@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/topLine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="_______________________________________________________" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="   "
+        android:textSize="2dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/topLine"
+        android:id="@+id/connectionStatusSpace"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Connection Status"
+        android:textSize="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/connectionStatusSpace"
+        android:id="@+id/connectionStatus"/>
+
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/scanButton"
+        android:layout_below="@id/connectionStatus"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:layout_marginRight="20dp"
+        android:text="Start Scan"
+        android:onClick="startScanButton"
+        android:backgroundTint="#4CAF50"/>
+
+    <Button
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/syncButton"
+        android:layout_below="@id/connectionStatus"
+        android:layout_toRightOf="@+id/connectionStatusSpace"
+        android:layout_marginLeft="20dp"
+        android:text="Start Sync"
+        android:onClick="startSyncButton"
+        android:backgroundTint="#4CAF50"/>
+    <TextView
+        android:id="@+id/leftThighStatusTitle"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/scanButton"
+        android:layout_toLeftOf="@+id/leftThighStatusView"
+        android:text="Left Thigh:"/>
+
+    <TextView
+        android:id="@+id/leftThighStatusView"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/scanButton"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="Disconnected"/>
+    <TextView
+        android:id="@+id/ValueT1Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/leftThighStatusTitle"
+        android:layout_toLeftOf="@+id/valueT1"
+        android:text="Value1:"/>
+
+    <TextView
+        android:id="@+id/valueT1"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rectangle"
+        android:layout_below="@+id/leftThighStatusView"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="Value1"/>
+
+    <TextView
+        android:id="@+id/ValueT2Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueT1Title"
+        android:layout_toLeftOf="@+id/valueT2"
+        android:text="Value2:" />
+
+    <TextView
+        android:id="@+id/valueT2"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rectangle"
+        android:layout_below="@+id/valueT1"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="value2"/>
+    <TextView
+        android:id="@+id/ValueT3Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueT2Title"
+        android:layout_toLeftOf="@+id/valueT3"
+        android:text="Value3:"/>
+
+    <TextView
+        android:id="@+id/valueT3"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rectangle"
+        android:layout_below="@+id/valueT2"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="value3"/>
+
+    <TextView
+        android:id="@+id/ValueT4Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueT3Title"
+        android:layout_toLeftOf="@+id/valueT3"
+        android:text="Battery:"/>
+    <TextView
+        android:id="@+id/valueT4"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rectangle"
+        android:layout_below="@+id/valueT3"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="Value4"/>
+
+
+
+    <TextView
+        android:id="@+id/leftFootStatusTitle"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/syncButton"
+        android:layout_toLeftOf="@+id/leftFootStatusView"
+        android:text="Left Foot:"/>
+
+    <TextView
+        android:id="@+id/leftFootStatusView"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/syncButton"
+        android:layout_marginTop="-3dp"
+        android:layout_marginRight="-202dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:text="Disconnected" />
+
+    <TextView
+        android:id="@+id/valueF1"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/leftFootStatusView"
+        android:layout_marginTop="3dp"
+        android:layout_marginRight="-200dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="Value1" />
+
+    <TextView
+        android:id="@+id/ValueF1Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/leftFootStatusTitle"
+        android:layout_toLeftOf="@+id/valueF1"
+        android:text="Value1:"/>
+
+    <TextView
+        android:id="@+id/valueF2"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/valueF1"
+        android:layout_marginTop="2dp"
+        android:layout_marginRight="-200dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value2" />
+    <TextView
+        android:id="@+id/ValueF2Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueF1Title"
+        android:layout_toLeftOf="@+id/valueF2"
+        android:text="Value2:" />
+    <TextView
+        android:id="@+id/valueF3"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/valueF2"
+        android:layout_marginTop="2dp"
+        android:layout_marginRight="-200dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value3" />
+    <TextView
+        android:id="@+id/ValueF3Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueF2Title"
+        android:layout_toLeftOf="@+id/valueF3"
+        android:text="Value3:" />
+    <TextView
+        android:id="@+id/valueF4"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/valueF3"
+        android:layout_marginTop="2dp"
+        android:layout_marginRight="-200dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value4" />
+    <TextView
+        android:id="@+id/ValueF4Title"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ValueF3Title"
+        android:layout_toLeftOf="@+id/valueF4"
+        android:text="Battery:" />
+
+
+
+    <Button
+        android:id="@+id/measureButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="27dp"
+        android:backgroundTint="#3F51B5"
+        android:onClick="StartMeasuringBtn"
+        android:text="Measure" />
+
+    <Button
+        android:id="@+id/disconnectButton"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginLeft="210dp"
+        android:layout_marginTop="27dp"
+        android:backgroundTint="#FD8888"
+        android:onClick="StartDisconnectingBtn"
+        android:text="Disconnect" />
+
+    <Switch
+        android:id="@+id/logSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/measureButton"
+        android:layout_marginLeft="-147dp"
+        android:layout_marginTop="411dp"
+        android:layout_toRightOf="@+id/scanButton"
+        android:text="Show Log" />
+</RelativeLayout>
