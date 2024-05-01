@@ -267,6 +267,6 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:visibility="invisible"
-        android:text="Log" />
+        android:text="Log Text" />
 
 </RelativeLayout>

@@ -284,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     startScanButton.setBackgroundColor(Color.parseColor("#008080"));
                 }
             });
-            mXsScanner.stopScan();
+            if(mXsScanner.stopScan()){ writeToLogs("Scan Stopped!"); }
         }
     }
     @Override
@@ -450,9 +450,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, BLUETOOTH_PERMISSION_CODE);
         checkPermission(android.Manifest.permission.BLUETOOTH_SCAN, BLUETOOTH_SCAN_PERMISSION_CODE);
-        mXsScanner.startScan();
 
+        if(mXsScanner.startScan()) { writeToLogs("Scan started!"); }
     }
+
     public void startSyncButton(View view){
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
@@ -477,9 +478,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     logContents.append("\n" + logMessage);
                 }
             });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (IndexOutOfBoundsException e){
+            e.printStackTrace();
         }
+        /*
         //Write to Log File
         String logMessageWithDateTime = java.text.DateFormat.getDateTimeInstance().format(new Date() + ": " + logMessage + "\n");
         try {
@@ -499,6 +501,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
             }
         }
+        */
     }
 
 
