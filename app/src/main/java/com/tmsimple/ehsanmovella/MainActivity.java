@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.xsens.dot.android.sdk.DotSdk;
@@ -29,9 +30,15 @@ import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.models.FilterProfileInfo;
 import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
+import android.text.method.ScrollingMovementMethod;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import android.widget.Switch;
 
@@ -45,10 +52,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     //LT: "D4:22:CD:00:63:8B"
     public String leftFootMAC = "D4:22:CD:00:63:A4";
 
+    public String logFile;
+    public FileOutputStream stream = null;
+
     Button startScanButton, startSyncButton, measureBtn, disconnectBtn;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
-    TextView leftThighScanStatus, leftFootScanStatus;
+    TextView leftThighScanStatus, leftFootScanStatus, logContents;
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
     DecimalFormat threePlacesT = new DecimalFormat("##.#");
     DecimalFormat threePlacesF = new DecimalFormat("##.#");
@@ -86,14 +96,30 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         logSwitch = findViewById(R.id.logSwitch);
 
-        startSyncButton.setEnabled(false);
+        logContents = findViewById(R.id.logContents);
+        logContents.setMovementMethod(new ScrollingMovementMethod());
+        logContents.setVisibility(View.INVISIBLE);
 
+        startSyncButton.setEnabled(false);
         //Xsens Dot On Create Stuff
         DotSdk.setDebugEnabled(true);
         DotSdk.setReconnectEnabled(true);
         mXsScanner = new DotScanner(this.getApplicationContext(), this);
         mXsScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
         mDeviceLst = new ArrayList<>();
+
+        //Log Show UI
+        logSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    logContents.setVisibility(View.VISIBLE);
+                }
+                else{
+                    logContents.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
     }
 
     @Override
@@ -441,6 +467,41 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
 
+    // Write to Log view and file
+    public void writeToLogs(String logMessage) {
+        //Write to Log View UI
+        try {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    logContents.append("\n" + logMessage);
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //Write to Log File
+        String logMessageWithDateTime = java.text.DateFormat.getDateTimeInstance().format(new Date() + ": " + logMessage + "\n");
+        try {
+            stream = new FileOutputStream(logFile, true);
+            stream.write(logMessageWithDateTime.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            logContents.append("\n" + "Error: Log file not found");
+            //errorMessagePopUp("Error: Log file not found");
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
 
     private void checkPermission(String permission, int requestCode) {
 
@@ -454,9 +515,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     }
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode,
                 permissions,
                 grantResults);
@@ -475,4 +534,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         }
     }
+
+
 }

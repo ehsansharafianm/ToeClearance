@@ -250,8 +250,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/measureButton"
-        android:layout_marginLeft="-147dp"
+        android:layout_marginLeft="-140dp"
         android:layout_marginTop="411dp"
         android:layout_toRightOf="@+id/scanButton"
         android:text="Show Log" />
+
+    <TextView
+        android:id="@+id/logContents"
+        android:layout_width="400dp"
+        android:layout_height="500dp"
+        android:layout_below="@id/connectionStatusSpace"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="75dp"
+        android:background="@drawable/rectangle"
+        android:backgroundTint="#000000"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:visibility="invisible"
+        android:text="Log" />
+
 </RelativeLayout>
