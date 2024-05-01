@@ -14,7 +14,7 @@ public class Segment {
     public boolean isConnected = false;
     public boolean isReady = false;
 
-    public DotLogger baselineDataLogger, baselineCognitiveDataLogger, fastDataLogger, trialDataLogger, retentionDataLogger, retentionCognitiveDataLogger;
+    public DotLogger normalDataLogger;
 
 
     public double[][] initEulerSamples;

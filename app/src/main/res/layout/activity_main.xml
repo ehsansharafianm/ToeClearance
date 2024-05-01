@@ -36,7 +36,7 @@
         android:layout_toLeftOf="@+id/connectionStatusSpace"
         android:layout_marginRight="20dp"
         android:text="Start Scan"
-        android:onClick="startScanButton"
+        android:onClick="scanButton_onClick"
         android:backgroundTint="#4CAF50"/>
 
     <Button
@@ -47,7 +47,7 @@
         android:layout_toRightOf="@+id/connectionStatusSpace"
         android:layout_marginLeft="20dp"
         android:text="Start Sync"
-        android:onClick="startSyncButton"
+        android:onClick="syncButton_onClick"
         android:backgroundTint="#4CAF50"/>
     <TextView
         android:id="@+id/leftThighStatusTitle"
@@ -231,8 +231,19 @@
         android:layout_marginLeft="20dp"
         android:layout_marginTop="27dp"
         android:backgroundTint="#3F51B5"
-        android:onClick="StartMeasuringBtn"
+        android:onClick="measureButton_onClick"
         android:text="Measure" />
+
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueF4"
+        android:layout_marginLeft="240dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="#BB3EFD"
+        android:onClick="stopButton_onClick"
+        android:text="Stop" />
 
     <Button
         android:id="@+id/disconnectButton"
@@ -240,9 +251,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/valueT4"
         android:layout_marginLeft="210dp"
-        android:layout_marginTop="27dp"
-        android:backgroundTint="#FD8888"
-        android:onClick="StartDisconnectingBtn"
+        android:layout_marginTop="414dp"
+        android:backgroundTint="#FA5C5C"
+        android:onClick="disconnectButton_onClick"
         android:text="Disconnect" />
 
     <Switch
@@ -257,16 +268,15 @@
 
     <TextView
         android:id="@+id/logContents"
-        android:layout_width="400dp"
-        android:layout_height="500dp"
+        android:layout_width="2000dp"
+        android:layout_height="300dp"
         android:layout_below="@id/connectionStatusSpace"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="75dp"
+        android:layout_marginTop="260dp"
         android:background="@drawable/rectangle"
         android:backgroundTint="#000000"
         android:textColor="@color/white"
         android:textStyle="bold"
-        android:visibility="invisible"
-        android:text="Log Text" />
+        android:visibility="invisible" />
 
 </RelativeLayout>
