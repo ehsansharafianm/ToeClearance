@@ -11,9 +11,12 @@ import android.bluetooth.le.ScanSettings;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.xsens.dot.android.sdk.DotSdk;
@@ -54,15 +57,21 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     //LT: "D4:22:CD:00:63:8B"
     public String leftFootMAC = "D4:22:CD:00:63:A4";
 
-    public String logFile;
+    public File logFile;
     public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
     public ArrayList<String> loggerFileNames = new ArrayList<>();
-    Button scanButton, syncButton, measureButton, disconnectButton, stopButton;
+    public int subjectNumber = 0;
+    public String subjectTitle;
+    public String logFileName;
+    public File logFilePath;
+    public String subjectDateAndTime;
+    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
+    EditText enterSubjectNumber;
     DecimalFormat threePlacesT = new DecimalFormat("##.#");
     DecimalFormat threePlacesF = new DecimalFormat("##.#");
 
@@ -86,9 +95,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         measureButton = findViewById(R.id.measureButton);
         disconnectButton = findViewById(R.id.disconnectButton);
         stopButton = findViewById(R.id.stopButton);
+        uploadButton = findViewById(R.id.uploadButton);
+        enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
 
         leftThighScanStatus = findViewById(R.id.leftThighStatusView);
         leftFootScanStatus = findViewById(R.id.leftFootStatusView);
+
+        logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
         ValueF1 = findViewById(R.id.valueF1);
         ValueF2 = findViewById(R.id.valueF2);
@@ -104,12 +117,16 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
-        stopButton.setEnabled(false);
+
 
         // Before scanning all should be deactive; after each step they will be enabled
+        scanButton.setEnabled(false);
         syncButton.setEnabled(false);
-        disconnectButton.setEnabled(false);
         measureButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        disconnectButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+
 
         //Xsens Dot On Create Stuff
         DotSdk.setDebugEnabled(true);
@@ -127,6 +144,30 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
                 else{
                     logContents.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+
+        enterSubjectNumber.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                try {
+                    subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
+                    subjectTitle = "Subject" + subjectNumber;
+                    subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+                    logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
+                    logFile = new File(logFilePath,logFileName);
+                    writeToLogs("Subject number set: " + subjectNumber);
+                    writeToLogs("Log File Created");
+                    scanButton.setEnabled(true);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -404,7 +445,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         try {
             File loggerFileFolder;
             String loggerFileName;
-            loggerFileFolder = this.getApplicationContext().getExternalFilesDir(device.getTag());
+            loggerFileFolder = this.getApplicationContext().getExternalFilesDir(subjectTitle + "/" + device.getTag());
             loggerFileName = device.getTag() + "_" + java.text.DateFormat.getDateTimeInstance().format(new Date()) + ".csv";
             String path = loggerFileFolder.getPath() + "/" + loggerFileName;
             File loggerFile = new File(path);
@@ -491,6 +532,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void stopButton_onClick(View view){ // After measuring, the dots should be stopped to for data logging
 
         stopButton.setEnabled(false);
+        uploadButton.setEnabled(true);
         writeToLogs("Stopping");
         if(leftThigh.xsDevice != null){
             try{
@@ -510,6 +552,11 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             writeToLogs("Error: Not connected to " + leftFoot.Name);
             e.printStackTrace();
         }}
+    }
+    public void uploadButton_onClick (View view){
+        for (int i = 0; i < loggerFileNames.size(); i++) {
+            writeToLogs("Uploading data to cloud : " + loggerFileNames.get(i));
+        }
     }
 
     /*
