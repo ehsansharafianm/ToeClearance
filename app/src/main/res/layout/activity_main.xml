@@ -28,6 +28,14 @@
         android:layout_below="@+id/connectionStatusSpace"
         android:id="@+id/connectionStatus"/>
 
+    <EditText
+        android:id="@+id/subjectNumber"
+        android:layout_width="130dp"
+        android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="30dp"
+        android:text="Input Number" />
+
     <Button
         android:layout_width="150dp"
         android:layout_height="wrap_content"

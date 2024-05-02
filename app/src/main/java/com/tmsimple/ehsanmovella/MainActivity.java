@@ -19,6 +19,7 @@ import android.widget.TextView;
 import com.xsens.dot.android.sdk.DotSdk;
 import com.xsens.dot.android.sdk.events.DotData;
 import com.xsens.dot.android.sdk.interfaces.DotDeviceCallback;
+import com.xsens.dot.android.sdk.interfaces.DotMeasurementCallback;
 import com.xsens.dot.android.sdk.interfaces.DotRecordingCallback;
 import com.xsens.dot.android.sdk.interfaces.DotScannerCallback;
 import com.xsens.dot.android.sdk.interfaces.DotSyncCallback;
@@ -43,7 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import android.widget.Switch;
 
-public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback {
+public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
 
     private Segment leftThigh, leftFoot;
@@ -345,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
 
         //Write To Log File:
-        /*
+
         String logMessageWithDateTime = java.text.DateFormat.getDateTimeInstance().format(new Date()) + ": " + logMessage + "\n";
         try {
             stream = new FileOutputStream(logFile, true);
@@ -365,8 +366,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
 
         }
-         */
-
     }
     private void checkPermission(String permission, int requestCode) {
 
@@ -466,6 +465,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             public void run() {measureButton.setText("Measuring...");}
         });
 
+
         if (leftThigh.xsDevice != null)
             leftThigh.normalDataLogger = createDataLog(leftThigh.xsDevice);
         if (leftFoot.xsDevice != null)
@@ -473,6 +473,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         if (leftThigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
         if (leftFoot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
+
     }
 
     public void disconnectButton_onClick(View view){
@@ -495,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             try{
                 leftThigh.xsDevice.stopMeasuring();
                 leftThigh.normalDataLogger.stop();
-                writeToLogs(leftThigh.Name + "Measurement stopped");
+                writeToLogs(leftThigh.Name + " measuring stopped");
             }catch (NullPointerException e) {
                 writeToLogs("Error: Not connected to " + leftThigh.Name);
                 e.printStackTrace();
@@ -504,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if(leftFoot.xsDevice != null){try{
             leftFoot.xsDevice.stopMeasuring();
             leftFoot.normalDataLogger.stop();
-            writeToLogs(leftFoot.Name + "Measurement stopped");
+            writeToLogs(leftFoot.Name + " measuring stopped");
         }catch (NullPointerException e) {
             writeToLogs("Error: Not connected to " + leftFoot.Name);
             e.printStackTrace();
@@ -613,4 +614,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     }
 
 
+    @Override
+    public void onDotHeadingChanged(String s, int i, int i1) {
+
+    }
+
+    @Override
+    public void onDotRotLocalRead(String s, float[] floats) {
+
+    }
 }//END OF THE CODE
