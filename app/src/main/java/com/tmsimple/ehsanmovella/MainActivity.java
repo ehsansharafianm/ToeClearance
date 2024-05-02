@@ -28,6 +28,7 @@ import com.xsens.dot.android.sdk.models.DotRecordingFileInfo;
 import com.xsens.dot.android.sdk.models.DotRecordingState;
 import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.models.FilterProfileInfo;
+import com.xsens.dot.android.sdk.utils.DotLogger;
 import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.text.method.ScrollingMovementMethod;
@@ -54,7 +55,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     public String logFile;
     public FileOutputStream stream = null;
-
+    public ArrayList<File> loggerFilePaths = new ArrayList<>();
+    public ArrayList<String> loggerFileNames = new ArrayList<>();
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
     DecimalFormat threePlacesT = new DecimalFormat("##.#");
     DecimalFormat threePlacesF = new DecimalFormat("##.#");
+
 
 
 
@@ -312,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 syncButton.setBackgroundColor(Color.parseColor("#008080"));
             }
         });
-        writeToLogs("Syncing is done!");
+        writeToLogs("\n ---------- Syncing is done! --------- \n");
     }
 
 
@@ -397,6 +400,30 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
     }
 
+    public DotLogger createDataLog(DotDevice device){
+
+        try {
+            File loggerFileFolder;
+            String loggerFileName;
+            loggerFileFolder = this.getApplicationContext().getExternalFilesDir(device.getTag());
+            loggerFileName = device.getTag() + "_" + java.text.DateFormat.getDateTimeInstance().format(new Date()) + ".csv";
+            String path = loggerFileFolder.getPath() + "/" + loggerFileName;
+            File loggerFile = new File(path);
+
+            loggerFilePaths.add(loggerFile);
+            loggerFileNames.add(loggerFileName);
+            writeToLogs(loggerFileName + " created");
+
+            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3, path, device.getTag(),
+                                           device.getFirmwareVersion(), true, 60, null, "25", 0);
+            return logger;
+        } catch (NullPointerException e) {
+            writeToLogs("Error with creation of logger with" + device.getName());
+            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3, "", device.getTag(),
+                    device.getFirmwareVersion(), true, 60, null, "25", 0);
+            return logger;
+        }
+    }
     /*
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
@@ -431,15 +458,21 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
     public void measureButton_onClick(View view){
+
+        stopButton.setEnabled(true); // After starting measuring the stop button will be activated
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {measureButton.setText("Measuring...");}
         });
 
+        if (leftThigh.xsDevice != null)
+            leftThigh.normalDataLogger = createDataLog(leftThigh.xsDevice);
+        if (leftFoot.xsDevice != null)
+            leftFoot.normalDataLogger = createDataLog(leftFoot.xsDevice);
+
         if (leftThigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
         if (leftFoot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
-        stopButton.setEnabled(true); // After starting measuring the stop button will be activated
     }
 
     public void disconnectButton_onClick(View view){
