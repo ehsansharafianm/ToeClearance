@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     DecimalFormat threePlacesT = new DecimalFormat("##.#");
     DecimalFormat threePlacesF = new DecimalFormat("##.#");
 
-
+    public int MeasurementMode;
 
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
@@ -326,11 +326,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     @Override
     public void onDotScanned(BluetoothDevice bluetoothDevice, int i) {
         String address = bluetoothDevice.getAddress();
+
+        MeasurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
+
         if(address.equals(leftThigh.MAC) && !leftThigh.isScanned){
             leftThigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             leftThigh.xsDevice.connect();
             leftThigh.isConnected = true;
-            leftThigh.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_4);
+            leftThigh.xsDevice.setMeasurementMode(MeasurementMode);
             writeToLogs(leftThigh.Name + " is scanned and logger is created");
             mDeviceLst.add(leftThigh.xsDevice);
         }
@@ -338,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             leftFoot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             leftFoot.xsDevice.connect();
             leftFoot.isConnected = true;
-            leftFoot.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_4);
+            leftFoot.xsDevice.setMeasurementMode(MeasurementMode);
             mDeviceLst.add(leftFoot.xsDevice);
             writeToLogs(leftFoot.Name + " is scanned and logger is created");
         }
@@ -459,13 +462,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             loggerFileNames.add(loggerFileName);
             writeToLogs(loggerFileName + " created");
 
-            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3,path,device.getTag(),device.getFirmwareVersion(),true,60,null,"29",0);
+            DotLogger logger = new DotLogger(getApplicationContext(), 1,MeasurementMode,path,device.getTag(),device.getFirmwareVersion(),true,60,null,"29",0);
             return logger;
 
 
         } catch (NullPointerException e) {
             writeToLogs("Error with creation of logger with" + device.getName());
-            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3, "", device.getTag(),
+            DotLogger logger = new DotLogger(getApplicationContext(), 1, MeasurementMode, "", device.getTag(),
                     device.getFirmwareVersion(), true, 60, null, "24", 0);
             return logger;
         }
