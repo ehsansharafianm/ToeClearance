@@ -159,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             public void afterTextChanged(Editable s) {
                 try {
                     subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
-                    subjectTitle = "Subject" + subjectNumber;
+                    subjectTitle = "Subject " + subjectNumber;
                     subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
                     logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
                     logFile = new File(logFilePath,logFileName);
@@ -172,7 +172,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         });
     }
-
     @Override
     public void onDotConnectionChanged(String address, int state) {
         if (state == DotDevice.CONN_STATE_CONNECTED){
@@ -196,6 +195,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     });
                 }
             }
+            writeToLogs(String.valueOf("Measurement Mode: " + leftThigh.xsDevice.getMeasurementMode())
+                                                                 + " / " + leftFoot.xsDevice.getMeasurementMode());
         }
         else if (state == DotDevice.CONN_STATE_DISCONNECTED){
             if(address.equals(leftThigh.MAC)){
@@ -234,13 +235,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     }
 
-
     @Override
     public void onDotDataChanged(String address, DotData dotData) {
 
-        double[] eulerAngles = dotData.getEuler();
+        //double[] eulerAngles = dotData.getEuler();
+        float[] eulerAngles = dotData.getQuat();
+        //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
 
         if (address.equals(leftThigh.MAC)) {
+            leftThigh.normalDataLogger.update(dotData);
             leftThigh.sampleCounter++;
             //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
             double[] eulerAnglesThigh = dotData.getEuler();
@@ -255,11 +258,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT1.setText(String.valueOf(leftThigh.dataOutput[0]) + "   deg");
                     ValueT2.setText(String.valueOf(leftThigh.dataOutput[1]) + "   deg");
                     ValueT3.setText(String.valueOf(leftThigh.dataOutput[2]) + "   deg");
-                    ValueT4.setText(String.valueOf(leftThigh.xsDevice.getBatteryPercentage()) + "   %");
+                    //ValueT4.setText(String.valueOf(leftThigh.xsDevice.getBatteryPercentage()) + "   %");
+                    ValueT4.setText(String.valueOf(leftThigh.sampleCounter));
                 }
             });
         }
         else if (address.equals(leftFoot.MAC)) {
+            leftFoot.normalDataLogger.update(dotData);
             leftFoot.sampleCounter++;
             //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
             double[] eulerAnglesFoot = dotData.getEuler();
@@ -286,7 +291,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             leftThigh.isReady = true;
             leftThigh.xsDevice.setOutputRate(60);
             writeToLogs("Left Thigh IMU sample rate is : " + String.valueOf(leftThigh.xsDevice.getCurrentOutputRate()));
-            //writeToLogs("Left Thigh IMU current filter profile is : " + String.valueOf(leftThigh.xsDevice.getCurrentFilterProfileIndex()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -298,7 +302,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             leftFoot.isReady = true;
             leftFoot.xsDevice.setOutputRate(60);
             writeToLogs("Left Foot IMU sample rate is : " + String.valueOf(leftFoot.xsDevice.getCurrentOutputRate()));
-            //writeToLogs("Left Foot IMU current filter profile is : " + String.valueOf(leftFoot.xsDevice.getCurrentFilterProfileIndex()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -327,15 +330,17 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             leftThigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             leftThigh.xsDevice.connect();
             leftThigh.isConnected = true;
-            leftThigh.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_QUATERNION);
+            leftThigh.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_4);
+            writeToLogs(leftThigh.Name + " is scanned and logger is created");
             mDeviceLst.add(leftThigh.xsDevice);
         }
         else if(address.equals(leftFoot.MAC) && !leftFoot.isScanned){
             leftFoot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             leftFoot.xsDevice.connect();
             leftFoot.isConnected = true;
-            leftFoot.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_COMPLETE_QUATERNION);
+            leftFoot.xsDevice.setMeasurementMode(DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_4);
             mDeviceLst.add(leftFoot.xsDevice);
+            writeToLogs(leftFoot.Name + " is scanned and logger is created");
         }
         if(leftThigh.isScanned && leftFoot.isScanned){
             runOnUiThread(new Runnable() {
@@ -454,13 +459,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             loggerFileNames.add(loggerFileName);
             writeToLogs(loggerFileName + " created");
 
-            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3, path, device.getTag(),
-                                           device.getFirmwareVersion(), true, 60, null, "25", 0);
+            DotLogger logger = new DotLogger(getApplicationContext(), 1, 3,path,device.getTag(),device.getFirmwareVersion(),true,60,null,"29",0);
             return logger;
+
+
         } catch (NullPointerException e) {
             writeToLogs("Error with creation of logger with" + device.getName());
             DotLogger logger = new DotLogger(getApplicationContext(), 1, 3, "", device.getTag(),
-                    device.getFirmwareVersion(), true, 60, null, "25", 0);
+                    device.getFirmwareVersion(), true, 60, null, "24", 0);
             return logger;
         }
     }

@@ -284,8 +284,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/measureButton"
-        android:layout_marginLeft="-140dp"
-        android:layout_marginTop="390dp"
+        android:layout_marginLeft="-127dp"
+        android:layout_marginTop="410dp"
         android:layout_toRightOf="@+id/scanButton"
         android:text="Show Log" />
 
