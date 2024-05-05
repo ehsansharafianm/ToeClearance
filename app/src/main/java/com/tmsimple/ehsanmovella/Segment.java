@@ -5,7 +5,8 @@ import com.xsens.dot.android.sdk.utils.DotLogger;
 
 public class Segment {
     public DotDevice xsDevice;
-    public String[] dataOutput = {"No Data", "NA", "NA", "NA"};
+    public String[] dataOutput = {"No Data", "NA", "NA", "NA", "NA"};
+
     public double[] initEuler = {20.0,0.0,0.0};
     public int sampleCounter = 0;
     public String MAC;

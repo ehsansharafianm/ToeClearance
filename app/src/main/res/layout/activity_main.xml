@@ -233,16 +233,13 @@
         android:layout_below="@+id/ValueF3Title"
         android:layout_toLeftOf="@+id/valueF4"
         android:text="Battery:" />
-
-
-
     <Button
         android:id="@+id/measureButton"
-        android:layout_width="150dp"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueT4"
         android:layout_marginLeft="20dp"
-        android:layout_marginTop="27dp"
+        android:layout_marginTop="25dp"
         android:backgroundTint="#3F51B5"
         android:onClick="measureButton_onClick"
         android:text="Measure" />
@@ -301,5 +298,40 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/activity1Button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="350dp"
+        android:backgroundTint="#008884"
+        android:text="Standing" />
+
+    <Button
+        android:id="@+id/activity2Button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="80dp"
+        android:layout_marginTop="410dp"
+        android:backgroundTint="#008884"
+        android:text="Walking" />
+    <Button
+        android:id="@+id/activity3Button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="160dp"
+        android:layout_marginTop="470dp"
+        android:backgroundTint="#008884"
+        android:text="Upstairs" />
+    <Button
+        android:id="@+id/activity4Button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="210dp"
+        android:layout_marginTop="540dp"
+        android:backgroundTint="#008884"
+        android:text="Downstairs" />
+
 
 </RelativeLayout>

@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -66,14 +67,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public String logFileName;
     public File logFilePath;
     public String subjectDateAndTime;
-    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton;
+    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton,
+           activity1Button, activity2Button, activity3Button, activity4Button;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
     EditText enterSubjectNumber;
-    DecimalFormat threePlacesT = new DecimalFormat("##.#");
-    DecimalFormat threePlacesF = new DecimalFormat("##.#");
+    DecimalFormat threePlaces = new DecimalFormat("##.#");
+    public int packetCounterCofficient = 0;
 
     public int MeasurementMode;
 
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
 
-    @SuppressLint("MissingInflatedId")
+    @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +99,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         stopButton = findViewById(R.id.stopButton);
         uploadButton = findViewById(R.id.uploadButton);
         enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
+        activity1Button = findViewById(R.id.activity1Button);
+        activity2Button = findViewById(R.id.activity2Button);
+        activity3Button = findViewById(R.id.activity3Button);
+        activity4Button = findViewById(R.id.activity4Button);
 
         leftThighScanStatus = findViewById(R.id.leftThighStatusView);
         leftFootScanStatus = findViewById(R.id.leftFootStatusView);
@@ -156,22 +162,95 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
             @Override
-            public void afterTextChanged(Editable s) {
-                try {
-                    subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
-                    subjectTitle = "Subject " + subjectNumber;
-                    subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
-                    logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
-                    logFile = new File(logFilePath,logFileName);
-                    writeToLogs("Subject number set: " + subjectNumber);
-                    writeToLogs("Log File Created");
-                    scanButton.setEnabled(true);
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
+            public void afterTextChanged(Editable string) {
+                if(!string.toString().isEmpty()){
+                    try {
+                        subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
+                        subjectTitle = "Subject " + subjectNumber;
+                        subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+                        logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
+                        logFile = new File(logFilePath,logFileName);
+                        writeToLogs("Subject number set: " + subjectNumber);
+                        writeToLogs("Log File Created");
+                        scanButton.setEnabled(true);
+                        //enterSubjectNumber.setEnabled(false);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        writeToLogs("Subject Number is invalid");
+                    }
                 }
             }
         });
+
+        activity1Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 1000000;
+                        activity1Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity1Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity2Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 2000000;
+                        activity2Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity2Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity3Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 3000000;
+                        activity3Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity3Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity4Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 4000000;
+                        activity4Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity4Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+
     }
+
+
+
     @Override
     public void onDotConnectionChanged(String address, int state) {
         if (state == DotDevice.CONN_STATE_CONNECTED){
@@ -238,8 +317,11 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     @Override
     public void onDotDataChanged(String address, DotData dotData) {
 
-        //double[] eulerAngles = dotData.getEuler();
-        float[] eulerAngles = dotData.getQuat();
+
+        dotData.setPacketCounter(packetCounterCofficient + dotData.getPacketCounter() );
+        double[] eulerAngles = dotData.getEuler();
+        int xxx = dotData.getPacketCounter();
+        //float[] eulerAngles = dotData.getQuat();
         //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
 
         if (address.equals(leftThigh.MAC)) {
@@ -248,16 +330,19 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
             double[] eulerAnglesThigh = dotData.getEuler();
 
-            leftThigh.dataOutput[0] = threePlacesT.format(eulerAngles[0]);
-            leftThigh.dataOutput[1] = threePlacesT.format(eulerAngles[1]);
-            leftThigh.dataOutput[2] = threePlacesT.format(eulerAngles[2]);
+            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0]);
+            leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+
+            leftThigh.dataOutput[3] = threePlaces.format(xxx);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
-                    ValueT1.setText(String.valueOf(leftThigh.dataOutput[0]) + "   deg");
-                    ValueT2.setText(String.valueOf(leftThigh.dataOutput[1]) + "   deg");
-                    ValueT3.setText(String.valueOf(leftThigh.dataOutput[2]) + "   deg");
+
+                    ValueT1.setText(leftThigh.dataOutput[0] + "   deg");
+                    ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
+                    ValueT3.setText(leftThigh.dataOutput[2] + "   deg");
                     //ValueT4.setText(String.valueOf(leftThigh.xsDevice.getBatteryPercentage()) + "   %");
                     ValueT4.setText(String.valueOf(leftThigh.sampleCounter));
                 }
@@ -269,17 +354,18 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
             double[] eulerAnglesFoot = dotData.getEuler();
 
-            leftFoot.dataOutput[0] = threePlacesF.format(eulerAngles[0]);
-            leftFoot.dataOutput[1] = threePlacesF.format(eulerAngles[1]);
-            leftFoot.dataOutput[2] = threePlacesF.format(eulerAngles[2]);
+            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]);
+            leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+            leftFoot.dataOutput[3] = threePlaces.format(xxx);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
-                    ValueF1.setText(String.valueOf(leftFoot.dataOutput[0]) + "   deg");
-                    ValueF2.setText(String.valueOf(leftFoot.dataOutput[1]) + "   deg");
-                    ValueF3.setText(String.valueOf(leftFoot.dataOutput[2]) + "   deg");
-                    ValueF4.setText(String.valueOf(leftFoot.xsDevice.getBatteryPercentage()) + "   %");
+                    ValueF1.setText(leftFoot.dataOutput[0] + "   deg");
+                    ValueF2.setText(leftFoot.dataOutput[1] + "   deg");
+                    ValueF3.setText(leftFoot.dataOutput[2] + "   deg");
+                    ValueF4.setText(String.valueOf(leftFoot.dataOutput[3]));
                 }
             });
         }
@@ -561,6 +647,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             writeToLogs("Error: Not connected to " + leftFoot.Name);
             e.printStackTrace();
         }}
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                measureButton.setText("Measuring Stopped");
+            }
+        });
     }
     public void uploadButton_onClick (View view){
         for (int i = 0; i < loggerFileNames.size(); i++) {
