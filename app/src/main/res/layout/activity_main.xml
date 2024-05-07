@@ -244,16 +244,8 @@
         android:onClick="measureButton_onClick"
         android:text="Measure" />
 
-    <Button
-        android:id="@+id/stopButton"
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/valueF4"
-        android:layout_marginLeft="240dp"
-        android:layout_marginTop="20dp"
-        android:backgroundTint="#BB3EFD"
-        android:onClick="stopButton_onClick"
-        android:text="Stop" />
+
+
 
     <Button
         android:id="@+id/disconnectButton"
@@ -285,6 +277,25 @@
         android:layout_marginTop="410dp"
         android:layout_toRightOf="@+id/scanButton"
         android:text="Show Log" />
+    <Button
+        android:id="@+id/dataLogButton"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueF4"
+        android:layout_marginLeft="220dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="#4DBDDF"
+        android:text="Data Log" />
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueF4"
+        android:layout_marginLeft="240dp"
+        android:layout_marginTop="120dp"
+        android:backgroundTint="#BB3EFD"
+        android:onClick="stopButton_onClick"
+        android:text="Stop" />
 
     <TextView
         android:id="@+id/logContents"
@@ -298,6 +309,7 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:visibility="invisible" />
+
 
     <Button
         android:id="@+id/activity1Button"

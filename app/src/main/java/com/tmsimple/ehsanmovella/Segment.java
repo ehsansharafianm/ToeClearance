@@ -8,7 +8,7 @@ public class Segment {
     public String[] dataOutput = {"No Data", "NA", "NA", "NA", "NA"};
 
     public double[] initEuler = {20.0,0.0,0.0};
-    public int sampleCounter = 0;
+    public int sampleCounter = 1;
     public String MAC;
     public String Name;
     public boolean isScanned = false;

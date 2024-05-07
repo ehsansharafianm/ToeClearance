@@ -67,7 +67,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public String logFileName;
     public File logFilePath;
     public String subjectDateAndTime;
-    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton,
+    public boolean isLoggingData = false;
+    public int dataLogButtonIndex = 0;
+    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
            activity1Button, activity2Button, activity3Button, activity4Button;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
@@ -98,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         disconnectButton = findViewById(R.id.disconnectButton);
         stopButton = findViewById(R.id.stopButton);
         uploadButton = findViewById(R.id.uploadButton);
+        dataLogButton = findViewById(R.id.dataLogButton);
         enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
         activity1Button = findViewById(R.id.activity1Button);
         activity2Button = findViewById(R.id.activity2Button);
@@ -132,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         stopButton.setEnabled(false);
         disconnectButton.setEnabled(false);
         uploadButton.setEnabled(false);
+        dataLogButton.setEnabled(false);
 
 
         //Xsens Dot On Create Stuff
@@ -182,6 +186,25 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         });
 
+        dataLogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataLogButtonIndex++;
+                writeToLogs(String.valueOf(dataLogButtonIndex));
+                if (dataLogButtonIndex%2 == 1){
+                    isLoggingData = true;
+                    dataLogButton.setBackgroundColor(Color.parseColor("#01302f"));
+                    dataLogButton.setText("Data Logging ...");
+                    writeToLogs(" ---- Data is Logging -----");
+                }
+                else if (dataLogButtonIndex%2 == 0 && dataLogButtonIndex > 1) {
+                    isLoggingData = false;
+                    dataLogButton.setBackgroundColor(Color.parseColor("#4DBDDF"));
+                    dataLogButton.setText("Data Logging Stopped");
+                    writeToLogs("---- Data Logging Stopped -----");
+                }
+            }
+        });
         activity1Button.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -317,24 +340,11 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     @Override
     public void onDotDataChanged(String address, DotData dotData) {
 
-
-        dotData.setPacketCounter(packetCounterCofficient + dotData.getPacketCounter() );
         double[] eulerAngles = dotData.getEuler();
-        int xxx = dotData.getPacketCounter();
-        //float[] eulerAngles = dotData.getQuat();
-        //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
-
         if (address.equals(leftThigh.MAC)) {
-            leftThigh.normalDataLogger.update(dotData);
-            leftThigh.sampleCounter++;
-            //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
-            double[] eulerAnglesThigh = dotData.getEuler();
-
             leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0]);
             leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-
-            leftThigh.dataOutput[3] = threePlaces.format(xxx);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -349,15 +359,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             });
         }
         else if (address.equals(leftFoot.MAC)) {
-            leftFoot.normalDataLogger.update(dotData);
-            leftFoot.sampleCounter++;
-            //double[] eulerAngles = DotParser.quaternion2Euler(dotData.getQuat());
-            double[] eulerAnglesFoot = dotData.getEuler();
-
             leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]);
             leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-            leftFoot.dataOutput[3] = threePlaces.format(xxx);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -368,6 +372,21 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueF4.setText(String.valueOf(leftFoot.dataOutput[3]));
                 }
             });
+        }
+        if (isLoggingData) {
+            dotData.setPacketCounter(packetCounterCofficient + leftThigh.sampleCounter);
+
+            int xxx = dotData.getPacketCounter();
+
+            if (address.equals(leftThigh.MAC)) {
+                leftThigh.normalDataLogger.update(dotData);
+                leftThigh.sampleCounter++;
+                leftThigh.dataOutput[3] = threePlaces.format(xxx);
+            } else if (address.equals(leftFoot.MAC)) {
+                leftFoot.normalDataLogger.update(dotData);
+                leftFoot.dataOutput[3] = threePlaces.format(xxx);
+
+            }
         }
     }
 
@@ -593,8 +612,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
     public void measureButton_onClick(View view){
-
+        dataLogButton.setEnabled(true);
         stopButton.setEnabled(true); // After starting measuring the stop button will be activated
+
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
@@ -627,6 +647,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void stopButton_onClick(View view){ // After measuring, the dots should be stopped to for data logging
 
         stopButton.setEnabled(false);
+        measureButton.setEnabled(false);
+        dataLogButton.setEnabled(false);
         uploadButton.setEnabled(true);
         writeToLogs("Stopping");
         if(leftThigh.xsDevice != null){
