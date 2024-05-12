@@ -6,10 +6,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanSettings;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,6 +22,14 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.xsens.dot.android.sdk.DotSdk;
 import com.xsens.dot.android.sdk.events.DotData;
 import com.xsens.dot.android.sdk.interfaces.DotDeviceCallback;
@@ -49,6 +59,8 @@ import java.util.HashMap;
 import android.widget.Switch;
 
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
+
+    public String Version = "v1.2";
 
 
     private Segment leftThigh, leftFoot;
@@ -80,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public int packetCounterCofficient = 0;
 
     public int MeasurementMode;
+    StorageReference storageReference;
+    //DatabaseReference databaseReference;
 
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
@@ -90,6 +104,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        storageReference = FirebaseStorage.getInstance().getReference();
+
 
         leftThigh = new Segment("Left Thigh IMU", leftThighMAC);
         leftFoot = new Segment("Left Foot IMU", leftFootMAC);
@@ -190,10 +207,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             @Override
             public void onClick(View v) {
                 dataLogButtonIndex++;
-                writeToLogs(String.valueOf(dataLogButtonIndex));
                 if (dataLogButtonIndex%2 == 1){
                     isLoggingData = true;
-                    dataLogButton.setBackgroundColor(Color.parseColor("#01302f"));
+                    dataLogButton.setBackgroundColor(Color.parseColor("#05edbb"));
                     dataLogButton.setText("Data Logging ...");
                     writeToLogs(" ---- Data is Logging -----");
                 }
@@ -341,6 +357,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void onDotDataChanged(String address, DotData dotData) {
 
         double[] eulerAngles = dotData.getEuler();
+        double[] eulerAngles_Q = DotParser.quaternion2Euler(dotData.getQuat());
         if (address.equals(leftThigh.MAC)) {
             leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0]);
             leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
@@ -567,14 +584,16 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             loggerFileNames.add(loggerFileName);
             writeToLogs(loggerFileName + " created");
 
-            DotLogger logger = new DotLogger(getApplicationContext(), 1,MeasurementMode,path,device.getTag(),device.getFirmwareVersion(),true,60,null,"29",0);
+            DotLogger logger = new DotLogger(getApplicationContext(), 1,MeasurementMode,path,device.getTag(),
+                    device.getFirmwareVersion(),true,60,null, Version,0);
             return logger;
 
 
         } catch (NullPointerException e) {
             writeToLogs("Error with creation of logger with" + device.getName());
             DotLogger logger = new DotLogger(getApplicationContext(), 1, MeasurementMode, "", device.getTag(),
-                    device.getFirmwareVersion(), true, 60, null, "24", 0);
+                    device.getFirmwareVersion(), true, 60, null,
+                    Version, 0);
             return logger;
         }
     }
@@ -630,9 +649,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if (leftThigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
         if (leftFoot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
 
+        //if (leftThigh.xsDevice.resetHeading()) {writeToLogs("Left Thigh IMU heading reset");}
+        //if (leftFoot.xsDevice.resetHeading()) {writeToLogs("Left Foot IMU heading reset");}
+
     }
 
     public void disconnectButton_onClick(View view){
+        measureButton.setEnabled(false);
+        dataLogButton.setEnabled(false);
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
@@ -679,7 +703,48 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void uploadButton_onClick (View view){
         for (int i = 0; i < loggerFileNames.size(); i++) {
             writeToLogs("Uploading data to cloud : " + loggerFileNames.get(i));
+            uploadLogFileToCloud(Uri.fromFile(loggerFilePaths.get(i)),loggerFileNames.get(i));
         }
+
+        uploadLogFileToCloud(Uri.fromFile(logFile), "log");
+    }
+    private void uploadLogFileToCloud(Uri file, String fileName){
+
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("File is loading...");
+        progressDialog.show();
+
+        //This is where you can change the upload location and name
+        StorageReference reference = storageReference.child("logs/Subject " + Integer.toString(subjectNumber) + "/" + fileName);
+
+        reference.putFile(file).
+                addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                uploadButton.setText("Uploading Failed");
+                uploadButton.setBackgroundColor(Color.parseColor("#f63e00"));
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                runOnUiThread(new Runnable() {
+                    @SuppressLint("SetTextI18n")
+                    @Override
+                    public void run() {
+                        uploadButton.setText("Uploading Done");
+                        uploadButton.setBackgroundColor(Color.parseColor("#0af056"));
+                    }
+                });
+                progressDialog.dismiss();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(@NonNull UploadTask.TaskSnapshot snapshot) {
+                double progress = (100.0 * snapshot.getBytesTransferred()) / snapshot.getTotalByteCount();
+                progressDialog.setMessage("File Uploaded.." + (int) progress + "%");
+            }
+            });
+
     }
 
     /*
