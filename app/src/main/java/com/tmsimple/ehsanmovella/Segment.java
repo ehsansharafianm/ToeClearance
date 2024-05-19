@@ -7,7 +7,9 @@ public class Segment {
     public DotDevice xsDevice;
     public String[] dataOutput = {"No Data", "NA", "NA", "NA", "NA"};
 
-    public double[] initEuler = {20.0,0.0,0.0};
+    public double initAngleValue = 0.0;
+    public double sumOfInitialValue = 0.0;
+    public int initializationCounter = 1;
     public int sampleCounter = 1;
     public String MAC;
     public String Name;
@@ -16,6 +18,7 @@ public class Segment {
     public boolean isReady = false;
 
     public DotLogger normalDataLogger;
+
 
 
     public double[][] initEulerSamples;

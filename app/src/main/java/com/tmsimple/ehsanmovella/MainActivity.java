@@ -61,8 +61,6 @@ import android.widget.Switch;
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
     public String Version = "v1.2";
-
-
     private Segment leftThigh, leftFoot;
     private DotScanner mXsScanner;
     public  String leftThighMAC = "D4:22:CD:00:63:8B";
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
-           activity1Button, activity2Button, activity3Button, activity4Button;
+           activity1Button, activity2Button, activity3Button, activity4Button, homeButton, initializationButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
@@ -103,13 +101,17 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.first_page);
+
 
         storageReference = FirebaseStorage.getInstance().getReference();
 
-
         leftThigh = new Segment("Left Thigh IMU", leftThighMAC);
         leftFoot = new Segment("Left Foot IMU", leftFootMAC);
+
+    }
+    public void LabelingData(View view){
+        setContentView((R.layout.labeling_data));
 
         scanButton = findViewById(R.id.scanButton);
         syncButton = findViewById(R.id.syncButton);
@@ -123,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         activity2Button = findViewById(R.id.activity2Button);
         activity3Button = findViewById(R.id.activity3Button);
         activity4Button = findViewById(R.id.activity4Button);
+        homeButton = findViewById(R.id.homeButton);
 
         leftThighScanStatus = findViewById(R.id.leftThighStatusView);
         leftFootScanStatus = findViewById(R.id.leftFootStatusView);
@@ -144,7 +147,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
 
-
         // Before scanning all should be deactive; after each step they will be enabled
         scanButton.setEnabled(false);
         syncButton.setEnabled(false);
@@ -153,6 +155,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         disconnectButton.setEnabled(false);
         uploadButton.setEnabled(false);
         dataLogButton.setEnabled(false);
+
 
 
         //Xsens Dot On Create Stuff
@@ -285,9 +288,149 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 return true;
             }
         });
-
+        homeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setContentView(R.layout.first_page);
+            }
+        });
     }
+    public void activityRecognition(View view){
+        setContentView(R.layout.recognition_page);
 
+        scanButton = findViewById(R.id.scanButton);
+        syncButton = findViewById(R.id.syncButton);
+        measureButton = findViewById(R.id.measureButton);
+        disconnectButton = findViewById(R.id.disconnectButton);
+        stopButton = findViewById(R.id.stopButton);
+        uploadButton = findViewById(R.id.uploadButton);
+        dataLogButton = findViewById(R.id.dataLogButton);
+        enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
+        activity1Button = findViewById(R.id.activity1Button);
+        homeButton = findViewById(R.id.homeButton);
+
+        leftThighScanStatus = findViewById(R.id.leftThighStatusView);
+        leftFootScanStatus = findViewById(R.id.leftFootStatusView);
+
+        logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
+
+        ValueF1 = findViewById(R.id.valueF1);
+        ValueF2 = findViewById(R.id.valueF2);
+        ValueF3 = findViewById(R.id.valueF3);
+        ValueF4 = findViewById(R.id.valueF4);
+        ValueT1 = findViewById(R.id.valueT1);
+        ValueT2 = findViewById(R.id.valueT2);
+        ValueT3 = findViewById(R.id.valueT3);
+        ValueT4 = findViewById(R.id.valueT4);
+
+        logSwitch = findViewById(R.id.logSwitch);
+
+        logContents = findViewById(R.id.logContents);
+        logContents.setMovementMethod(new ScrollingMovementMethod());
+        logContents.setVisibility(View.INVISIBLE);
+
+        // Before scanning all should be deactive; after each step they will be enabled
+        scanButton.setEnabled(false);
+        syncButton.setEnabled(false);
+        measureButton.setEnabled(false);
+        stopButton.setEnabled(false);
+        disconnectButton.setEnabled(false);
+        uploadButton.setEnabled(false);
+        dataLogButton.setEnabled(false);
+
+
+
+        //Xsens Dot On Create Stuff
+        DotSdk.setDebugEnabled(true);
+        DotSdk.setReconnectEnabled(true);
+        mXsScanner = new DotScanner(this.getApplicationContext(), this);
+        mXsScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
+        mDeviceLst = new ArrayList<>();
+
+        //Log Show UI
+        logSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    logContents.setVisibility(View.VISIBLE);
+                }
+                else{
+                    logContents.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+
+        enterSubjectNumber.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable string) {
+                if(!string.toString().isEmpty()){
+                    try {
+                        subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
+                        subjectTitle = "Subject " + subjectNumber;
+                        subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+                        logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
+                        logFile = new File(logFilePath,logFileName);
+                        writeToLogs("Subject number set: " + subjectNumber);
+                        writeToLogs("Log File Created");
+                        scanButton.setEnabled(true);
+                        //enterSubjectNumber.setEnabled(false);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        writeToLogs("Subject Number is invalid");
+                    }
+                }
+            }
+        });
+
+        dataLogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dataLogButtonIndex++;
+                if (dataLogButtonIndex%2 == 1){
+                    isLoggingData = true;
+                    dataLogButton.setBackgroundColor(Color.parseColor("#05edbb"));
+                    dataLogButton.setText("Data Logging ...");
+                    writeToLogs(" ---- Data is Logging -----");
+                }
+                else if (dataLogButtonIndex%2 == 0 && dataLogButtonIndex > 1) {
+                    isLoggingData = false;
+                    dataLogButton.setBackgroundColor(Color.parseColor("#4DBDDF"));
+                    dataLogButton.setText("Data Logging Stopped");
+                    writeToLogs("---- Data Logging Stopped -----");
+                }
+            }
+        });
+        activity1Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 1000000;
+                        activity1Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity1Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+
+        homeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setContentView(R.layout.first_page);
+            }
+        });
+    }
+//*//*////*//*////*//*////*//*////*//*//    //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
 
 
     @Override
@@ -352,12 +495,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
 
     }
-
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public void onDotDataChanged(String address, DotData dotData) {
 
         double[] eulerAngles = dotData.getEuler();
-        double[] eulerAngles_Q = DotParser.quaternion2Euler(dotData.getQuat());
+        //double[] eulerAngles_Q = DotParser.quaternion2Euler(dotData.getQuat());
         if (address.equals(leftThigh.MAC)) {
             leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0]);
             leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
@@ -370,8 +513,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT1.setText(leftThigh.dataOutput[0] + "   deg");
                     ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
                     ValueT3.setText(leftThigh.dataOutput[2] + "   deg");
+                    ValueT4.setText(String.valueOf(leftThigh.dataOutput[3]));
                     //ValueT4.setText(String.valueOf(leftThigh.xsDevice.getBatteryPercentage()) + "   %");
-                    ValueT4.setText(String.valueOf(leftThigh.sampleCounter));
                 }
             });
         }
@@ -391,19 +534,36 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             });
         }
         if (isLoggingData) {
-            dotData.setPacketCounter(packetCounterCofficient + leftThigh.sampleCounter);
-
-            int xxx = dotData.getPacketCounter();
-
+            //int xxx = dotData.getPacketCounter();
             if (address.equals(leftThigh.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + leftThigh.sampleCounter);
                 leftThigh.normalDataLogger.update(dotData);
                 leftThigh.sampleCounter++;
-                leftThigh.dataOutput[3] = threePlaces.format(xxx);
+                leftThigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             } else if (address.equals(leftFoot.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + leftFoot.sampleCounter);
                 leftFoot.normalDataLogger.update(dotData);
-                leftFoot.dataOutput[3] = threePlaces.format(xxx);
-
+                leftFoot.sampleCounter++;
+                leftFoot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             }
+        }
+        // Initialization the Data
+
+        if (address.equals(leftThigh.MAC))
+            calculateInitialValue(leftThigh, dotData, eulerAngles);
+        else if (address.equals(leftFoot.MAC))
+            calculateInitialValue(leftFoot, dotData, eulerAngles);
+
+
+    }
+    public void calculateInitialValue(Segment segment, DotData dotData, double[] eulerAngles){
+        if (dotData.getPacketCounter() > 1000000 ){
+
+            segment.sumOfInitialValue += eulerAngles[0]; // Corresponding to x axis
+            segment.initAngleValue = segment.sumOfInitialValue / segment.initializationCounter;
+            if (segment.initializationCounter % 60 == 59)
+                writeToLogs("Initial value of" + segment.Name + ":" + threePlaces.format(segment.initAngleValue));
+            segment.initializationCounter++;
         }
     }
 
@@ -616,6 +776,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if(mXsScanner.startScan()) { writeToLogs("Scan started!"); }
     }
 
+
     public void syncButton_onClick(View view){
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
@@ -631,8 +792,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
     public void measureButton_onClick(View view){
-        dataLogButton.setEnabled(true);
+
         stopButton.setEnabled(true); // After starting measuring the stop button will be activated
+        dataLogButton.setEnabled(true);
 
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")

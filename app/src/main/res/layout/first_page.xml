@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+
+        android:id="@+id/appTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="Activity Detection"
+        android:textSize="30dp" />
+
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:id="@+id/pg2"
+        android:text="Lebeling Data"
+        android:onClick="LabelingData"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/appTitle"
+        android:backgroundTint="#0A6814"
+        android:layout_marginTop="50dp"/>
+
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:id="@+id/pg3"
+        android:text="Activity Recognition"
+        android:layout_below="@+id/pg2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:backgroundTint="#0A6814"
+        android:onClick="activityRecognition"/>
+
+
+
+</RelativeLayout>
+

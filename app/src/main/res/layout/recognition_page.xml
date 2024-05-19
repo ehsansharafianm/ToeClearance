@@ -41,6 +41,7 @@
         android:textColorHint="#959595"
         android:textColor="@color/black"/>
 
+
     <Button
         android:layout_width="150dp"
         android:layout_height="wrap_content"
@@ -51,6 +52,19 @@
         android:text="Start Scan"
         android:onClick="scanButton_onClick"
         android:backgroundTint="#4CAF50"/>
+
+    <Button
+        android:id="@+id/homeButton"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="120dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:layout_below="@id/connectionStatusSpace"
+        android:backgroundTint="#977001"
+        android:onClick="homeButton_onClick"
+        android:textSize="10dp"
+        android:textStyle="bold"
+        android:text="Home" />
 
     <Button
         android:layout_width="150dp"
@@ -320,30 +334,6 @@
         android:backgroundTint="#008884"
         android:text="Standing" />
 
-    <Button
-        android:id="@+id/activity2Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="80dp"
-        android:layout_marginTop="410dp"
-        android:backgroundTint="#008884"
-        android:text="Walking" />
-    <Button
-        android:id="@+id/activity3Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="160dp"
-        android:layout_marginTop="470dp"
-        android:backgroundTint="#008884"
-        android:text="Upstairs" />
-    <Button
-        android:id="@+id/activity4Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="210dp"
-        android:layout_marginTop="540dp"
-        android:backgroundTint="#008884"
-        android:text="Downstairs" />
 
 
 </RelativeLayout>
