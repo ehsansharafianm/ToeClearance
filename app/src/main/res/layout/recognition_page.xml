@@ -306,10 +306,20 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/valueF4"
         android:layout_marginLeft="240dp"
-        android:layout_marginTop="120dp"
+        android:layout_marginTop="320dp"
         android:backgroundTint="#BB3EFD"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
+    <Button
+        android:id="@+id/recognitionButton"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueF4"
+        android:layout_marginLeft="240dp"
+        android:layout_marginTop="110dp"
+        android:backgroundTint="#4CAE50"
+        android:onClick="recognitionButton_onClick"
+        android:text="Recognition" />
 
     <TextView
         android:id="@+id/logContents"
@@ -323,8 +333,6 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:visibility="invisible" />
-
-
     <Button
         android:id="@+id/activity1Button"
         android:layout_width="120dp"
@@ -334,6 +342,46 @@
         android:backgroundTint="#008884"
         android:text="Standing" />
 
+    <TextView
+        android:id="@+id/valueT5"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recognitionButton"
+        android:layout_marginTop="38dp"
+        android:layout_marginRight="71dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value5" />
+    <TextView
+        android:id="@+id/valueT6"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recognitionButton"
+        android:layout_marginTop="70dp"
+        android:layout_marginRight="71dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value6" />
 
+    <TextView
+        android:id="@+id/valueF5"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/activity1Button"
+        android:layout_marginTop="30dp"
+        android:layout_marginRight="-150dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value5" />
+    <TextView
+        android:id="@+id/valueF6"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/activity1Button"
+        android:layout_marginTop="60dp"
+        android:layout_marginRight="-150dp"
+        android:layout_toLeftOf="@+id/connectionStatusSpace"
+        android:background="@drawable/rectangle"
+        android:text="value6" />
 
 </RelativeLayout>

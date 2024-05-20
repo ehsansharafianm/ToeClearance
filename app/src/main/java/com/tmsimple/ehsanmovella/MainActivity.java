@@ -80,19 +80,21 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
-           activity1Button, activity2Button, activity3Button, activity4Button, homeButton, initializationButton;
+           activity1Button, activity2Button, activity3Button, activity4Button, homeButton, recognitionButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
-    TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
+    TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueF5, ValueF6, ValueT1, ValueT2, ValueT3, ValueT4, ValueT5, ValueT6;
     EditText enterSubjectNumber;
     DecimalFormat threePlaces = new DecimalFormat("##.#");
     public int packetCounterCofficient = 0;
+    public boolean startRecognition = false;
 
     public int MeasurementMode;
     StorageReference storageReference;
     //DatabaseReference databaseReference;
-
+    public int SAMPLE_RATE = 60;
+    public int windowSize = 3 * SAMPLE_RATE;
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -308,6 +310,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
         activity1Button = findViewById(R.id.activity1Button);
         homeButton = findViewById(R.id.homeButton);
+        recognitionButton = findViewById(R.id.recognitionButton);
 
         leftThighScanStatus = findViewById(R.id.leftThighStatusView);
         leftFootScanStatus = findViewById(R.id.leftFootStatusView);
@@ -318,10 +321,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         ValueF2 = findViewById(R.id.valueF2);
         ValueF3 = findViewById(R.id.valueF3);
         ValueF4 = findViewById(R.id.valueF4);
+        ValueF5 = findViewById(R.id.valueF5);
+        ValueF6 = findViewById(R.id.valueF6);
         ValueT1 = findViewById(R.id.valueT1);
         ValueT2 = findViewById(R.id.valueT2);
         ValueT3 = findViewById(R.id.valueT3);
         ValueT4 = findViewById(R.id.valueT4);
+        ValueT5 = findViewById(R.id.valueT5);
+        ValueT6 = findViewById(R.id.valueT6);
 
         logSwitch = findViewById(R.id.logSwitch);
 
@@ -329,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
 
-        // Before scanning all should be deactive; after each step they will be enabled
+        // Before scanning all should be deactivate; after each step they will be enabled
         scanButton.setEnabled(false);
         syncButton.setEnabled(false);
         measureButton.setEnabled(false);
@@ -337,8 +344,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         disconnectButton.setEnabled(false);
         uploadButton.setEnabled(false);
         dataLogButton.setEnabled(false);
-
-
 
         //Xsens Dot On Create Stuff
         DotSdk.setDebugEnabled(true);
@@ -429,6 +434,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 setContentView(R.layout.first_page);
             }
         });
+        recognitionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startRecognition = true;
+                recognitionButton.setText("Recogniton...");
+                recognitionButton.setBackgroundColor(Color.parseColor("#4DDFB8"));
+            }
+        });
     }
 //*//*////*//*////*//*////*//*////*//*//    //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
 
@@ -502,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         double[] eulerAngles = dotData.getEuler();
         //double[] eulerAngles_Q = DotParser.quaternion2Euler(dotData.getQuat());
         if (address.equals(leftThigh.MAC)) {
-            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0]);
+            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - leftThigh.initAngleValue);
             leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
             runOnUiThread(new Runnable() {
@@ -514,12 +527,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
                     ValueT3.setText(leftThigh.dataOutput[2] + "   deg");
                     ValueT4.setText(String.valueOf(leftThigh.dataOutput[3]));
-                    //ValueT4.setText(String.valueOf(leftThigh.xsDevice.getBatteryPercentage()) + "   %");
                 }
             });
-        }
-        else if (address.equals(leftFoot.MAC)) {
-            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]);
+        } else if (address.equals(leftFoot.MAC)) {
+            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]- leftFoot.initAngleValue);
             leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
             runOnUiThread(new Runnable() {
@@ -530,6 +541,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueF2.setText(leftFoot.dataOutput[1] + "   deg");
                     ValueF3.setText(leftFoot.dataOutput[2] + "   deg");
                     ValueF4.setText(String.valueOf(leftFoot.dataOutput[3]));
+                    //ValueF5.setText(threePlaces.format(leftFoot.minEulerAngle));
+                    //ValueF6.setText(threePlaces.format(leftFoot.maxEulerAngle));
                 }
             });
         }
@@ -547,21 +560,61 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 leftFoot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             }
         }
-        // Initialization the Data
-
-        if (address.equals(leftThigh.MAC))
+        // Initialization process
+        if (address.equals(leftThigh.MAC)) {
+            // Initialization process
             calculateInitialValue(leftThigh, dotData, eulerAngles);
-        else if (address.equals(leftFoot.MAC))
+            // Calculation Max and Min values
+            if (startRecognition)
+                determineMaxMinValues(leftThigh, dotData, eulerAngles);
+        } else if (address.equals(leftFoot.MAC))
+        {
+            // Initialization process
             calculateInitialValue(leftFoot, dotData, eulerAngles);
+            // Calculation Max and Min values
+            if (startRecognition)
+                determineMaxMinValues(leftFoot, dotData, eulerAngles);
+        }
+    }
+    public void determineMaxMinValues(Segment segment, DotData dotData, double[] eulerAngles){
 
+        if (segment.windowCounter <= windowSize)
+        {
+            segment.windowCounter++;
+        }else{
+            segment.windowCounter = 1;
+            segment.angleHistory.clear();
+            segment.minEulerAngle = segment.minEulerAngle_temp;
+            segment.maxEulerAngle = segment.maxEulerAngle_temp;
+            segment.maxEulerAngle_temp = -9999;
+            segment.minEulerAngle_temp =  9999;
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+                    ValueF5.setText(threePlaces.format(leftFoot.minEulerAngle));
+                    ValueF6.setText(threePlaces.format(leftFoot.maxEulerAngle));
+                    ValueT5.setText(threePlaces.format(leftThigh.minEulerAngle));
+                    ValueT6.setText(threePlaces.format(leftThigh.maxEulerAngle));
+                }
+            });
 
+        }
+        segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
+
+        for (Double angle : segment.angleHistory){
+            if (angle > segment.maxEulerAngle_temp)
+                segment.maxEulerAngle_temp = angle;
+            if (angle < segment.minEulerAngle_temp)
+                segment.minEulerAngle_temp = angle;
+        }
     }
     public void calculateInitialValue(Segment segment, DotData dotData, double[] eulerAngles){
-        if (dotData.getPacketCounter() > 1000000 ){
+        if (dotData.getPacketCounter() > 1000000 && dotData.getPacketCounter() < 2000000){ // If it is just in Standing mode
 
             segment.sumOfInitialValue += eulerAngles[0]; // Corresponding to x axis
             segment.initAngleValue = segment.sumOfInitialValue / segment.initializationCounter;
-            if (segment.initializationCounter % 60 == 59)
+            if (segment.initializationCounter % 120 == 119)
                 writeToLogs("Initial value of" + segment.Name + ":" + threePlaces.format(segment.initAngleValue));
             segment.initializationCounter++;
         }
