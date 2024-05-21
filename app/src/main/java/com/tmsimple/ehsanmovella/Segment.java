@@ -1,5 +1,7 @@
 package com.tmsimple.ehsanmovella;
 
+import static com.tmsimple.ehsanmovella.MainActivity.UNRECHABLE_VALUE;
+
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.utils.DotLogger;
 
@@ -21,10 +23,10 @@ public class Segment {
     public boolean isReady = false;
 
     public DotLogger normalDataLogger;
-    public double maxEulerAngle = -9999;
-    public double maxEulerAngle_temp = -9999;
-    public double minEulerAngle = 9999;
-    public double minEulerAngle_temp = 9999;
+    public double maxEulerAngle = -UNRECHABLE_VALUE;
+    public double maxEulerAngle_temp = -UNRECHABLE_VALUE;
+    public double minEulerAngle = UNRECHABLE_VALUE;
+    public double minEulerAngle_temp = UNRECHABLE_VALUE;
     public LinkedList<Double> angleHistory = new LinkedList<>();
 
 

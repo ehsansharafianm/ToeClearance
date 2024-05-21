@@ -10,6 +10,7 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanSettings;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -49,18 +50,24 @@ import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.text.method.ScrollingMovementMethod;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import android.widget.Switch;
 
+import org.tensorflow.lite.Interpreter;
+
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
     public String Version = "v1.2";
+    public static int UNRECHABLE_VALUE = 9999;
     private Segment leftThigh, leftFoot;
     private DotScanner mXsScanner;
     public  String leftThighMAC = "D4:22:CD:00:63:8B";
@@ -84,11 +91,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
-    TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueF5, ValueF6, ValueT1, ValueT2, ValueT3, ValueT4, ValueT5, ValueT6;
+    TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueF5, ValueF6, ValueT1, ValueT2, ValueT3, ValueT4, ValueT5, ValueT6, valueResult;
     EditText enterSubjectNumber;
     DecimalFormat threePlaces = new DecimalFormat("##.#");
     public int packetCounterCofficient = 0;
     public boolean startRecognition = false;
+    private Interpreter tflite;
 
     public int MeasurementMode;
     StorageReference storageReference;
@@ -110,6 +118,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         leftThigh = new Segment("Left Thigh IMU", leftThighMAC);
         leftFoot = new Segment("Left Foot IMU", leftFootMAC);
+
+        // Initialize TensorFlow Lite interpreter
+        try {
+            tflite = new Interpreter(loadModelFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
     public void LabelingData(View view){
@@ -142,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         ValueT2 = findViewById(R.id.valueT2);
         ValueT3 = findViewById(R.id.valueT3);
         ValueT4 = findViewById(R.id.valueT4);
+
 
         logSwitch = findViewById(R.id.logSwitch);
 
@@ -329,6 +345,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         ValueT4 = findViewById(R.id.valueT4);
         ValueT5 = findViewById(R.id.valueT5);
         ValueT6 = findViewById(R.id.valueT6);
+        valueResult = findViewById(R.id.valueResult);
 
         logSwitch = findViewById(R.id.logSwitch);
 
@@ -576,29 +593,61 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 determineMaxMinValues(leftFoot, dotData, eulerAngles);
         }
     }
+
+    public void classifierModel_CNN(){
+        // Prepare input data for the model
+        float[][] input = new float[1][4];
+
+        input[0][0] = (float)  leftThigh.maxEulerAngle;
+        input[0][1] = (float)  leftThigh.minEulerAngle;
+        input[0][2] = (float)  leftFoot.maxEulerAngle;
+        input[0][3] = (float)  leftFoot.minEulerAngle;
+
+        // Array to hold model output
+        float[][] outputVal = new float[1][3];
+
+        // Run inference
+        if (tflite != null) {
+            tflite.run(input, outputVal);
+        }
+        // Interpret the output
+        String[] classLabels = {"Downstairs", "Upstairs", "Walking"};
+        int maxIndex = 0;
+        for (int i = 1; i < outputVal[0].length; i++) {
+            if (outputVal[0][i] > outputVal[0][maxIndex]) {
+                maxIndex = i;
+            }
+        }
+        String result = "Predicted Activity: " + classLabels[maxIndex];
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                valueResult.setText(result);
+            }
+        });
+    }
     public void determineMaxMinValues(Segment segment, DotData dotData, double[] eulerAngles){
 
-        if (segment.windowCounter <= windowSize)
-        {
+        if (segment.windowCounter <= windowSize) {
             segment.windowCounter++;
-        }else{
+        }else {
             segment.windowCounter = 1;
             segment.angleHistory.clear();
             segment.minEulerAngle = segment.minEulerAngle_temp;
             segment.maxEulerAngle = segment.maxEulerAngle_temp;
-            segment.maxEulerAngle_temp = -9999;
-            segment.minEulerAngle_temp =  9999;
+            segment.maxEulerAngle_temp = -UNRECHABLE_VALUE;
+            segment.minEulerAngle_temp =  UNRECHABLE_VALUE;
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
-                    ValueF5.setText(threePlaces.format(leftFoot.minEulerAngle));
-                    ValueF6.setText(threePlaces.format(leftFoot.maxEulerAngle));
-                    ValueT5.setText(threePlaces.format(leftThigh.minEulerAngle));
-                    ValueT6.setText(threePlaces.format(leftThigh.maxEulerAngle));
+                    ValueF5.setText(threePlaces.format(leftFoot.maxEulerAngle));
+                    ValueF6.setText(threePlaces.format(leftFoot.minEulerAngle));
+                    ValueT5.setText(threePlaces.format(leftThigh.maxEulerAngle));
+                    ValueT6.setText(threePlaces.format(leftThigh.minEulerAngle));
                 }
             });
-
+            classifierModel_CNN();
         }
         segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
 
@@ -624,7 +673,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void onDotInitDone(String address) { //onDotInitDone is the callback after the initialization is successful
         if (address.equals(leftThigh.MAC)) {
             leftThigh.isReady = true;
-            leftThigh.xsDevice.setOutputRate(60);
+            leftThigh.xsDevice.setOutputRate(SAMPLE_RATE);
             writeToLogs("Left Thigh IMU sample rate is : " + String.valueOf(leftThigh.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
@@ -635,7 +684,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
         else if (address.equals(leftFoot.MAC)) {
             leftFoot.isReady = true;
-            leftFoot.xsDevice.setOutputRate(60);
+            leftFoot.xsDevice.setOutputRate(SAMPLE_RATE);
             writeToLogs("Left Foot IMU sample rate is : " + String.valueOf(leftFoot.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
@@ -798,14 +847,14 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             writeToLogs(loggerFileName + " created");
 
             DotLogger logger = new DotLogger(getApplicationContext(), 1,MeasurementMode,path,device.getTag(),
-                    device.getFirmwareVersion(),true,60,null, Version,0);
+                    device.getFirmwareVersion(),true,SAMPLE_RATE,null, Version,0);
             return logger;
 
 
         } catch (NullPointerException e) {
             writeToLogs("Error with creation of logger with" + device.getName());
             DotLogger logger = new DotLogger(getApplicationContext(), 1, MeasurementMode, "", device.getTag(),
-                    device.getFirmwareVersion(), true, 60, null,
+                    device.getFirmwareVersion(), true, SAMPLE_RATE, null,
                     Version, 0);
             return logger;
         }
@@ -960,6 +1009,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
             });
 
+    }
+
+    private MappedByteBuffer loadModelFile() throws IOException {
+        AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model.tflite");
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
     /*
