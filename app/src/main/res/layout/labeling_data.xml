@@ -259,18 +259,17 @@
         android:text="Measure" />
 
 
-
-
     <Button
         android:id="@+id/disconnectButton"
         android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueT4"
         android:layout_marginLeft="210dp"
-        android:layout_marginTop="414dp"
+        android:layout_marginTop="410dp"
         android:backgroundTint="#FA5C5C"
         android:onClick="disconnectButton_onClick"
         android:text="Disconnect" />
+
     <Button
         android:id="@+id/uploadButton"
         android:layout_width="160dp"
@@ -339,15 +338,16 @@
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="80dp"
-        android:layout_marginTop="410dp"
+        android:layout_marginTop="400dp"
         android:backgroundTint="#008884"
         android:text="Walking" />
+
     <Button
         android:id="@+id/activity3Button"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="160dp"
-        android:layout_marginTop="470dp"
+        android:layout_marginTop="450dp"
         android:backgroundTint="#008884"
         android:text="Upstairs" />
     <Button
@@ -355,9 +355,18 @@
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginLeft="210dp"
-        android:layout_marginTop="540dp"
+        android:layout_marginTop="510dp"
         android:backgroundTint="#008884"
         android:text="Downstairs" />
+
+    <Button
+        android:id="@+id/activity5Button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="270dp"
+        android:layout_marginTop="570dp"
+        android:backgroundTint="#008884"
+        android:text="sitting" />
 
 
 </RelativeLayout>

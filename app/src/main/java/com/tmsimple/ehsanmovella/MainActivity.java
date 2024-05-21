@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
-           activity1Button, activity2Button, activity3Button, activity4Button, homeButton, recognitionButton;
+           activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton, recognitionButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView leftThighScanStatus, leftFootScanStatus, logContents;
@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         activity2Button = findViewById(R.id.activity2Button);
         activity3Button = findViewById(R.id.activity3Button);
         activity4Button = findViewById(R.id.activity4Button);
+        activity5Button = findViewById(R.id.activity5Button);
         homeButton = findViewById(R.id.homeButton);
 
         leftThighScanStatus = findViewById(R.id.leftThighStatusView);
@@ -301,6 +302,22 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     case MotionEvent.ACTION_UP:
                         packetCounterCofficient = 0;
                         activity4Button.setBackgroundColor(Color.parseColor("#008884"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity5Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 5000000;
+                        activity5Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity5Button.setBackgroundColor(Color.parseColor("#008884"));
                         break;
                 }
                 return true;
