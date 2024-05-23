@@ -67,14 +67,13 @@ import org.tensorflow.lite.Interpreter;
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
     public String Version = "v1.2";
-    public static int UNRECHABLE_VALUE = 9999;
+    public static int UNREACHABLE_VALUE = 9999;
     private Segment leftThigh, leftFoot;
     private DotScanner mXsScanner;
     public  String leftThighMAC = "D4:22:CD:00:63:8B";
     //RT: "D4:22:CD:00:63:71"
     //LT: "D4:22:CD:00:63:8B"
     public String leftFootMAC = "D4:22:CD:00:63:A4";
-
     public File logFile;
     public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
@@ -127,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
 
     }
+    @SuppressLint("ClickableViewAccessibility")
     public void LabelingData(View view){
         setContentView((R.layout.labeling_data));
 
@@ -330,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         });
     }
+    @SuppressLint("ClickableViewAccessibility")
     public void activityRecognition(View view){
         setContentView(R.layout.recognition_page);
 
@@ -472,12 +473,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             @Override
             public void onClick(View v) {
                 startRecognition = true;
-                recognitionButton.setText("Recogniton...");
+                recognitionButton.setText("Recognition...");
                 recognitionButton.setBackgroundColor(Color.parseColor("#4DDFB8"));
             }
         });
     }
-//*//*////*//*////*//*////*//*////*//*//    //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
+//*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
 
 
     @Override
@@ -547,39 +548,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void onDotDataChanged(String address, DotData dotData) {
 
         double[] eulerAngles = dotData.getEuler();
-        //double[] eulerAngles_Q = DotParser.quaternion2Euler(dotData.getQuat());
-        if (address.equals(leftThigh.MAC)) {
-            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - leftThigh.initAngleValue);
-            leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-            runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void run() {
 
-                    ValueT1.setText(leftThigh.dataOutput[0] + "   deg");
-                    ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
-                    ValueT3.setText(leftThigh.dataOutput[2] + "   deg");
-                    ValueT4.setText(String.valueOf(leftThigh.dataOutput[3]));
-                }
-            });
-        } else if (address.equals(leftFoot.MAC)) {
-            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]- leftFoot.initAngleValue);
-            leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-            runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void run() {
-                    ValueF1.setText(leftFoot.dataOutput[0] + "   deg");
-                    ValueF2.setText(leftFoot.dataOutput[1] + "   deg");
-                    ValueF3.setText(leftFoot.dataOutput[2] + "   deg");
-                    ValueF4.setText(String.valueOf(leftFoot.dataOutput[3]));
-                    //ValueF5.setText(threePlaces.format(leftFoot.minEulerAngle));
-                    //ValueF6.setText(threePlaces.format(leftFoot.maxEulerAngle));
-                }
-            });
-        }
+        /* Fill the fields with appropriate values */
+        fillFields(address, dotData, eulerAngles);
+
         if (isLoggingData) {
             //int xxx = dotData.getPacketCounter();
             if (address.equals(leftThigh.MAC)) {
@@ -594,7 +566,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 leftFoot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             }
         }
-        // Initialization process
         if (address.equals(leftThigh.MAC)) {
             // Initialization process
             calculateInitialValue(leftThigh, dotData, eulerAngles);
@@ -610,7 +581,40 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 determineMaxMinValues(leftFoot, dotData, eulerAngles);
         }
     }
+    public void fillFields(String address, DotData dotData, double[] eulerAngles){
 
+        if (address.equals(leftThigh.MAC)) {
+            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - leftThigh.initAngleValue);
+            leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+
+                    ValueT1.setText(leftThigh.dataOutput[0] + "   deg");
+                    ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
+                    ValueT3.setText(String.valueOf(leftThigh.dataOutput[3]));
+                    ValueT4.setText(leftThigh.xsDevice.getBatteryPercentage() + "   %");
+
+                }
+            });
+        } else if (address.equals(leftFoot.MAC)) {
+            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]- leftFoot.initAngleValue);
+            leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+                    ValueF1.setText(leftFoot.dataOutput[0] + "   deg");
+                    ValueF2.setText(leftFoot.dataOutput[1] + "   deg");
+                    ValueF3.setText(String.valueOf(leftFoot.dataOutput[3]));
+                    ValueF4.setText(leftFoot.xsDevice.getBatteryPercentage() + "   %");
+                }
+            });
+        }
+    }
     public void classifierModel_CNN(){
         // Prepare input data for the model
         float[][] input = new float[1][4];
@@ -652,8 +656,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             segment.angleHistory.clear();
             segment.minEulerAngle = segment.minEulerAngle_temp;
             segment.maxEulerAngle = segment.maxEulerAngle_temp;
-            segment.maxEulerAngle_temp = -UNRECHABLE_VALUE;
-            segment.minEulerAngle_temp =  UNRECHABLE_VALUE;
+            segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
+            segment.minEulerAngle_temp =  UNREACHABLE_VALUE;
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -664,7 +668,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT6.setText(threePlaces.format(leftThigh.minEulerAngle));
                 }
             });
-            classifierModel_CNN();
+
+            classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
         }
         segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
 
@@ -930,9 +935,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if (leftThigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
         if (leftFoot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
 
-        //if (leftThigh.xsDevice.resetHeading()) {writeToLogs("Left Thigh IMU heading reset");}
-        //if (leftFoot.xsDevice.resetHeading()) {writeToLogs("Left Foot IMU heading reset");}
-
     }
 
     public void disconnectButton_onClick(View view){
@@ -1000,6 +1002,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         reference.putFile(file).
                 addOnFailureListener(new OnFailureListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onFailure(@NonNull Exception exception) {
                 uploadButton.setText("Uploading Failed");
@@ -1028,6 +1031,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     }
 
+    /* For interpretation of the Model from Tensorflow light to Java code */
     private MappedByteBuffer loadModelFile() throws IOException {
         AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model.tflite");
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());

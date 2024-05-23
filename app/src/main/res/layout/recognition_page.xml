@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5FFDA">
 
     <TextView
         android:id="@+id/topLine"
@@ -97,7 +98,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/leftThighStatusTitle"
         android:layout_toLeftOf="@+id/valueT1"
-        android:text="Value1:"/>
+        android:text="X Angle:"/>
 
     <TextView
         android:id="@+id/valueT1"
@@ -130,7 +131,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/ValueT2Title"
         android:layout_toLeftOf="@+id/valueT3"
-        android:text="Value3:"/>
+        android:text="Index:"/>
 
     <TextView
         android:id="@+id/valueT3"
@@ -194,7 +195,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/leftFootStatusTitle"
         android:layout_toLeftOf="@+id/valueF1"
-        android:text="Value1:"/>
+        android:text="X Angle:"/>
 
     <TextView
         android:id="@+id/valueF2"
@@ -229,7 +230,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/ValueF2Title"
         android:layout_toLeftOf="@+id/valueF3"
-        android:text="Value3:" />
+        android:text="Index:" />
     <TextView
         android:id="@+id/valueF4"
         android:layout_width="100dp"
@@ -310,6 +311,20 @@
         android:backgroundTint="#BB3EFD"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
+
+
+    <TextView
+        android:id="@+id/logContents"
+        android:layout_width="2000dp"
+        android:layout_height="300dp"
+        android:layout_below="@id/connectionStatusSpace"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="280dp"
+        android:background="@drawable/rectangle"
+        android:backgroundTint="#045391"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:visibility="invisible" />
     <Button
         android:id="@+id/recognitionButton"
         android:layout_width="150dp"
@@ -320,19 +335,6 @@
         android:backgroundTint="#4CAE50"
         android:onClick="recognitionButton_onClick"
         android:text="Recognition" />
-
-    <TextView
-        android:id="@+id/logContents"
-        android:layout_width="2000dp"
-        android:layout_height="300dp"
-        android:layout_below="@id/connectionStatusSpace"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="280dp"
-        android:background="@drawable/rectangle"
-        android:backgroundTint="#000000"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        android:visibility="invisible" />
     <Button
         android:id="@+id/activity1Button"
         android:layout_width="120dp"
