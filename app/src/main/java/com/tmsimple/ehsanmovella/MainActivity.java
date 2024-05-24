@@ -65,6 +65,7 @@ import android.widget.Switch;
 import org.tensorflow.lite.Interpreter;
 
 // This version is edited by Crosby computer
+// Second Change from Crosby
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
     public String Version = "v1.2";
