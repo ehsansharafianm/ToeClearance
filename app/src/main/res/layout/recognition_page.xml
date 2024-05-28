@@ -307,7 +307,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/valueF4"
         android:layout_marginLeft="240dp"
-        android:layout_marginTop="320dp"
+        android:layout_marginTop="330dp"
         android:backgroundTint="#BB3EFD"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
@@ -390,10 +390,11 @@
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/activity1Button"
-        android:layout_marginTop="110dp"
+        android:layout_marginTop="100dp"
         android:layout_marginRight="-50dp"
         android:layout_toLeftOf="@+id/connectionStatusSpace"
         android:background="@drawable/rectangle"
+        android:textSize="40dp"
         android:text="Results" />
 
 </RelativeLayout>
