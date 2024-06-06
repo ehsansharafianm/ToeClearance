@@ -79,15 +79,15 @@
         android:onClick="syncButton_onClick"
         android:backgroundTint="#4CAF50"/>
     <TextView
-        android:id="@+id/leftThighStatusTitle"
+        android:id="@+id/thighStatusTitle"
         android:layout_width="90dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/scanButton"
-        android:layout_toLeftOf="@+id/leftThighStatusView"
-        android:text="Left Thigh:"/>
+        android:layout_toLeftOf="@+id/thighStatusView"
+        android:text="Thigh:"/>
 
     <TextView
-        android:id="@+id/leftThighStatusView"
+        android:id="@+id/thighStatusView"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/scanButton"
@@ -97,7 +97,7 @@
         android:id="@+id/ValueT1Title"
         android:layout_width="90dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/leftThighStatusTitle"
+        android:layout_below="@+id/thighStatusTitle"
         android:layout_toLeftOf="@+id/valueT1"
         android:text="X Angle:"/>
 
@@ -106,7 +106,7 @@
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:background="@drawable/rectangle"
-        android:layout_below="@+id/leftThighStatusView"
+        android:layout_below="@+id/thighStatusView"
         android:layout_toLeftOf="@+id/connectionStatusSpace"
         android:text="Value1"/>
 
@@ -162,15 +162,15 @@
 
 
     <TextView
-        android:id="@+id/leftFootStatusTitle"
+        android:id="@+id/footStatusTitle"
         android:layout_width="90dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/syncButton"
-        android:layout_toLeftOf="@+id/leftFootStatusView"
-        android:text="Left Foot:"/>
+        android:layout_toLeftOf="@+id/footStatusView"
+        android:text="Foot:"/>
 
     <TextView
-        android:id="@+id/leftFootStatusView"
+        android:id="@+id/footStatusView"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/syncButton"
@@ -183,7 +183,7 @@
         android:id="@+id/valueF1"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/leftFootStatusView"
+        android:layout_below="@+id/footStatusView"
         android:layout_marginTop="3dp"
         android:layout_marginRight="-200dp"
         android:layout_toLeftOf="@+id/connectionStatusSpace"
@@ -194,7 +194,7 @@
         android:id="@+id/ValueF1Title"
         android:layout_width="90dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/leftFootStatusTitle"
+        android:layout_below="@+id/footStatusTitle"
         android:layout_toLeftOf="@+id/valueF1"
         android:text="X Angle:"/>
 

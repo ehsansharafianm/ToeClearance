@@ -64,18 +64,17 @@ import android.widget.Switch;
 
 import org.tensorflow.lite.Interpreter;
 
-// This version is edited by Crosby computer
-// Second Change from Crosby
+
 public class MainActivity extends AppCompatActivity implements DotDeviceCallback, DotScannerCallback, DotRecordingCallback, DotSyncCallback, DotMeasurementCallback {
 
     public String Version = "v1.2";
     public static int UNREACHABLE_VALUE = 9999;
-    private Segment leftThigh, leftFoot;
+    private Segment thigh, foot;
     private DotScanner mXsScanner;
-    public  String leftThighMAC = "D4:22:CD:00:63:8B";
+    public  String thighMAC = "D4:22:CD:00:63:8B";
     //RT: "D4:22:CD:00:63:71"
     //LT: "D4:22:CD:00:63:8B"
-    public String leftFootMAC = "D4:22:CD:00:63:A4";
+    public String footMAC = "D4:22:CD:00:63:A4";
     public File logFile;
     public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
@@ -91,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
            activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton, recognitionButton;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
-    TextView leftThighScanStatus, leftFootScanStatus, logContents;
+    TextView thighScanStatus, footScanStatus, logContents;
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueF5, ValueF6, ValueT1, ValueT2, ValueT3, ValueT4, ValueT5, ValueT6, valueResult;
     EditText enterSubjectNumber;
     DecimalFormat threePlaces = new DecimalFormat("##.#");
@@ -103,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     StorageReference storageReference;
     //DatabaseReference databaseReference;
     public int SAMPLE_RATE = 60;
-    public int windowSize = 3 * SAMPLE_RATE;
+    public int windowSize = 60; // It shows that window size is 1.5 s
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -114,11 +113,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_page);
 
-
         storageReference = FirebaseStorage.getInstance().getReference();
-
-        leftThigh = new Segment("Left Thigh IMU", leftThighMAC);
-        leftFoot = new Segment("Left Foot IMU", leftFootMAC);
+        thigh = new Segment("Thigh IMU", thighMAC);
+        foot = new Segment("Foot IMU", footMAC);
 
         // Initialize TensorFlow Lite interpreter
         try {
@@ -126,7 +123,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
     @SuppressLint("ClickableViewAccessibility")
     public void LabelingData(View view){
@@ -147,8 +143,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         activity5Button = findViewById(R.id.activity5Button);
         homeButton = findViewById(R.id.homeButton);
 
-        leftThighScanStatus = findViewById(R.id.leftThighStatusView);
-        leftFootScanStatus = findViewById(R.id.leftFootStatusView);
+        thighScanStatus = findViewById(R.id.thighStatusView);
+        footScanStatus = findViewById(R.id.footStatusView);
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
@@ -161,9 +157,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         ValueT3 = findViewById(R.id.valueT3);
         ValueT4 = findViewById(R.id.valueT4);
 
-
         logSwitch = findViewById(R.id.logSwitch);
-
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
@@ -176,8 +170,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         disconnectButton.setEnabled(false);
         uploadButton.setEnabled(false);
         dataLogButton.setEnabled(false);
-
-
 
         //Xsens Dot On Create Stuff
         DotSdk.setDebugEnabled(true);
@@ -348,8 +340,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         homeButton = findViewById(R.id.homeButton);
         recognitionButton = findViewById(R.id.recognitionButton);
 
-        leftThighScanStatus = findViewById(R.id.leftThighStatusView);
-        leftFootScanStatus = findViewById(R.id.leftFootStatusView);
+        thighScanStatus = findViewById(R.id.thighStatusView);
+        footScanStatus = findViewById(R.id.footStatusView);
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
@@ -471,14 +463,25 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 setContentView(R.layout.first_page);
             }
         });
-        recognitionButton.setOnClickListener(new View.OnClickListener() {
+
+        recognitionButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                startRecognition = true;
-                recognitionButton.setText("Recognition...");
-                recognitionButton.setBackgroundColor(Color.parseColor("#4DDFB8"));
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startRecognition = true;
+                        recognitionButton.setBackgroundColor(Color.parseColor("#4DDFB8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        startRecognition = false;
+                        recognitionButton.setBackgroundColor(Color.parseColor("#4CAE50"));
+                        valueResult.setText("---");
+                        break;
+                }
+                return true;
             }
         });
+
     }
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
 
@@ -486,47 +489,47 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     @Override
     public void onDotConnectionChanged(String address, int state) {
         if (state == DotDevice.CONN_STATE_CONNECTED){
-            if(address.equals(leftThigh.MAC)){
-                if(address.equals(leftThigh.MAC)){
-                    leftThigh.isConnected = true;
+            if(address.equals(thigh.MAC)){
+                if(address.equals(thigh.MAC)){
+                    thigh.isConnected = true;
                     writeToLogs("Left Thigh IMU is connected!");
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {leftThighScanStatus.setText("Connected");}
+                        public void run() {thighScanStatus.setText("Connected");}
                     });
                 }
             }
-            else if(address.equals(leftFoot.MAC)){
-                if(address.equals(leftFoot.MAC)){
-                    leftFoot.isConnected = true;
+            else if(address.equals(foot.MAC)){
+                if(address.equals(foot.MAC)){
+                    foot.isConnected = true;
                     writeToLogs("Left Foot IMU is connected!");
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {leftFootScanStatus.setText("Connected");}
+                        public void run() {footScanStatus.setText("Connected");}
                     });
                 }
             }
-            writeToLogs(String.valueOf("Measurement Mode: " + leftThigh.xsDevice.getMeasurementMode())
-                                                                 + " / " + leftFoot.xsDevice.getMeasurementMode());
+            writeToLogs(String.valueOf("Measurement Mode: " + thigh.xsDevice.getMeasurementMode())
+                                                                 + " / " + foot.xsDevice.getMeasurementMode());
         }
         else if (state == DotDevice.CONN_STATE_DISCONNECTED){
-            if(address.equals(leftThigh.MAC)){
-                if(address.equals(leftThigh.MAC)){
-                    leftThigh.isConnected = false;
+            if(address.equals(thigh.MAC)){
+                if(address.equals(thigh.MAC)){
+                    thigh.isConnected = false;
                     writeToLogs("Left Thigh IMU is disconnected!");
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {leftThighScanStatus.setText("Disconnected");}
+                        public void run() {thighScanStatus.setText("Disconnected");}
                     });
                 }
             }
-            else if(address.equals(leftFoot.MAC)){
-                if(address.equals(leftFoot.MAC)){
-                    leftFoot.isConnected = false;
+            else if(address.equals(foot.MAC)){
+                if(address.equals(foot.MAC)){
+                    foot.isConnected = false;
                     writeToLogs("Left Foot IMU is disconnected!");
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() {leftFootScanStatus.setText("Disconnected");}
+                        public void run() {footScanStatus.setText("Disconnected");}
                     });
                 }
             }
@@ -556,63 +559,63 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         if (isLoggingData) {
             //int xxx = dotData.getPacketCounter();
-            if (address.equals(leftThigh.MAC)) {
-                dotData.setPacketCounter(packetCounterCofficient + leftThigh.sampleCounter);
-                leftThigh.normalDataLogger.update(dotData);
-                leftThigh.sampleCounter++;
-                leftThigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
-            } else if (address.equals(leftFoot.MAC)) {
-                dotData.setPacketCounter(packetCounterCofficient + leftFoot.sampleCounter);
-                leftFoot.normalDataLogger.update(dotData);
-                leftFoot.sampleCounter++;
-                leftFoot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+            if (address.equals(thigh.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + thigh.sampleCounter);
+                thigh.normalDataLogger.update(dotData);
+                thigh.sampleCounter++;
+                thigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+            } else if (address.equals(foot.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + foot.sampleCounter);
+                foot.normalDataLogger.update(dotData);
+                foot.sampleCounter++;
+                foot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             }
         }
-        if (address.equals(leftThigh.MAC)) {
+        if (address.equals(thigh.MAC)) {
             // Initialization process
-            calculateInitialValue(leftThigh, dotData, eulerAngles);
+            calculateInitialValue(thigh, dotData, eulerAngles);
             // Calculation Max and Min values
             if (startRecognition)
-                determineMaxMinValues(leftThigh, dotData, eulerAngles);
-        } else if (address.equals(leftFoot.MAC))
+                determineMaxMinValues(thigh, dotData, eulerAngles);
+        } else if (address.equals(foot.MAC))
         {
             // Initialization process
-            calculateInitialValue(leftFoot, dotData, eulerAngles);
+            calculateInitialValue(foot, dotData, eulerAngles);
             // Calculation Max and Min values
             if (startRecognition)
-                determineMaxMinValues(leftFoot, dotData, eulerAngles);
+                determineMaxMinValues(foot, dotData, eulerAngles);
         }
     }
     public void fillFields(String address, DotData dotData, double[] eulerAngles){
 
-        if (address.equals(leftThigh.MAC)) {
-            leftThigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - leftThigh.initAngleValue);
-            leftThigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            leftThigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+        if (address.equals(thigh.MAC)) {
+            thigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - thigh.initAngleValue);
+            thigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            thigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
 
-                    ValueT1.setText(leftThigh.dataOutput[0] + "   deg");
-                    ValueT2.setText(leftThigh.dataOutput[1] + "   deg");
-                    ValueT3.setText(String.valueOf(leftThigh.dataOutput[3]));
-                    ValueT4.setText(leftThigh.xsDevice.getBatteryPercentage() + "   %");
+                    ValueT1.setText(thigh.dataOutput[0] + "   deg");
+                    ValueT2.setText(thigh.dataOutput[1] + "   deg");
+                    ValueT3.setText(String.valueOf(thigh.dataOutput[3]));
+                    ValueT4.setText(thigh.xsDevice.getBatteryPercentage() + "   %");
 
                 }
             });
-        } else if (address.equals(leftFoot.MAC)) {
-            leftFoot.dataOutput[0] = threePlaces.format(eulerAngles[0]- leftFoot.initAngleValue);
-            leftFoot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            leftFoot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+        } else if (address.equals(foot.MAC)) {
+            foot.dataOutput[0] = threePlaces.format(eulerAngles[0]- foot.initAngleValue);
+            foot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            foot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
-                    ValueF1.setText(leftFoot.dataOutput[0] + "   deg");
-                    ValueF2.setText(leftFoot.dataOutput[1] + "   deg");
-                    ValueF3.setText(String.valueOf(leftFoot.dataOutput[3]));
-                    ValueF4.setText(leftFoot.xsDevice.getBatteryPercentage() + "   %");
+                    ValueF1.setText(foot.dataOutput[0] + "   deg");
+                    ValueF2.setText(foot.dataOutput[1] + "   deg");
+                    ValueF3.setText(String.valueOf(foot.dataOutput[3]));
+                    ValueF4.setText(foot.xsDevice.getBatteryPercentage() + "   %");
                 }
             });
         }
@@ -621,27 +624,27 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         // Prepare input data for the model
         float[][] input = new float[1][4];
 
-        input[0][0] = (float)  leftThigh.maxEulerAngle;
-        input[0][1] = (float)  leftThigh.minEulerAngle;
-        input[0][2] = (float)  leftFoot.maxEulerAngle;
-        input[0][3] = (float)  leftFoot.minEulerAngle;
+        input[0][0] = (float)  thigh.maxEulerAngle;
+        input[0][1] = (float)  thigh.minEulerAngle;
+        input[0][2] = (float)  foot.maxEulerAngle;
+        input[0][3] = (float)  foot.minEulerAngle;
 
         // Array to hold model output
-        float[][] outputVal = new float[1][3];
+        float[][] outputVal = new float[1][5];
 
         // Run inference
         if (tflite != null) {
             tflite.run(input, outputVal);
         }
         // Interpret the output
-        String[] classLabels = {"Downstairs", "Upstairs", "Walking"};
+        String[] classLabels = {"Downstairs", "Sitting", "Standing", "Upstairs", "Walking"};
         int maxIndex = 0;
         for (int i = 1; i < outputVal[0].length; i++) {
             if (outputVal[0][i] > outputVal[0][maxIndex]) {
                 maxIndex = i;
             }
         }
-        String result = "Predicted Activity: " + classLabels[maxIndex];
+        String result = classLabels[maxIndex];
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -664,10 +667,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 @SuppressLint("SetTextI18n")
                 @Override
                 public void run() {
-                    ValueF5.setText(threePlaces.format(leftFoot.maxEulerAngle));
-                    ValueF6.setText(threePlaces.format(leftFoot.minEulerAngle));
-                    ValueT5.setText(threePlaces.format(leftThigh.maxEulerAngle));
-                    ValueT6.setText(threePlaces.format(leftThigh.minEulerAngle));
+                    ValueF5.setText(threePlaces.format(foot.maxEulerAngle));
+                    ValueF6.setText(threePlaces.format(foot.minEulerAngle));
+                    ValueT5.setText(threePlaces.format(thigh.maxEulerAngle));
+                    ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
                 }
             });
 
@@ -695,29 +698,29 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     @Override
     public void onDotInitDone(String address) { //onDotInitDone is the callback after the initialization is successful
-        if (address.equals(leftThigh.MAC)) {
-            leftThigh.isReady = true;
-            leftThigh.xsDevice.setOutputRate(SAMPLE_RATE);
-            writeToLogs("Left Thigh IMU sample rate is : " + String.valueOf(leftThigh.xsDevice.getCurrentOutputRate()));
+        if (address.equals(thigh.MAC)) {
+            thigh.isReady = true;
+            thigh.xsDevice.setOutputRate(SAMPLE_RATE);
+            writeToLogs("Left Thigh IMU sample rate is : " + String.valueOf(thigh.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    leftThighScanStatus.setText("Ready");
+                    thighScanStatus.setText("Ready");
                 }
             });
         }
-        else if (address.equals(leftFoot.MAC)) {
-            leftFoot.isReady = true;
-            leftFoot.xsDevice.setOutputRate(SAMPLE_RATE);
-            writeToLogs("Left Foot IMU sample rate is : " + String.valueOf(leftFoot.xsDevice.getCurrentOutputRate()));
+        else if (address.equals(foot.MAC)) {
+            foot.isReady = true;
+            foot.xsDevice.setOutputRate(SAMPLE_RATE);
+            writeToLogs("Left Foot IMU sample rate is : " + String.valueOf(foot.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    leftFootScanStatus.setText("Ready");
+                    footScanStatus.setText("Ready");
                 }
             });
         }
-        if (leftThigh.isReady && leftFoot.isReady){
+        if (thigh.isReady && foot.isReady){
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -737,27 +740,27 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         MeasurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
 
-        if(address.equals(leftThigh.MAC) && !leftThigh.isScanned){
-            leftThigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
-            leftThigh.xsDevice.connect();
-            leftThigh.isConnected = true;
-            leftThigh.xsDevice.setMeasurementMode(MeasurementMode);
-            writeToLogs(leftThigh.Name + " is scanned and logger is created");
-            mDeviceLst.add(leftThigh.xsDevice);
+        if(address.equals(thigh.MAC) && !thigh.isScanned){
+            thigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
+            thigh.xsDevice.connect();
+            thigh.isConnected = true;
+            thigh.xsDevice.setMeasurementMode(MeasurementMode);
+            writeToLogs(thigh.Name + " is scanned and logger is created");
+            mDeviceLst.add(thigh.xsDevice);
         }
-        else if(address.equals(leftFoot.MAC) && !leftFoot.isScanned){
-            leftFoot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
-            leftFoot.xsDevice.connect();
-            leftFoot.isConnected = true;
-            leftFoot.xsDevice.setMeasurementMode(MeasurementMode);
-            mDeviceLst.add(leftFoot.xsDevice);
-            writeToLogs(leftFoot.Name + " is scanned and logger is created");
+        else if(address.equals(foot.MAC) && !foot.isScanned){
+            foot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
+            foot.xsDevice.connect();
+            foot.isConnected = true;
+            foot.xsDevice.setMeasurementMode(MeasurementMode);
+            mDeviceLst.add(foot.xsDevice);
+            writeToLogs(foot.Name + " is scanned and logger is created");
         }
-        if(leftThigh.isScanned && leftFoot.isScanned){
+        if(thigh.isScanned && foot.isScanned){
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
-                public void run(){leftFootScanStatus.setText("Scanned");}
+                public void run(){footScanStatus.setText("Scanned");}
             });
         }
     }
@@ -775,8 +778,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         });
         writeToLogs("\n ---------- Syncing is done! --------- \n");
     }
-
-
 
     /*
     /////////////////////////////////////////////////////////      Functions     //////////////////////////////
@@ -910,8 +911,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             public void run() {
                 syncButton.setText("Syncing...");
                 syncButton.setBackgroundColor(Color.parseColor("#FF9933"));
-                leftThighScanStatus.setText("Syncing");
-                leftFootScanStatus.setText("Syncing");
+                thighScanStatus.setText("Syncing");
+                footScanStatus.setText("Syncing");
             }
         });
         mDeviceLst.get(0).setRootDevice(true);
@@ -929,13 +930,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         });
 
 
-        if (leftThigh.xsDevice != null)
-            leftThigh.normalDataLogger = createDataLog(leftThigh.xsDevice);
-        if (leftFoot.xsDevice != null)
-            leftFoot.normalDataLogger = createDataLog(leftFoot.xsDevice);
+        if (thigh.xsDevice != null)
+            thigh.normalDataLogger = createDataLog(thigh.xsDevice);
+        if (foot.xsDevice != null)
+            foot.normalDataLogger = createDataLog(foot.xsDevice);
 
-        if (leftThigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
-        if (leftFoot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
+        if (thigh.xsDevice.startMeasuring()) {writeToLogs("Left Thigh IMU is measuring");}
+        if (foot.xsDevice.startMeasuring()) {writeToLogs("Left Foot IMU is measuring");}
 
     }
 
@@ -950,8 +951,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 disconnectButton.setBackgroundColor(Color.parseColor("#F60000"));
             }
         });
-        leftThigh.xsDevice.disconnect();
-        leftFoot.xsDevice.disconnect();
+        thigh.xsDevice.disconnect();
+        foot.xsDevice.disconnect();
     }
     public void stopButton_onClick(View view){ // After measuring, the dots should be stopped to for data logging
 
@@ -960,22 +961,22 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         dataLogButton.setEnabled(false);
         uploadButton.setEnabled(true);
         writeToLogs("Stopping");
-        if(leftThigh.xsDevice != null){
+        if(thigh.xsDevice != null){
             try{
-                leftThigh.xsDevice.stopMeasuring();
-                leftThigh.normalDataLogger.stop();
-                writeToLogs(leftThigh.Name + " measuring stopped");
+                thigh.xsDevice.stopMeasuring();
+                thigh.normalDataLogger.stop();
+                writeToLogs(thigh.Name + " measuring stopped");
             }catch (NullPointerException e) {
-                writeToLogs("Error: Not connected to " + leftThigh.Name);
+                writeToLogs("Error: Not connected to " + thigh.Name);
                 e.printStackTrace();
             }
         }
-        if(leftFoot.xsDevice != null){try{
-            leftFoot.xsDevice.stopMeasuring();
-            leftFoot.normalDataLogger.stop();
-            writeToLogs(leftFoot.Name + " measuring stopped");
+        if(foot.xsDevice != null){try{
+            foot.xsDevice.stopMeasuring();
+            foot.normalDataLogger.stop();
+            writeToLogs(foot.Name + " measuring stopped");
         }catch (NullPointerException e) {
-            writeToLogs("Error: Not connected to " + leftFoot.Name);
+            writeToLogs("Error: Not connected to " + foot.Name);
             e.printStackTrace();
         }}
         runOnUiThread(new Runnable() {
@@ -1032,17 +1033,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             });
 
     }
-
     /* For interpretation of the Model from Tensorflow light to Java code */
     private MappedByteBuffer loadModelFile() throws IOException {
-        AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model.tflite");
+        AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model_v3.tflite");
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
         FileChannel fileChannel = inputStream.getChannel();
         long startOffset = fileDescriptor.getStartOffset();
         long declaredLength = fileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
-
     /*
         ///////////////////////////////////////////////////////        Unused xsDevice functions      //////////////////////
          */
