@@ -71,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     public String Version = "v1.2";
     public static int UNREACHABLE_VALUE = 9999;
+    public static int windowTime = 60;
+    public static int strideWindow = 15;
     private Segment thigh, foot;
     private DotScanner mXsScanner;
     public  String thighMAC = "D4:22:CD:00:63:71";
@@ -656,7 +658,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
         segment.valuesWindow[segment.valuesWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
 
-        if (segment.windowCounter < 15) {
+        if (segment.windowCounter < strideWindow) {
             segment.windowCounter++;
             segment.windowClosed = false;
         }

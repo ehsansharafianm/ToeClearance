@@ -1,6 +1,7 @@
 package com.tmsimple.ehsanmovella;
 
 import static com.tmsimple.ehsanmovella.MainActivity.UNREACHABLE_VALUE;
+import static com.tmsimple.ehsanmovella.MainActivity.windowTime;
 
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.utils.DotLogger;
@@ -29,8 +30,7 @@ public class Segment {
     public double minEulerAngle_temp = UNREACHABLE_VALUE;
     public LinkedList<Double> angleHistory = new LinkedList<>();
     public boolean windowClosed = false;
-    public double[] valuesWindow = new double[60];
-    public double[] vsluesSlidingWindow = new double[30];
+    public double[] valuesWindow = new double[windowTime];
 
     public double[][] initEulerSamples;
 
