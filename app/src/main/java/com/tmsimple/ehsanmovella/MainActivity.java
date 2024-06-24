@@ -61,6 +61,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import android.widget.Switch;
+import android.util.Log;
+
 
 import org.tensorflow.lite.Interpreter;
 
@@ -71,10 +73,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public static int UNREACHABLE_VALUE = 9999;
     private Segment thigh, foot;
     private DotScanner mXsScanner;
-    public  String thighMAC = "D4:22:CD:00:63:8B";
+    public  String thighMAC = "D4:22:CD:00:63:71";
+    public String footMAC = "D4:22:CD:00:63:D6";
     //RT: "D4:22:CD:00:63:71"
-    //LT: "D4:22:CD:00:63:8B"
-    public String footMAC = "D4:22:CD:00:63:A4";
+    //RF: "D4:22:CD:00:63:D6"
+    //LT: "D4:22:CD:00:63:8B";
+    //LF: "D4:22:CD:00:63:A4";
     public File logFile;
     public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
@@ -86,8 +90,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public String subjectDateAndTime;
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
+
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
-           activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton, recognitionButton;
+            activity0Button, activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton ;
     Switch logSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView thighScanStatus, footScanStatus, logContents;
@@ -95,14 +100,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     EditText enterSubjectNumber;
     DecimalFormat threePlaces = new DecimalFormat("##.#");
     public int packetCounterCofficient = 0;
-    public boolean startRecognition = false;
     private Interpreter tflite;
 
     public int MeasurementMode;
     StorageReference storageReference;
     //DatabaseReference databaseReference;
     public int SAMPLE_RATE = 60;
-    public int windowSize = 60; // It shows that window size is 1.5 s
+    public int windowSize = 70; // It shows that window size is 1.5 s
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -336,9 +340,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         uploadButton = findViewById(R.id.uploadButton);
         dataLogButton = findViewById(R.id.dataLogButton);
         enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
-        activity1Button = findViewById(R.id.activity1Button);
+        activity0Button = findViewById(R.id.activity0Button);
         homeButton = findViewById(R.id.homeButton);
-        recognitionButton = findViewById(R.id.recognitionButton);
+
 
         thighScanStatus = findViewById(R.id.thighStatusView);
         footScanStatus = findViewById(R.id.footStatusView);
@@ -440,17 +444,17 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
             }
         });
-        activity1Button.setOnTouchListener(new View.OnTouchListener() {
+        activity0Button.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         packetCounterCofficient = 1000000;
-                        activity1Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        activity0Button.setBackgroundColor(Color.parseColor("#05fff8"));
                         break;
                     case MotionEvent.ACTION_UP:
                         packetCounterCofficient = 0;
-                        activity1Button.setBackgroundColor(Color.parseColor("#008884"));
+                        activity0Button.setBackgroundColor(Color.parseColor("#008884"));
                         break;
                 }
                 return true;
@@ -464,23 +468,6 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         });
 
-        recognitionButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startRecognition = true;
-                        recognitionButton.setBackgroundColor(Color.parseColor("#4DDFB8"));
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        startRecognition = false;
-                        recognitionButton.setBackgroundColor(Color.parseColor("#4CAE50"));
-                        valueResult.setText("---");
-                        break;
-                }
-                return true;
-            }
-        });
 
     }
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
@@ -575,16 +562,16 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             // Initialization process
             calculateInitialValue(thigh, dotData, eulerAngles);
             // Calculation Max and Min values
-            if (startRecognition)
-                determineMaxMinValues(thigh, dotData, eulerAngles);
+            determineMaxMinValues(thigh, dotData, eulerAngles);
         } else if (address.equals(foot.MAC))
         {
             // Initialization process
             calculateInitialValue(foot, dotData, eulerAngles);
             // Calculation Max and Min values
-            if (startRecognition)
-                determineMaxMinValues(foot, dotData, eulerAngles);
+            determineMaxMinValues(foot, dotData, eulerAngles);
         }
+
+
     }
     public void fillFields(String address, DotData dotData, double[] eulerAngles){
 
@@ -621,6 +608,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
     }
     public void classifierModel_CNN(){
+
+        // Start timing
+        long startTime = System.nanoTime();
+
         // Prepare input data for the model
         float[][] input = new float[1][4];
 
@@ -651,14 +642,36 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 valueResult.setText(result);
             }
         });
+
+        // Log the duration
+        long endTime = System.nanoTime();
+        long durationInMs = (endTime - startTime) / 1000000;
+        Log.d("Performance", "Execution time of classifierModel_CNN: " + durationInMs + " ms");
     }
     public void determineMaxMinValues(Segment segment, DotData dotData, double[] eulerAngles){
 
-        if (segment.windowCounter <= windowSize) {
+        for (int j = 1; j < segment.valuesWindow.length; j++)
+        {
+            segment.valuesWindow[j - 1] = segment.valuesWindow[j];
+        }
+        segment.valuesWindow[segment.valuesWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
+
+        if (segment.windowCounter < 15) {
             segment.windowCounter++;
-        }else {
+            segment.windowClosed = false;
+        }
+        else {
+            // Finding Max and Min value in that window
+            for (Double angle : segment.valuesWindow){
+                if (angle > segment.maxEulerAngle_temp)
+                    segment.maxEulerAngle_temp = angle;
+                if (angle < segment.minEulerAngle_temp)
+                    segment.minEulerAngle_temp = angle;
+            }
+            writeToLogs(segment.Name + " Window is Closed");
             segment.windowCounter = 1;
-            segment.angleHistory.clear();
+            segment.windowClosed = true;
+            // segment.angleHistory.clear();
             segment.minEulerAngle = segment.minEulerAngle_temp;
             segment.maxEulerAngle = segment.maxEulerAngle_temp;
             segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
@@ -673,17 +686,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
                 }
             });
-
-            classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+            if (segment == foot)
+                classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
         }
-        segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
+        //segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
 
-        for (Double angle : segment.angleHistory){
-            if (angle > segment.maxEulerAngle_temp)
-                segment.maxEulerAngle_temp = angle;
-            if (angle < segment.minEulerAngle_temp)
-                segment.minEulerAngle_temp = angle;
-        }
+
     }
     public void calculateInitialValue(Segment segment, DotData dotData, double[] eulerAngles){
         if (dotData.getPacketCounter() > 1000000 && dotData.getPacketCounter() < 2000000){ // If it is just in Standing mode

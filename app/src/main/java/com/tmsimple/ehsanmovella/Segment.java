@@ -28,7 +28,9 @@ public class Segment {
     public double minEulerAngle = UNREACHABLE_VALUE;
     public double minEulerAngle_temp = UNREACHABLE_VALUE;
     public LinkedList<Double> angleHistory = new LinkedList<>();
-
+    public boolean windowClosed = false;
+    public double[] valuesWindow = new double[60];
+    public double[] vsluesSlidingWindow = new double[30];
 
     public double[][] initEulerSamples;
 
