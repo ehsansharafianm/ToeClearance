@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public String subjectDateAndTime;
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
+    public int[][] confusionMat = new int[5][5];
 
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
             activity0Button, activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton ;
@@ -109,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     //DatabaseReference databaseReference;
     public int SAMPLE_RATE = 60;
     public int windowSize = 70; // It shows that window size is 1.5 s
+    public String estimationResult;
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -343,6 +345,11 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         dataLogButton = findViewById(R.id.dataLogButton);
         enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
         activity0Button = findViewById(R.id.activity0Button);
+        activity1Button = findViewById(R.id.activity1Button);
+        activity2Button = findViewById(R.id.activity2Button);
+        activity3Button = findViewById(R.id.activity3Button);
+        activity4Button = findViewById(R.id.activity4Button);
+        activity5Button = findViewById(R.id.activity5Button);
         homeButton = findViewById(R.id.homeButton);
 
 
@@ -462,6 +469,86 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 return true;
             }
         });
+        activity1Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 11000000;
+                        activity1Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity1Button.setBackgroundColor(Color.parseColor("#B5398C"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity2Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 22000000;
+                        activity2Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity2Button.setBackgroundColor(Color.parseColor("#B5398C"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity3Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 33000000;
+                        activity3Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity3Button.setBackgroundColor(Color.parseColor("#B5398C"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity4Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 44000000;
+                        activity4Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity4Button.setBackgroundColor(Color.parseColor("#B5398C"));
+                        break;
+                }
+                return true;
+            }
+        });
+        activity5Button.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        packetCounterCofficient = 55000000;
+                        activity5Button.setBackgroundColor(Color.parseColor("#05fff8"));
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        packetCounterCofficient = 0;
+                        activity5Button.setBackgroundColor(Color.parseColor("#B5398C"));
+                        break;
+                }
+                return true;
+            }
+        });
 
         homeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -560,17 +647,19 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 foot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
             }
         }
+        View view = findViewById(R.id.recognition_page);
+
         if (address.equals(thigh.MAC)) {
             // Initialization process
             calculateInitialValue(thigh, dotData, eulerAngles);
-            // Calculation Max and Min values
-            determineMaxMinValues(thigh, dotData, eulerAngles);
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition mode
+                processingValues(thigh, dotData, eulerAngles);
         } else if (address.equals(foot.MAC))
         {
             // Initialization process
             calculateInitialValue(foot, dotData, eulerAngles);
-            // Calculation Max and Min values
-            determineMaxMinValues(foot, dotData, eulerAngles);
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition mode
+                processingValues(foot, dotData, eulerAngles);
         }
 
 
@@ -609,7 +698,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             });
         }
     }
-    public void classifierModel_CNN(){
+    public String classifierModel_CNN(){
 
         // Start timing
         long startTime = System.nanoTime();
@@ -649,8 +738,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         long endTime = System.nanoTime();
         long durationInMs = (endTime - startTime) / 1000000;
         Log.d("Performance", "Execution time of classifierModel_CNN: " + durationInMs + " ms");
+        
+        return result;
     }
-    public void determineMaxMinValues(Segment segment, DotData dotData, double[] eulerAngles){
+    public void processingValues(Segment segment, DotData dotData, double[] eulerAngles){
 
         for (int j = 1; j < segment.valuesWindow.length; j++)
         {
@@ -664,20 +755,18 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
         else {
             // Finding Max and Min value in that window
-            for (Double angle : segment.valuesWindow){
+            for (Double angle : segment.valuesWindow) {
                 if (angle > segment.maxEulerAngle_temp)
                     segment.maxEulerAngle_temp = angle;
                 if (angle < segment.minEulerAngle_temp)
                     segment.minEulerAngle_temp = angle;
             }
-            writeToLogs(segment.Name + " Window is Closed");
             segment.windowCounter = 1;
             segment.windowClosed = true;
-            // segment.angleHistory.clear();
             segment.minEulerAngle = segment.minEulerAngle_temp;
             segment.maxEulerAngle = segment.maxEulerAngle_temp;
             segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
-            segment.minEulerAngle_temp =  UNREACHABLE_VALUE;
+            segment.minEulerAngle_temp = UNREACHABLE_VALUE;
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -688,10 +777,79 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
                 }
             });
-            if (segment == foot)
-                classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+            if (segment == foot) {
+                estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+                validationProcedure(estimationResult, dotData);
+            }
         }
-        //segment.angleHistory.add(eulerAngles[0] -segment.initAngleValue);
+    }
+    public void validationProcedure(String estimationResult, DotData dotData){
+
+        if (dotData.getPacketCounter() > 11000000 && dotData.getPacketCounter() < 22000000){
+            if(estimationResult == "Standing")
+                confusionMat[0][0] ++;
+            else if (estimationResult == "Walking")
+                confusionMat[0][1] ++;
+            else if (estimationResult == "Upstairs")
+                confusionMat[0][2] ++;
+            else if (estimationResult == "Downstairs")
+                confusionMat[0][3] ++;
+            else if (estimationResult == "Sitting")
+                confusionMat[0][4] ++;
+            writeToLogs("Standing validation correct:" + confusionMat[0][0] + " Incorrect: " + (confusionMat[0][1] + confusionMat[0][2] + confusionMat[0][3] + confusionMat[0][4]));
+        }
+        else if (dotData.getPacketCounter() > 22000000 && dotData.getPacketCounter() < 33000000){
+            if(estimationResult == "Standing")
+                confusionMat[1][0] ++;
+            else if (estimationResult == "Walking")
+                confusionMat[1][1] ++;
+            else if (estimationResult == "Upstairs")
+                confusionMat[1][2] ++;
+            else if (estimationResult == "Downstairs")
+                confusionMat[1][3] ++;
+            else if (estimationResult == "Sitting")
+                confusionMat[1][4] ++;
+            writeToLogs("Walking validation correct:" + confusionMat[1][1] + " Incorrect: " + (confusionMat[1][0] + confusionMat[1][2] + confusionMat[1][3] + confusionMat[1][4]));
+        }
+        else if (dotData.getPacketCounter() > 33000000 && dotData.getPacketCounter() < 44000000){
+            if(estimationResult == "Standing")
+                confusionMat[2][0] ++;
+            else if (estimationResult == "Walking")
+                confusionMat[2][1] ++;
+            else if (estimationResult == "Upstairs")
+                confusionMat[2][2] ++;
+            else if (estimationResult == "Downstairs")
+                confusionMat[2][3] ++;
+            else if (estimationResult == "Sitting")
+                confusionMat[2][4] ++;
+            writeToLogs("Upstairs validation correct:" + confusionMat[2][2] + " Incorrect: " + (confusionMat[2][0] + confusionMat[2][1] + confusionMat[2][3] + confusionMat[2][4]));
+        }
+        else if (dotData.getPacketCounter() > 44000000 && dotData.getPacketCounter() < 55000000){
+            if(estimationResult == "Standing")
+                confusionMat[3][0] ++;
+            else if (estimationResult == "Walking")
+                confusionMat[3][1] ++;
+            else if (estimationResult == "Upstairs")
+                confusionMat[3][2] ++;
+            else if (estimationResult == "Downstairs")
+                confusionMat[3][3] ++;
+            else if (estimationResult == "Sitting")
+                confusionMat[3][4] ++;
+            writeToLogs("Downstairs validation correct:" + confusionMat[3][3] + " Incorrect: " + (confusionMat[3][0] + confusionMat[3][1] + confusionMat[3][2] + confusionMat[3][4]));
+        }
+        else if (dotData.getPacketCounter() > 55000000 && dotData.getPacketCounter() < 66000000){
+            if(estimationResult == "Standing")
+                confusionMat[4][0] ++;
+            else if (estimationResult == "Walking")
+                confusionMat[4][1] ++;
+            else if (estimationResult == "Upstairs")
+                confusionMat[4][2] ++;
+            else if (estimationResult == "Downstairs")
+                confusionMat[4][3] ++;
+            else if (estimationResult == "Sitting")
+                confusionMat[4][4] ++;
+            writeToLogs("Sitting validation correct:" + confusionMat[4][4] + " Incorrect: " + (confusionMat[4][0] + confusionMat[4][1] + confusionMat[4][2] + confusionMat[4][3]));
+        }
 
 
     }
@@ -995,6 +1153,16 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 measureButton.setText("Measuring Stopped");
             }
         });
+        if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition mode
+        {
+            writeToLogs("----------  Confusion Matrix --------------");
+            for (int i = 0; i < 5; i++) {
+
+                writeToLogs(confusionMat[i][0] + "  " + confusionMat[i][1]
+                             + "  " + confusionMat[i][2] + "  " + confusionMat[i][3] + "  " + confusionMat[i][4]);
+
+            }
+        }
     }
     public void uploadButton_onClick (View view){
         for (int i = 0; i < loggerFileNames.size(); i++) {

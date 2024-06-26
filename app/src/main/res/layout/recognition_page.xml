@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recognition_page"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5FFDA">
@@ -313,18 +314,7 @@
         android:text="Stop" />
 
 
-    <TextView
-        android:id="@+id/logContents"
-        android:layout_width="2000dp"
-        android:layout_height="300dp"
-        android:layout_below="@id/connectionStatusSpace"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="280dp"
-        android:background="@drawable/rectangle"
-        android:backgroundTint="#045391"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        android:visibility="invisible" />
+
 
 
     <Button
@@ -335,6 +325,46 @@
         android:layout_marginTop="310dp"
         android:backgroundTint="#008884"
         android:text="Standing Intial" />
+    <Button
+        android:id="@+id/activity1Button"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="310dp"
+        android:backgroundTint="#B5398C"
+        android:text="Standing Test" />
+    <Button
+        android:id="@+id/activity2Button"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="360dp"
+        android:backgroundTint="#B5398C"
+        android:text="Walking Test" />
+    <Button
+        android:id="@+id/activity3Button"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="410dp"
+        android:backgroundTint="#B5398C"
+        android:text="Upstairs Test" />
+    <Button
+        android:id="@+id/activity4Button"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="460dp"
+        android:backgroundTint="#B5398C"
+        android:text="Downstairs Test" />
+    <Button
+        android:id="@+id/activity5Button"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="510dp"
+        android:backgroundTint="#B5398C"
+        android:text="Sitting Test" />
 
     <TextView
         android:id="@+id/valueT5"
@@ -385,11 +415,23 @@
         android:layout_width="220dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/activity0Button"
-        android:layout_marginTop="175dp"
+        android:layout_marginTop="215dp"
         android:layout_marginRight="-23dp"
         android:layout_toLeftOf="@+id/connectionStatusSpace"
         android:background="@drawable/rectangle"
         android:text="Result"
         android:textSize="40dp" />
+    <TextView
+        android:id="@+id/logContents"
+        android:layout_width="2000dp"
+        android:layout_height="260dp"
+        android:layout_below="@id/connectionStatusSpace"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="280dp"
+        android:background="@drawable/rectangle"
+        android:backgroundTint="#045391"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:visibility="invisible" />
 
 </RelativeLayout>
