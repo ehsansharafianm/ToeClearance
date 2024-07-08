@@ -25,8 +25,6 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -45,13 +43,11 @@ import com.xsens.dot.android.sdk.models.DotRecordingState;
 import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.models.FilterProfileInfo;
 import com.xsens.dot.android.sdk.utils.DotLogger;
-import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.text.method.ScrollingMovementMethod;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
@@ -60,6 +56,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+
 import android.widget.Switch;
 import android.util.Log;
 
@@ -75,12 +73,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public static int strideWindow = 15;
     private Segment thigh, foot;
     private DotScanner mXsScanner;
-    public  String thighMAC = "D4:22:CD:00:63:71";
-    public String footMAC = "D4:22:CD:00:63:D6";
+    public  String thighMAC = "D4:22:CD:00:63:8B";
+    public String footMAC = "D4:22:CD:00:63:A4";
     //RT: "D4:22:CD:00:63:71"
     //RF: "D4:22:CD:00:63:D6"
     //LT: "D4:22:CD:00:63:8B";
     //LF: "D4:22:CD:00:63:A4";
+    //LA: "D4:CA:6E:F1:77:9B";
+    //RA: "D4:22:CD:00:04:D2";
+    //CE-LA : "D4:CA:6E:F1:72:BF";
     public File logFile;
     public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public boolean isLoggingData = false;
     public int dataLogButtonIndex = 0;
     public int[][] confusionMat = new int[5][5];
+    public int[] peakPacketCounter = {0, 0};
 
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
             activity0Button, activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton ;
@@ -111,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public int SAMPLE_RATE = 60;
     public int windowSize = 70; // It shows that window size is 1.5 s
     public String estimationResult;
+    public boolean conditionFindingPeak = false;
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -568,7 +571,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             if(address.equals(thigh.MAC)){
                 if(address.equals(thigh.MAC)){
                     thigh.isConnected = true;
-                    writeToLogs("Left Thigh IMU is connected!");
+                    writeToLogs("Thigh IMU is connected!");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {thighScanStatus.setText("Connected");}
@@ -578,21 +581,20 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             else if(address.equals(foot.MAC)){
                 if(address.equals(foot.MAC)){
                     foot.isConnected = true;
-                    writeToLogs("Left Foot IMU is connected!");
+                    writeToLogs("Foot IMU is connected!");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {footScanStatus.setText("Connected");}
                     });
                 }
             }
-            writeToLogs(String.valueOf("Measurement Mode: " + thigh.xsDevice.getMeasurementMode())
-                                                                 + " / " + foot.xsDevice.getMeasurementMode());
+
         }
         else if (state == DotDevice.CONN_STATE_DISCONNECTED){
             if(address.equals(thigh.MAC)){
                 if(address.equals(thigh.MAC)){
                     thigh.isConnected = false;
-                    writeToLogs("Left Thigh IMU is disconnected!");
+                    writeToLogs("Thigh IMU is disconnected!");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {thighScanStatus.setText("Disconnected");}
@@ -602,7 +604,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             else if(address.equals(foot.MAC)){
                 if(address.equals(foot.MAC)){
                     foot.isConnected = false;
-                    writeToLogs("Left Foot IMU is disconnected!");
+                    writeToLogs("Foot IMU is disconnected!");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {footScanStatus.setText("Disconnected");}
@@ -652,13 +654,13 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if (address.equals(thigh.MAC)) {
             // Initialization process
             calculateInitialValue(thigh, dotData, eulerAngles);
-            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition mode
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
                 processingValues(thigh, dotData, eulerAngles);
         } else if (address.equals(foot.MAC))
         {
             // Initialization process
             calculateInitialValue(foot, dotData, eulerAngles);
-            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition mode
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
                 processingValues(foot, dotData, eulerAngles);
         }
 
@@ -667,6 +669,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public void fillFields(String address, DotData dotData, double[] eulerAngles){
 
         if (address.equals(thigh.MAC)) {
+            thigh.angleValue = eulerAngles[0] - thigh.initAngleValue;
             thigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - thigh.initAngleValue);
             thigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             thigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
@@ -683,6 +686,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
             });
         } else if (address.equals(foot.MAC)) {
+            foot.angleValue = eulerAngles[0] - foot.initAngleValue;
             foot.dataOutput[0] = threePlaces.format(eulerAngles[0]- foot.initAngleValue);
             foot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
             foot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
@@ -743,30 +747,54 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     }
     public void processingValues(Segment segment, DotData dotData, double[] eulerAngles){
 
-        for (int j = 1; j < segment.valuesWindow.length; j++)
-        {
-            segment.valuesWindow[j - 1] = segment.valuesWindow[j];
-        }
-        segment.valuesWindow[segment.valuesWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
+        segment.angleHistory.add(segment.angleValue);
 
-        if (segment.windowCounter < strideWindow) {
-            segment.windowCounter++;
-            segment.windowClosed = false;
+        if (segment == foot)
+        {
+            // Saving the stream data into array as the window
+            for (int j = 1; j < segment.findingPeakWindow.length; j++)
+            {
+                segment.findingPeakWindow[j - 1] = segment.findingPeakWindow[j];
+            }
+            segment.findingPeakWindow[segment.findingPeakWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
+
+            // Check three criteria for finding peak
+            if (segment.findingPeakWindow[5] < segment.findingPeakWindow[0]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[1]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[2]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[3]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[4]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[6]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[7]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[8]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[9]     &&
+                segment.findingPeakWindow[5] < segment.findingPeakWindow[10]    && // If is min
+
+                Math.abs(thigh.angleValue - foot.angleValue) > 50               && // Distance with thigh angle in that time
+                foot.sampleCounter - peakPacketCounter[1] > SAMPLE_RATE * 0.6)    //  Distance time with the previous local minimum
+            {
+                conditionFindingPeak = true;
+                peakPacketCounter[0] = peakPacketCounter[1];
+                peakPacketCounter[1] = foot.sampleCounter;
+
+            }
         }
-        else {
+        if (conditionFindingPeak)
+        {
             // Finding Max and Min value in that window
-            for (Double angle : segment.valuesWindow) {
+            for (Double angle : segment.angleHistory) {
                 if (angle > segment.maxEulerAngle_temp)
                     segment.maxEulerAngle_temp = angle;
                 if (angle < segment.minEulerAngle_temp)
                     segment.minEulerAngle_temp = angle;
             }
-            segment.windowCounter = 1;
-            segment.windowClosed = true;
             segment.minEulerAngle = segment.minEulerAngle_temp;
             segment.maxEulerAngle = segment.maxEulerAngle_temp;
             segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
             segment.minEulerAngle_temp = UNREACHABLE_VALUE;
+            foot.angleHistory.clear();
+            thigh.angleHistory.clear();
+            conditionFindingPeak = false;
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -782,6 +810,47 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 validationProcedure(estimationResult, dotData);
             }
         }
+
+//        for (int j = 1; j < segment.valuesWindow.length; j++)
+//        {
+//            segment.valuesWindow[j - 1] = segment.valuesWindow[j];
+//        }
+//        segment.valuesWindow[segment.valuesWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
+//
+//        if (segment.windowCounter < strideWindow) {
+//            segment.windowCounter++;
+//            segment.windowClosed = false;
+//        }
+//        else {
+//            // Finding Max and Min value in that window
+//            for (Double angle : segment.valuesWindow) {
+//                if (angle > segment.maxEulerAngle_temp)
+//                    segment.maxEulerAngle_temp = angle;
+//                if (angle < segment.minEulerAngle_temp)
+//                    segment.minEulerAngle_temp = angle;
+//            }
+//            segment.windowCounter = 1;
+//            segment.windowClosed = true;
+//            segment.minEulerAngle = segment.minEulerAngle_temp;
+//            segment.maxEulerAngle = segment.maxEulerAngle_temp;
+//            segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
+//            segment.minEulerAngle_temp = UNREACHABLE_VALUE;
+//            runOnUiThread(new Runnable() {
+//                @SuppressLint("SetTextI18n")
+//                @Override
+//                public void run() {
+//                    ValueF5.setText(threePlaces.format(foot.maxEulerAngle));
+//                    ValueF6.setText(threePlaces.format(foot.minEulerAngle));
+//                    ValueT5.setText(threePlaces.format(thigh.maxEulerAngle));
+//                    ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
+//                }
+//            });
+//            if (segment == foot) {
+//                estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+//                validationProcedure(estimationResult, dotData);
+//            }
+//        }
+
     }
     public void validationProcedure(String estimationResult, DotData dotData){
 
@@ -869,7 +938,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         if (address.equals(thigh.MAC)) {
             thigh.isReady = true;
             thigh.xsDevice.setOutputRate(SAMPLE_RATE);
-            writeToLogs("Left Thigh IMU sample rate is : " + String.valueOf(thigh.xsDevice.getCurrentOutputRate()));
+            writeToLogs("Thigh IMU sample rate is : " + String.valueOf(thigh.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -880,7 +949,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         else if (address.equals(foot.MAC)) {
             foot.isReady = true;
             foot.xsDevice.setOutputRate(SAMPLE_RATE);
-            writeToLogs("Left Foot IMU sample rate is : " + String.valueOf(foot.xsDevice.getCurrentOutputRate()));
+            writeToLogs("Foot IMU sample rate is : " + String.valueOf(foot.xsDevice.getCurrentOutputRate()));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -899,7 +968,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     scanButton.setBackgroundColor(Color.parseColor("#008080"));
                 }
             });
-            if(mXsScanner.stopScan()){ writeToLogs("Scan Stopped!"); }
+            if(mXsScanner.stopScan()){
+                writeToLogs("Scan Stopped!");
+                //pauseMillis(500);
+                }
         }
     }
     @Override
@@ -909,6 +981,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         MeasurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
 
         if(address.equals(thigh.MAC) && !thigh.isScanned){
+
+            //pauseMillis(500);
             thigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             thigh.xsDevice.connect();
             thigh.isConnected = true;
@@ -917,6 +991,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             mDeviceLst.add(thigh.xsDevice);
         }
         else if(address.equals(foot.MAC) && !foot.isScanned){
+
+            //pauseMillis(500);
             foot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
             foot.xsDevice.connect();
             foot.isConnected = true;
@@ -944,6 +1020,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 syncButton.setBackgroundColor(Color.parseColor("#008080"));
             }
         });
+        writeToLogs(String.valueOf("Measurement Mode: " + thigh.xsDevice.getMeasurementMode())
+                + " / " + foot.xsDevice.getMeasurementMode());
         writeToLogs("\n ---------- Syncing is done! --------- \n");
     }
 
@@ -1083,6 +1161,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 footScanStatus.setText("Syncing");
             }
         });
+
+        // Stop Any Previous Syncing
+        DotSyncManager.getInstance(this).stopSyncing();
         mDeviceLst.get(0).setRootDevice(true);
         DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
@@ -1220,6 +1301,15 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         long declaredLength = fileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
+    public void pauseMillis(int milliseconds){
+        try {
+            TimeUnit.MILLISECONDS.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            writeToLogs("Pause Failed");
+            e.printStackTrace();
+        }
+    }
+
     /*
         ///////////////////////////////////////////////////////        Unused xsDevice functions      //////////////////////
          */

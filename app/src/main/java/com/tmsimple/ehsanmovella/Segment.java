@@ -6,11 +6,13 @@ import static com.tmsimple.ehsanmovella.MainActivity.windowTime;
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.utils.DotLogger;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Segment {
     public DotDevice xsDevice;
     public String[] dataOutput = {"No Data", "NA", "NA", "NA", "NA"};
+    public double angleValue = 0.0;
 
     public double initAngleValue = 0.0;
     public double sumOfInitialValue = 0.0;
@@ -31,6 +33,8 @@ public class Segment {
     public LinkedList<Double> angleHistory = new LinkedList<>();
     public boolean windowClosed = false;
     public double[] valuesWindow = new double[windowTime];
+    public double[] findingPeakWindow = new double[11];
+    public int[] findingPeakSampleCounter = new int[2];
 
     public double[][] initEulerSamples;
 
