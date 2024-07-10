@@ -33,8 +33,13 @@ public class Segment {
     public LinkedList<Double> angleHistory = new LinkedList<>();
     public boolean windowClosed = false;
     public double[] valuesWindow = new double[windowTime];
-    public double[] findingPeakWindow = new double[11];
+    public double[] smallWindow = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    public double[] bigWindow = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     public int[] findingPeakSampleCounter = new int[2];
+    public boolean isSitting = false;
+    public boolean isStanding = false;
+
+
 
     public double[][] initEulerSamples;
 

@@ -54,6 +54,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +74,9 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public static int strideWindow = 15;
     private Segment thigh, foot;
     private DotScanner mXsScanner;
-    public  String thighMAC = "D4:22:CD:00:63:8B";
-    public String footMAC = "D4:22:CD:00:63:A4";
+    public  String thighMAC = "D4:22:CD:00:63:71";
+    public String footMAC = "D4:22:CD:00:63:D6";
+
     //RT: "D4:22:CD:00:63:71"
     //RF: "D4:22:CD:00:63:D6"
     //LT: "D4:22:CD:00:63:8B";
@@ -113,10 +115,10 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public int SAMPLE_RATE = 60;
     public int windowSize = 70; // It shows that window size is 1.5 s
     public String estimationResult;
-    public boolean conditionFindingPeak = false;
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
+    public boolean conditionFindingPeak = false;
 
     @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility"})
     @Override
@@ -565,236 +567,62 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
 
 
-    @Override
-    public void onDotConnectionChanged(String address, int state) {
-        if (state == DotDevice.CONN_STATE_CONNECTED){
-            if(address.equals(thigh.MAC)){
-                if(address.equals(thigh.MAC)){
-                    thigh.isConnected = true;
-                    writeToLogs("Thigh IMU is connected!");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {thighScanStatus.setText("Connected");}
-                    });
-                }
-            }
-            else if(address.equals(foot.MAC)){
-                if(address.equals(foot.MAC)){
-                    foot.isConnected = true;
-                    writeToLogs("Foot IMU is connected!");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {footScanStatus.setText("Connected");}
-                    });
-                }
-            }
-
-        }
-        else if (state == DotDevice.CONN_STATE_DISCONNECTED){
-            if(address.equals(thigh.MAC)){
-                if(address.equals(thigh.MAC)){
-                    thigh.isConnected = false;
-                    writeToLogs("Thigh IMU is disconnected!");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {thighScanStatus.setText("Disconnected");}
-                    });
-                }
-            }
-            else if(address.equals(foot.MAC)){
-                if(address.equals(foot.MAC)){
-                    foot.isConnected = false;
-                    writeToLogs("Foot IMU is disconnected!");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {footScanStatus.setText("Disconnected");}
-                    });
-                }
-            }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    scanButton.setText("Scan");
-                    measureButton.setText("Measure");
-                    syncButton.setText("Start Sync");
-                    disconnectButton.setText("Disconnect");
-                    scanButton.setBackgroundColor(Color.parseColor("#4CAF50"));
-                    syncButton.setBackgroundColor(Color.parseColor("#4CAF50"));
-                    disconnectButton.setBackgroundColor(Color.parseColor("#FD8888"));
-                }
-            });
-        }
-
-    }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    @Override
-    public void onDotDataChanged(String address, DotData dotData) {
-
-        double[] eulerAngles = dotData.getEuler();
-
-        /* Fill the fields with appropriate values */
-        fillFields(address, dotData, eulerAngles);
-
-        if (isLoggingData) {
-            //int xxx = dotData.getPacketCounter();
-            if (address.equals(thigh.MAC)) {
-                dotData.setPacketCounter(packetCounterCofficient + thigh.sampleCounter);
-                thigh.normalDataLogger.update(dotData);
-                thigh.sampleCounter++;
-                thigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
-            } else if (address.equals(foot.MAC)) {
-                dotData.setPacketCounter(packetCounterCofficient + foot.sampleCounter);
-                foot.normalDataLogger.update(dotData);
-                foot.sampleCounter++;
-                foot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
-            }
-        }
-        View view = findViewById(R.id.recognition_page);
-
-        if (address.equals(thigh.MAC)) {
-            // Initialization process
-            calculateInitialValue(thigh, dotData, eulerAngles);
-            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
-                processingValues(thigh, dotData, eulerAngles);
-        } else if (address.equals(foot.MAC))
-        {
-            // Initialization process
-            calculateInitialValue(foot, dotData, eulerAngles);
-            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
-                processingValues(foot, dotData, eulerAngles);
-        }
 
 
-    }
-    public void fillFields(String address, DotData dotData, double[] eulerAngles){
+    /////////////////////////////////      Functions     /////////////////////////////
 
-        if (address.equals(thigh.MAC)) {
-            thigh.angleValue = eulerAngles[0] - thigh.initAngleValue;
-            thigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - thigh.initAngleValue);
-            thigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            thigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-            runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void run() {
-
-                    ValueT1.setText(thigh.dataOutput[0] + "   deg");
-                    ValueT2.setText(thigh.dataOutput[1] + "   deg");
-                    ValueT3.setText(String.valueOf(thigh.dataOutput[3]));
-                    ValueT4.setText(thigh.xsDevice.getBatteryPercentage() + "   %");
-
-                }
-            });
-        } else if (address.equals(foot.MAC)) {
-            foot.angleValue = eulerAngles[0] - foot.initAngleValue;
-            foot.dataOutput[0] = threePlaces.format(eulerAngles[0]- foot.initAngleValue);
-            foot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
-            foot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
-            runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void run() {
-                    ValueF1.setText(foot.dataOutput[0] + "   deg");
-                    ValueF2.setText(foot.dataOutput[1] + "   deg");
-                    ValueF3.setText(String.valueOf(foot.dataOutput[3]));
-                    ValueF4.setText(foot.xsDevice.getBatteryPercentage() + "   %");
-                }
-            });
-        }
-    }
-    public String classifierModel_CNN(){
-
-        // Start timing
-        long startTime = System.nanoTime();
-
-        // Prepare input data for the model
-        float[][] input = new float[1][4];
-
-        input[0][0] = (float)  thigh.maxEulerAngle;
-        input[0][1] = (float)  thigh.minEulerAngle;
-        input[0][2] = (float)  foot.maxEulerAngle;
-        input[0][3] = (float)  foot.minEulerAngle;
-
-        // Array to hold model output
-        float[][] outputVal = new float[1][5];
-
-        // Run inference
-        if (tflite != null) {
-            tflite.run(input, outputVal);
-        }
-        // Interpret the output
-        String[] classLabels = {"Downstairs", "Sitting", "Standing", "Upstairs", "Walking"};
-        int maxIndex = 0;
-        for (int i = 1; i < outputVal[0].length; i++) {
-            if (outputVal[0][i] > outputVal[0][maxIndex]) {
-                maxIndex = i;
-            }
-        }
-        String result = classLabels[maxIndex];
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                valueResult.setText(result);
-            }
-        });
-
-        // Log the duration
-        long endTime = System.nanoTime();
-        long durationInMs = (endTime - startTime) / 1000000;
-        Log.d("Performance", "Execution time of classifierModel_CNN: " + durationInMs + " ms");
-        
-        return result;
-    }
     public void processingValues(Segment segment, DotData dotData, double[] eulerAngles){
 
         segment.angleHistory.add(segment.angleValue);
-
+        
+        // Saving the stream data into array as the window
+        for (int j = 1; j < segment.smallWindow.length; j++)
+        {
+            segment.smallWindow[j - 1] = segment.smallWindow[j];
+        }
+        segment.smallWindow[6] = segment.angleValue;
+        
         if (segment == foot)
         {
-            // Saving the stream data into array as the window
-            for (int j = 1; j < segment.findingPeakWindow.length; j++)
-            {
-                segment.findingPeakWindow[j - 1] = segment.findingPeakWindow[j];
-            }
-            segment.findingPeakWindow[segment.findingPeakWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
-
             // Check three criteria for finding peak
-            if (segment.findingPeakWindow[5] < segment.findingPeakWindow[0]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[1]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[2]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[3]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[4]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[6]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[7]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[8]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[9]     &&
-                segment.findingPeakWindow[5] < segment.findingPeakWindow[10]    && // If is min
-
-                Math.abs(thigh.angleValue - foot.angleValue) > 50               && // Distance with thigh angle in that time
-                foot.sampleCounter - peakPacketCounter[1] > SAMPLE_RATE * 0.6)    //  Distance time with the previous local minimum
+            if (segment.smallWindow[3] < segment.smallWindow[0]     &&
+                segment.smallWindow[3] < segment.smallWindow[1]     &&
+                segment.smallWindow[3] < segment.smallWindow[2]     &&
+                segment.smallWindow[3] < segment.smallWindow[4]     &&
+                segment.smallWindow[3] < segment.smallWindow[5]     &&
+                segment.smallWindow[3] < segment.smallWindow[6]     &&
+                segment.smallWindow[3] < -20                             &&  // Condition 1: If is min
+                Math.abs(thigh.angleValue - foot.angleValue) > 50               && // Condition 2: Distance with thigh angle in that time
+                foot.sampleCounter - peakPacketCounter[1] > SAMPLE_RATE * 0.5    //  Condition 3: Distance time with the previous local minimum
+                                                                            )
             {
-                conditionFindingPeak = true;
                 peakPacketCounter[0] = peakPacketCounter[1];
                 peakPacketCounter[1] = foot.sampleCounter;
-
+                conditionFindingPeak = true;
+                writeToLogs("Toe-off :  " + threePlaces.format(segment.smallWindow[3])
+                                        + "   +    " + threePlaces.format(thigh.angleValue - foot.angleValue)
+                                        + "   +    " + String.valueOf(peakPacketCounter[1] - peakPacketCounter[0])
+                                        + "   +    " + threePlaces.format(segment.angleHistory.size()));
             }
         }
-        if (conditionFindingPeak)
-        {
-            // Finding Max and Min value in that window
-            for (Double angle : segment.angleHistory) {
-                if (angle > segment.maxEulerAngle_temp)
-                    segment.maxEulerAngle_temp = angle;
-                if (angle < segment.minEulerAngle_temp)
-                    segment.minEulerAngle_temp = angle;
-            }
-            segment.minEulerAngle = segment.minEulerAngle_temp;
-            segment.maxEulerAngle = segment.maxEulerAngle_temp;
-            segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
-            segment.minEulerAngle_temp = UNREACHABLE_VALUE;
-            foot.angleHistory.clear();
-            thigh.angleHistory.clear();
-            conditionFindingPeak = false;
+
+        // Finding Max and Min value in that window
+        for (Double angle : segment.angleHistory) {
+            if (angle > segment.maxEulerAngle_temp)
+                segment.maxEulerAngle_temp = angle;
+            if (angle < segment.minEulerAngle_temp)
+                segment.minEulerAngle_temp = angle;
+        }
+        segment.minEulerAngle = segment.minEulerAngle_temp;
+        segment.maxEulerAngle = segment.maxEulerAngle_temp;
+        segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
+        segment.minEulerAngle_temp =  UNREACHABLE_VALUE;
+
+
+        if (segment == foot && conditionFindingPeak) {
+            writeToLogs(threePlaces.format(thigh.maxEulerAngle) + "  +  " + threePlaces.format(thigh.minEulerAngle) + "  +  " +
+                    threePlaces.format(foot.maxEulerAngle) + "  +  " + threePlaces.format(foot.minEulerAngle));
+            writeToLogs("-------------------------");
             runOnUiThread(new Runnable() {
                 @SuppressLint("SetTextI18n")
                 @Override
@@ -805,51 +633,112 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
                 }
             });
-            if (segment == foot) {
+            estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+            validationProcedure(estimationResult, dotData);
+            conditionFindingPeak = false;
+            foot.angleHistory.clear();
+            thigh.angleHistory.clear();
+
+        }
+        ///////// Checking for Sitting and Standing mode //////////////////////////////////////
+        // Saving the stream data into array as the window
+        for (int j = 1; j < segment.bigWindow.length; j++)
+        {
+            segment.bigWindow[j - 1] = segment.bigWindow[j];
+        }
+        segment.bigWindow[10] = segment.angleValue;
+        // Check for Standing mode ////////////////////////////////
+        if(Math.abs(segment.bigWindow[0]) < 3 && Math.abs(segment.bigWindow[1]) < 3 &&
+           Math.abs(segment.bigWindow[2]) < 3 && Math.abs(segment.bigWindow[3]) < 3 &&
+           Math.abs(segment.bigWindow[4]) < 3 && Math.abs(segment.bigWindow[5]) < 3 &&
+           Math.abs(segment.bigWindow[6]) < 3 && Math.abs(segment.bigWindow[7]) < 3 &&
+           Math.abs(segment.bigWindow[8]) < 3 && Math.abs(segment.bigWindow[9]) < 3 &&
+           Math.abs(segment.bigWindow[10]) < 3 &&
+           Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
+
+           segment.isStanding = true;
+           segment.maxEulerAngle = segment.bigWindow[5];
+           segment.minEulerAngle = segment.bigWindow[5];
+        }
+
+        if(foot.isStanding && thigh.isStanding)
+        {
+            writeToLogs(threePlaces.format(thigh.maxEulerAngle) + "  +  " + threePlaces.format(thigh.minEulerAngle) + "  +  " +
+                    threePlaces.format(foot.maxEulerAngle) + "  +  " + threePlaces.format(foot.minEulerAngle));
+            writeToLogs("--------- Standing ----------");
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+                    ValueF5.setText(threePlaces.format(foot.maxEulerAngle));
+                    ValueF6.setText(threePlaces.format(foot.minEulerAngle));
+                    ValueT5.setText(threePlaces.format(thigh.maxEulerAngle));
+                    ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
+                }
+            });
+            if (foot.sampleCounter % 10 == 0) {
                 estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
                 validationProcedure(estimationResult, dotData);
             }
+            foot.isStanding = false;
+            thigh.isStanding = false;
         }
 
-//        for (int j = 1; j < segment.valuesWindow.length; j++)
-//        {
-//            segment.valuesWindow[j - 1] = segment.valuesWindow[j];
-//        }
-//        segment.valuesWindow[segment.valuesWindow.length - 1] = eulerAngles[0] - segment.initAngleValue;
-//
-//        if (segment.windowCounter < strideWindow) {
-//            segment.windowCounter++;
-//            segment.windowClosed = false;
-//        }
-//        else {
-//            // Finding Max and Min value in that window
-//            for (Double angle : segment.valuesWindow) {
-//                if (angle > segment.maxEulerAngle_temp)
-//                    segment.maxEulerAngle_temp = angle;
-//                if (angle < segment.minEulerAngle_temp)
-//                    segment.minEulerAngle_temp = angle;
-//            }
-//            segment.windowCounter = 1;
-//            segment.windowClosed = true;
-//            segment.minEulerAngle = segment.minEulerAngle_temp;
-//            segment.maxEulerAngle = segment.maxEulerAngle_temp;
-//            segment.maxEulerAngle_temp = -UNREACHABLE_VALUE;
-//            segment.minEulerAngle_temp = UNREACHABLE_VALUE;
-//            runOnUiThread(new Runnable() {
-//                @SuppressLint("SetTextI18n")
-//                @Override
-//                public void run() {
-//                    ValueF5.setText(threePlaces.format(foot.maxEulerAngle));
-//                    ValueF6.setText(threePlaces.format(foot.minEulerAngle));
-//                    ValueT5.setText(threePlaces.format(thigh.maxEulerAngle));
-//                    ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
-//                }
-//            });
-//            if (segment == foot) {
-//                estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
-//                validationProcedure(estimationResult, dotData);
-//            }
-//        }
+
+        // Checking for Sitting mode /////////////////
+        if (segment == foot){
+            if(Math.abs(segment.bigWindow[0]) < 3 && Math.abs(segment.bigWindow[1]) < 3 &&
+                    Math.abs(segment.bigWindow[2]) < 3 && Math.abs(segment.bigWindow[3]) < 3 &&
+                    Math.abs(segment.bigWindow[4]) < 3 && Math.abs(segment.bigWindow[5]) < 3 &&
+                    Math.abs(segment.bigWindow[6]) < 3 && Math.abs(segment.bigWindow[7]) < 3 &&
+                    Math.abs(segment.bigWindow[8]) < 3 && Math.abs(segment.bigWindow[9]) < 3 &&
+                    Math.abs(segment.bigWindow[10]) < 3 &&
+                    Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
+
+                segment.isSitting = true;
+                segment.maxEulerAngle = segment.bigWindow[5];
+                segment.minEulerAngle = segment.bigWindow[5];
+            }
+        }
+        else if (segment == thigh) {
+            if(Math.abs(segment.bigWindow[0]) > 65 && Math.abs(segment.bigWindow[1]) > 65 &&
+                Math.abs(segment.bigWindow[2]) > 65 && Math.abs(segment.bigWindow[3]) > 65 &&
+                Math.abs(segment.bigWindow[4]) > 65 && Math.abs(segment.bigWindow[5]) > 65 &&
+                Math.abs(segment.bigWindow[6]) > 65 && Math.abs(segment.bigWindow[7]) > 65 &&
+                Math.abs(segment.bigWindow[8]) > 65 && Math.abs(segment.bigWindow[9]) > 65 &&
+                Math.abs(segment.bigWindow[10]) > 65 &&
+                Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
+
+                segment.isSitting = true;
+                segment.maxEulerAngle = segment.bigWindow[5];
+                segment.minEulerAngle = segment.bigWindow[5];
+            }
+
+        }
+        if(foot.isSitting && thigh.isSitting)
+        {
+            writeToLogs(threePlaces.format(thigh.maxEulerAngle) + "  +  " + threePlaces.format(thigh.minEulerAngle) + "  +  " +
+                    threePlaces.format(foot.maxEulerAngle) + "  +  " + threePlaces.format(foot.minEulerAngle));
+            writeToLogs("--------- Sitting ----------");
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+                    ValueF5.setText(threePlaces.format(foot.maxEulerAngle));
+                    ValueF6.setText(threePlaces.format(foot.minEulerAngle));
+                    ValueT5.setText(threePlaces.format(thigh.maxEulerAngle));
+                    ValueT6.setText(threePlaces.format(thigh.minEulerAngle));
+                }
+            });
+
+            if (foot.sampleCounter % 10 ==0) {
+                estimationResult = classifierModel_CNN(); // Calling the Classifier Model when the time window is completed
+                validationProcedure(estimationResult, dotData);
+            }
+            foot.isSitting = false;
+            thigh.isSitting = false;
+        }
+
 
     }
     public void validationProcedure(String estimationResult, DotData dotData){
@@ -933,6 +822,198 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
     }
 
+    public void fillFields(String address, DotData dotData, double[] eulerAngles){
+
+        if (address.equals(thigh.MAC)) {
+            thigh.angleValue = eulerAngles[0] - thigh.initAngleValue;
+            thigh.dataOutput[0] = threePlaces.format(eulerAngles[0] - thigh.initAngleValue);
+            thigh.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            thigh.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+
+                    ValueT1.setText(thigh.dataOutput[0] + "   deg");
+                    ValueT2.setText(thigh.dataOutput[1] + "   deg");
+                    ValueT3.setText(String.valueOf(thigh.dataOutput[3]));
+                    ValueT4.setText(thigh.xsDevice.getBatteryPercentage() + "   %");
+
+                }
+            });
+        } else if (address.equals(foot.MAC)) {
+            foot.angleValue = eulerAngles[0] - foot.initAngleValue;
+            foot.dataOutput[0] = threePlaces.format(eulerAngles[0]- foot.initAngleValue);
+            foot.dataOutput[1] = threePlaces.format(eulerAngles[1]);
+            foot.dataOutput[2] = threePlaces.format(eulerAngles[2]);
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run() {
+                    ValueF1.setText(foot.dataOutput[0] + "   deg");
+                    ValueF2.setText(foot.dataOutput[1] + "   deg");
+                    ValueF3.setText(String.valueOf(foot.dataOutput[3]));
+                    ValueF4.setText(foot.xsDevice.getBatteryPercentage() + "   %");
+                }
+            });
+        }
+    }
+    public String classifierModel_CNN(){
+
+        // Start timing
+        long startTime = System.nanoTime();
+
+        // Prepare input data for the model
+        float[][] input = new float[1][4];
+
+        input[0][0] = (float)  thigh.maxEulerAngle;
+        input[0][1] = (float)  thigh.minEulerAngle;
+        input[0][2] = (float)  foot.maxEulerAngle;
+        input[0][3] = (float)  foot.minEulerAngle;
+
+        // Array to hold model output
+        float[][] outputVal = new float[1][5];
+
+        // Run inference
+        if (tflite != null) {
+            tflite.run(input, outputVal);
+        }
+        // Interpret the output
+        String[] classLabels = {"Downstairs", "Sitting", "Standing", "Upstairs", "Walking"};
+        int maxIndex = 0;
+        for (int i = 1; i < outputVal[0].length; i++) {
+            if (outputVal[0][i] > outputVal[0][maxIndex]) {
+                maxIndex = i;
+            }
+        }
+        String result = classLabels[maxIndex];
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                valueResult.setText(result);
+            }
+        });
+
+        // Log the duration
+        long endTime = System.nanoTime();
+        long durationInMs = (endTime - startTime) / 1000000;
+        Log.d("Performance", "Execution time of classifierModel_CNN: " + durationInMs + " ms");
+
+        return result;
+    }
+
+    //////////////////////////////////////  Sequence of syncing  ///////////////////////////////////////////////////////////////////
+
+    public void scanButton_onClick(View view){
+        runOnUiThread(new Runnable() {
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void run() {
+                scanButton.setText("Scanning ...");
+                scanButton.setBackgroundColor(Color.parseColor("#FF9933"));
+            }
+        });
+
+        checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, BLUETOOTH_PERMISSION_CODE);
+        checkPermission(android.Manifest.permission.BLUETOOTH_SCAN, BLUETOOTH_SCAN_PERMISSION_CODE);
+
+        if(mXsScanner.startScan()) { writeToLogs("Scan started!"); }
+    }
+    @Override
+    public void onDotConnectionChanged(String address, int state) {
+        if (state == DotDevice.CONN_STATE_CONNECTED){
+            if(address.equals(thigh.MAC)){
+                if(address.equals(thigh.MAC)){
+                    thigh.isConnected = true;
+                    writeToLogs("Thigh IMU is connected!");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {thighScanStatus.setText("Connected");}
+                    });
+                }
+            }
+            else if(address.equals(foot.MAC)){
+                if(address.equals(foot.MAC)){
+                    foot.isConnected = true;
+                    writeToLogs("Foot IMU is connected!");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {footScanStatus.setText("Connected");}
+                    });
+                }
+            }
+
+        }
+        else if (state == DotDevice.CONN_STATE_DISCONNECTED){
+            if(address.equals(thigh.MAC)){
+                if(address.equals(thigh.MAC)){
+                    thigh.isConnected = false;
+                    writeToLogs("Thigh IMU is disconnected!");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {thighScanStatus.setText("Disconnected");}
+                    });
+                }
+            }
+            else if(address.equals(foot.MAC)){
+                if(address.equals(foot.MAC)){
+                    foot.isConnected = false;
+                    writeToLogs("Foot IMU is disconnected!");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {footScanStatus.setText("Disconnected");}
+                    });
+                }
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    scanButton.setText("Scan");
+                    measureButton.setText("Measure");
+                    syncButton.setText("Start Sync");
+                    disconnectButton.setText("Disconnect");
+                    scanButton.setBackgroundColor(Color.parseColor("#4CAF50"));
+                    syncButton.setBackgroundColor(Color.parseColor("#4CAF50"));
+                    disconnectButton.setBackgroundColor(Color.parseColor("#FD8888"));
+                }
+            });
+        }
+
+    }
+    @Override
+    public void onDotScanned(BluetoothDevice bluetoothDevice, int i) {
+        String address = bluetoothDevice.getAddress();
+
+        if(address.equals(thigh.MAC) && !thigh.isScanned){
+            thigh.isScanned = true;
+            thigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
+            thigh.xsDevice.connect();
+            thigh.isConnected = true;
+
+            writeToLogs(thigh.Name + " is scanned and logger is created");
+            mDeviceLst.add(thigh.xsDevice);
+        }
+        else if(address.equals(foot.MAC) && !foot.isScanned){
+            foot.isScanned = true;
+            foot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
+            foot.xsDevice.connect();
+            foot.isConnected = true;
+
+            mDeviceLst.add(foot.xsDevice);
+            writeToLogs(foot.Name + " is scanned and logger is created");
+        }
+        if(thigh.isScanned && foot.isScanned){
+            runOnUiThread(new Runnable() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void run(){footScanStatus.setText("Scanned");}
+            });
+            if(mXsScanner.stopScan()){
+                writeToLogs("Scan Stopped!");
+                //pauseMillis(500);
+            }
+        }
+    }
     @Override
     public void onDotInitDone(String address) { //onDotInitDone is the callback after the initialization is successful
         if (address.equals(thigh.MAC)) {
@@ -968,48 +1049,29 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                     scanButton.setBackgroundColor(Color.parseColor("#008080"));
                 }
             });
-            if(mXsScanner.stopScan()){
-                writeToLogs("Scan Stopped!");
-                //pauseMillis(500);
-                }
         }
     }
-    @Override
-    public void onDotScanned(BluetoothDevice bluetoothDevice, int i) {
-        String address = bluetoothDevice.getAddress();
+    public void syncButton_onClick(View view){
+        runOnUiThread(new Runnable() {
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void run() {
+                syncButton.setText("Syncing...");
+                syncButton.setBackgroundColor(Color.parseColor("#FF9933"));
+                thighScanStatus.setText("Syncing");
+                footScanStatus.setText("Syncing");
+            }
+        });
 
-        MeasurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
-
-        if(address.equals(thigh.MAC) && !thigh.isScanned){
-
-            //pauseMillis(500);
-            thigh.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
-            thigh.xsDevice.connect();
-            thigh.isConnected = true;
-            thigh.xsDevice.setMeasurementMode(MeasurementMode);
-            writeToLogs(thigh.Name + " is scanned and logger is created");
-            mDeviceLst.add(thigh.xsDevice);
-        }
-        else if(address.equals(foot.MAC) && !foot.isScanned){
-
-            //pauseMillis(500);
-            foot.xsDevice = new DotDevice(this.getApplicationContext(), bluetoothDevice, MainActivity.this);
-            foot.xsDevice.connect();
-            foot.isConnected = true;
-            foot.xsDevice.setMeasurementMode(MeasurementMode);
-            mDeviceLst.add(foot.xsDevice);
-            writeToLogs(foot.Name + " is scanned and logger is created");
-        }
-        if(thigh.isScanned && foot.isScanned){
-            runOnUiThread(new Runnable() {
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void run(){footScanStatus.setText("Scanned");}
-            });
-        }
+        // Stop Any Previous Syncing
+        DotSyncManager.getInstance(this).stopSyncing();
+        mDeviceLst.get(0).setRootDevice(true);
+        DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
     }
     @Override
     public void onSyncingDone(HashMap<String, Boolean> hashMap, boolean b, int i) {
+
+        MeasurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
         measureButton.setEnabled(true);
         disconnectButton.setEnabled(true);
         runOnUiThread(new Runnable() {
@@ -1020,9 +1082,52 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 syncButton.setBackgroundColor(Color.parseColor("#008080"));
             }
         });
+        thigh.xsDevice.setMeasurementMode(MeasurementMode);
+        foot.xsDevice.setMeasurementMode(MeasurementMode);
+
         writeToLogs(String.valueOf("Measurement Mode: " + thigh.xsDevice.getMeasurementMode())
                 + " / " + foot.xsDevice.getMeasurementMode());
         writeToLogs("\n ---------- Syncing is done! --------- \n");
+    }
+
+    @Override
+    public void onDotDataChanged(String address, DotData dotData) {
+
+        double[] eulerAngles = dotData.getEuler();
+
+        /* Fill the fields with appropriate values */
+        fillFields(address, dotData, eulerAngles);
+
+        if (isLoggingData) {
+            //int xxx = dotData.getPacketCounter();
+            if (address.equals(thigh.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + thigh.sampleCounter);
+                thigh.normalDataLogger.update(dotData);
+                thigh.sampleCounter++;
+                thigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+            } else if (address.equals(foot.MAC)) {
+                dotData.setPacketCounter(packetCounterCofficient + foot.sampleCounter);
+                foot.normalDataLogger.update(dotData);
+                foot.sampleCounter++;
+                foot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+            }
+        }
+        View view = findViewById(R.id.recognition_page);
+
+        if (address.equals(thigh.MAC)) {
+            // Initialization process
+            calculateInitialValue(thigh, dotData, eulerAngles);
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
+                processingValues(thigh, dotData, eulerAngles);
+        } else if (address.equals(foot.MAC))
+        {
+            // Initialization process
+            calculateInitialValue(foot, dotData, eulerAngles);
+            if (findViewById(R.id.recognition_page) != null) // To check if we are using the recognition page
+                processingValues(foot, dotData, eulerAngles);
+        }
+
+
     }
 
     /*
@@ -1133,40 +1238,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     /*
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
-    public void scanButton_onClick(View view){
-        runOnUiThread(new Runnable() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void run() {
-                scanButton.setText("Scanning ...");
-                scanButton.setBackgroundColor(Color.parseColor("#FF9933"));
-            }
-        });
-
-        checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, BLUETOOTH_PERMISSION_CODE);
-        checkPermission(android.Manifest.permission.BLUETOOTH_SCAN, BLUETOOTH_SCAN_PERMISSION_CODE);
-
-        if(mXsScanner.startScan()) { writeToLogs("Scan started!"); }
-    }
 
 
-    public void syncButton_onClick(View view){
-        runOnUiThread(new Runnable() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void run() {
-                syncButton.setText("Syncing...");
-                syncButton.setBackgroundColor(Color.parseColor("#FF9933"));
-                thighScanStatus.setText("Syncing");
-                footScanStatus.setText("Syncing");
-            }
-        });
-
-        // Stop Any Previous Syncing
-        DotSyncManager.getInstance(this).stopSyncing();
-        mDeviceLst.get(0).setRootDevice(true);
-        DotSyncManager.getInstance(this).startSyncing(mDeviceLst, 100);
-    }
     public void measureButton_onClick(View view){
 
         stopButton.setEnabled(true); // After starting measuring the stop button will be activated
