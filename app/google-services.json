@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "277881655597",
+    "project_id": "activitydetection-abe87",
+    "storage_bucket": "activitydetection-abe87.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:277881655597:android:70222d4974eb6bc58603a4",
+        "android_client_info": {
+          "package_name": "com.tmsimple.ehsanmovella"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSR9Wrmp_u1vHPC_yQKzjeI2TrOsfIF2I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
