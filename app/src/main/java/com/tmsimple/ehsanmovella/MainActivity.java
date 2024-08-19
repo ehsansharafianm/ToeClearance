@@ -74,8 +74,8 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     public static int strideWindow = 15;
     private Segment thigh, foot;
     private DotScanner mXsScanner;
-    public  String thighMAC = "D4:22:CD:00:63:71";
-    public String footMAC = "D4:22:CD:00:63:D6";
+    public  String thighMAC = "D4:22:CD:00:63:8B";
+    public String footMAC = "D4:22:CD:00:63:A4";
 
     //RT: "D4:22:CD:00:63:71"
     //RF: "D4:22:CD:00:63:D6"
@@ -648,12 +648,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         }
         segment.bigWindow[10] = segment.angleValue;
         // Check for Standing mode ////////////////////////////////
-        if(Math.abs(segment.bigWindow[0]) < 3 && Math.abs(segment.bigWindow[1]) < 3 &&
-           Math.abs(segment.bigWindow[2]) < 3 && Math.abs(segment.bigWindow[3]) < 3 &&
-           Math.abs(segment.bigWindow[4]) < 3 && Math.abs(segment.bigWindow[5]) < 3 &&
-           Math.abs(segment.bigWindow[6]) < 3 && Math.abs(segment.bigWindow[7]) < 3 &&
-           Math.abs(segment.bigWindow[8]) < 3 && Math.abs(segment.bigWindow[9]) < 3 &&
-           Math.abs(segment.bigWindow[10]) < 3 &&
+        if(Math.abs(segment.bigWindow[0]) < 4 && Math.abs(segment.bigWindow[1]) < 4 &&
+           Math.abs(segment.bigWindow[2]) < 4 && Math.abs(segment.bigWindow[3]) < 4 &&
+           Math.abs(segment.bigWindow[4]) < 4 && Math.abs(segment.bigWindow[5]) < 4 &&
+           Math.abs(segment.bigWindow[6]) < 4 && Math.abs(segment.bigWindow[7]) < 4 &&
+           Math.abs(segment.bigWindow[8]) < 4 && Math.abs(segment.bigWindow[9]) < 4 &&
+           Math.abs(segment.bigWindow[10]) < 4 &&
            Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
 
            segment.isStanding = true;
@@ -687,12 +687,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
         // Checking for Sitting mode /////////////////
         if (segment == foot){
-            if(Math.abs(segment.bigWindow[0]) < 3 && Math.abs(segment.bigWindow[1]) < 3 &&
-                    Math.abs(segment.bigWindow[2]) < 3 && Math.abs(segment.bigWindow[3]) < 3 &&
-                    Math.abs(segment.bigWindow[4]) < 3 && Math.abs(segment.bigWindow[5]) < 3 &&
-                    Math.abs(segment.bigWindow[6]) < 3 && Math.abs(segment.bigWindow[7]) < 3 &&
-                    Math.abs(segment.bigWindow[8]) < 3 && Math.abs(segment.bigWindow[9]) < 3 &&
-                    Math.abs(segment.bigWindow[10]) < 3 &&
+            if(Math.abs(segment.bigWindow[0]) < 4 && Math.abs(segment.bigWindow[1]) < 4 &&
+                    Math.abs(segment.bigWindow[2]) < 4 && Math.abs(segment.bigWindow[3]) < 4 &&
+                    Math.abs(segment.bigWindow[4]) < 4 && Math.abs(segment.bigWindow[5]) < 4 &&
+                    Math.abs(segment.bigWindow[6]) < 4 && Math.abs(segment.bigWindow[7]) < 4 &&
+                    Math.abs(segment.bigWindow[8]) < 4 && Math.abs(segment.bigWindow[9]) < 4 &&
+                    Math.abs(segment.bigWindow[10]) < 4 &&
                     Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
 
                 segment.isSitting = true;
@@ -701,12 +701,12 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             }
         }
         else if (segment == thigh) {
-            if(Math.abs(segment.bigWindow[0]) > 65 && Math.abs(segment.bigWindow[1]) > 65 &&
-                Math.abs(segment.bigWindow[2]) > 65 && Math.abs(segment.bigWindow[3]) > 65 &&
-                Math.abs(segment.bigWindow[4]) > 65 && Math.abs(segment.bigWindow[5]) > 65 &&
-                Math.abs(segment.bigWindow[6]) > 65 && Math.abs(segment.bigWindow[7]) > 65 &&
-                Math.abs(segment.bigWindow[8]) > 65 && Math.abs(segment.bigWindow[9]) > 65 &&
-                Math.abs(segment.bigWindow[10]) > 65 &&
+            if(Math.abs(segment.bigWindow[0])  > 60 && Math.abs(segment.bigWindow[1]) > 60 &&
+                Math.abs(segment.bigWindow[2]) > 60 && Math.abs(segment.bigWindow[3]) > 60 &&
+                Math.abs(segment.bigWindow[4]) > 60 && Math.abs(segment.bigWindow[5]) > 60 &&
+                Math.abs(segment.bigWindow[6]) > 60 && Math.abs(segment.bigWindow[7]) > 60 &&
+                Math.abs(segment.bigWindow[8]) > 60 && Math.abs(segment.bigWindow[9]) > 60 &&
+                Math.abs(segment.bigWindow[10]) > 60 &&
                 Math.abs(segment.bigWindow[10] - segment.bigWindow[0])  < 2 ) {
 
                 segment.isSitting = true;
@@ -1367,7 +1367,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     }
     /* For interpretation of the Model from Tensorflow light to Java code */
     private MappedByteBuffer loadModelFile() throws IOException {
-        AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model_v3.tflite");
+        AssetFileDescriptor fileDescriptor = this.getAssets().openFd("model_v4.tflite");
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
         FileChannel fileChannel = inputStream.getChannel();
         long startOffset = fileDescriptor.getStartOffset();
