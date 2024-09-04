@@ -292,6 +292,17 @@
         android:layout_marginTop="410dp"
         android:layout_toRightOf="@+id/scanButton"
         android:text="Show Log" />
+
+    <Switch
+        android:id="@+id/ImuSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/measureButton"
+        android:layout_marginLeft="40dp"
+        android:layout_marginTop="410dp"
+        android:layout_toRightOf="@+id/scanButton"
+        android:text="L-R IMU" />
+
     <Button
         android:id="@+id/dataLogButton"
         android:layout_width="180dp"

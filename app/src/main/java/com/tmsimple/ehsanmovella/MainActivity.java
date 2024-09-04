@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
 
     Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
             activity0Button, activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton ;
-    Switch logSwitch;
+    Switch logSwitch, ImuSwitch;
     private ArrayList<DotDevice> mDeviceLst;
     TextView thighScanStatus, footScanStatus, logContents;
     TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueF5, ValueF6, ValueT1, ValueT2, ValueT3, ValueT4, ValueT5, ValueT6, valueResult;
@@ -127,8 +127,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         setContentView(R.layout.first_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
-        thigh = new Segment("Thigh IMU", thighMAC);
-        foot = new Segment("Foot IMU", footMAC);
+
 
         // Initialize TensorFlow Lite interpreter
         try {
@@ -137,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
             e.printStackTrace();
         }
     }
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint({"ClickableViewAccessibility", "MissingInflatedId"})
     public void LabelingData(View view){
         setContentView((R.layout.labeling_data));
 
@@ -171,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         ValueT4 = findViewById(R.id.valueT4);
 
         logSwitch = findViewById(R.id.logSwitch);
+        ImuSwitch = findViewById(R.id.ImuSwitch);
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
@@ -200,6 +200,28 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
                 else{
                     logContents.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        ImuSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+
+
+                    thighMAC = "D4:CA:6E:F1:77:9B";
+                    footMAC = "D4:CA:6E:F1:78:4E";
+                    writeToLogs("IMU switch is checked for left side");
+                    writeToLogs(thighMAC);
+                    writeToLogs(footMAC);
+
+                }
+                else{
+                    thighMAC = "D4:22:CD:00:63:8B";
+                    footMAC = "D4:22:CD:00:63:A4";
+                    writeToLogs("IMU switch is checked for right side");
+                    writeToLogs(thighMAC);
+                    writeToLogs(footMAC);
                 }
             }
         });
@@ -378,6 +400,7 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
         valueResult = findViewById(R.id.valueResult);
 
         logSwitch = findViewById(R.id.logSwitch);
+        ImuSwitch = findViewById(R.id.ImuSwitch);
 
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
@@ -408,6 +431,27 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
                 }
                 else{
                     logContents.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        ImuSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+
+
+                    thighMAC = "D4:CA:6E:F1:77:9B";
+                    footMAC = "D4:CA:6E:F1:78:4E";
+                    writeToLogs("IMU switch is checked for right side");
+                    writeToLogs(thighMAC);
+                    writeToLogs(footMAC);
+                }
+                else{
+                    thighMAC = "D4:22:CD:00:63:8B";
+                    footMAC = "D4:22:CD:00:63:A4";
+                    writeToLogs("IMU switch is checked for left side");
+                    writeToLogs(thighMAC);
+                    writeToLogs(footMAC);
                 }
             }
         });
@@ -905,6 +949,11 @@ public class MainActivity extends AppCompatActivity implements DotDeviceCallback
     //////////////////////////////////////  Sequence of syncing  ///////////////////////////////////////////////////////////////////
 
     public void scanButton_onClick(View view){
+
+
+        thigh = new Segment("Thigh IMU", thighMAC);
+        foot = new Segment("Foot IMU", footMAC);
+
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
