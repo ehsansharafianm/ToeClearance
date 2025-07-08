@@ -328,14 +328,6 @@
         android:visibility="invisible" />
 
     <Button
-        android:id="@+id/activity1Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="350dp"
-        android:backgroundTint="#008884"
-        android:text="Standing" />
-    <Button
         android:id="@+id/stopButton"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
@@ -345,41 +337,6 @@
         android:backgroundTint="#BB3EFD"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
-
-    <Button
-        android:id="@+id/activity2Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="80dp"
-        android:layout_marginTop="400dp"
-        android:backgroundTint="#008884"
-        android:text="Walking" />
-
-    <Button
-        android:id="@+id/activity3Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="160dp"
-        android:layout_marginTop="450dp"
-        android:backgroundTint="#008884"
-        android:text="Upstairs" />
-    <Button
-        android:id="@+id/activity4Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="210dp"
-        android:layout_marginTop="510dp"
-        android:backgroundTint="#008884"
-        android:text="Downstairs" />
-
-    <Button
-        android:id="@+id/activity5Button"
-        android:layout_width="120dp"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="270dp"
-        android:layout_marginTop="570dp"
-        android:backgroundTint="#008884"
-        android:text="Sitting" />
 
 
 </RelativeLayout>

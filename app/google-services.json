@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "277881655597",
-    "project_id": "activitydetection-abe87",
-    "storage_bucket": "activitydetection-abe87.appspot.com"
+    "project_number": "749767861766",
+    "project_id": "toeclarance",
+    "storage_bucket": "toeclarance.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:277881655597:android:70222d4974eb6bc58603a4",
+        "mobilesdk_app_id": "1:749767861766:android:58f70e6d086cbc5311c587",
         "android_client_info": {
-          "package_name": "com.tmsimple.ehsanmovella"
+          "package_name": "com.tmsimple.ToeClearance"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBSR9Wrmp_u1vHPC_yQKzjeI2TrOsfIF2I"
+          "current_key": "AIzaSyDSLUZWeZJr3OKN6t4bsidVVflYqxHvWQc"
         }
       ],
       "services": {

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.tmsimple.ehsanmovella'
+    namespace 'com.tmsimple.ToeClearance'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.tmsimple.ehsanmovella"
+        applicationId "com.tmsimple.ToeClearance"
         minSdk 26
         targetSdk 33
         versionCode 1

@@ -28,16 +28,6 @@
         android:backgroundTint="#0A6814"
         android:layout_marginTop="50dp"/>
 
-    <Button
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:id="@+id/pg3"
-        android:text="Activity Recognition"
-        android:layout_below="@+id/pg2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:backgroundTint="#0A6814"
-        android:onClick="activityRecognition"/>
 
 
 
