@@ -245,7 +245,6 @@ public class ImuManager implements
         }
 
         if (isLoggingData) {
-            logManager.log("isLoggingData = " + isLoggingData);
             if (address.equals(thigh.MAC)) {
                 thigh.normalDataLogger.update(dotData);
                 thigh.sampleCounter++;

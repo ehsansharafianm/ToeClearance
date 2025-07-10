@@ -25,8 +25,10 @@ public class LogManager {
     }
 
     // You can update the log file later if needed
-    public void setLogFile(File logFile) {
+    public void setLogFile(File logFile, int subjectNumber) {
         this.logFile = logFile;
+        log("Subject number set: " + subjectNumber);
+        log("Log File Created");
     }
     public void setLogVisible(boolean visible) {
         if (logContents != null) {

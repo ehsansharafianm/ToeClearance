@@ -5,20 +5,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.le.ScanSettings;
+
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -29,42 +25,17 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.xsens.dot.android.sdk.DotSdk;
-import com.xsens.dot.android.sdk.events.DotData;
-import com.xsens.dot.android.sdk.interfaces.DotDeviceCallback;
-import com.xsens.dot.android.sdk.interfaces.DotMeasurementCallback;
-import com.xsens.dot.android.sdk.interfaces.DotRecordingCallback;
-import com.xsens.dot.android.sdk.interfaces.DotScannerCallback;
-import com.xsens.dot.android.sdk.interfaces.DotSyncCallback;
 import com.xsens.dot.android.sdk.models.DotDevice;
-import com.xsens.dot.android.sdk.models.DotPayload;
-import com.xsens.dot.android.sdk.models.DotRecordingFileInfo;
-import com.xsens.dot.android.sdk.models.DotRecordingState;
-import com.xsens.dot.android.sdk.models.DotSyncManager;
-import com.xsens.dot.android.sdk.models.FilterProfileInfo;
 import com.xsens.dot.android.sdk.utils.DotLogger;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.text.method.ScrollingMovementMethod;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
-
 import android.widget.Switch;
-import android.util.Log;
 
-
-import org.tensorflow.lite.Interpreter;
 
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
@@ -72,7 +43,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public String Version = "v1.2";
 
     private Segment thigh, foot;
-    private DotScanner mXsScanner;
     public String thighMAC = "D4:22:CD:00:63:8B"; //V2-17
     public String footMAC = "D4:22:CD:00:63:D6"; //V2-16
 
@@ -84,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     //RA: "D4:22:CD:00:04:D2";
     //CE-LA : "D4:CA:6E:F1:72:BF";
     public File logFile;
-    public FileOutputStream stream = null;
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
     public ArrayList<String> loggerFileNames = new ArrayList<>();
     public int subjectNumber = 0;
@@ -92,31 +61,16 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public String logFileName;
     public File logFilePath;
     public String subjectDateAndTime;
-    public int dataLogButtonIndex = 0;
-
     private ImuManager imuManager;
     private LogManager logManager;
+    private UiManager uiManager;
 
-    Button scanButton, syncButton, measureButton, disconnectButton, stopButton, uploadButton, dataLogButton,
-            activity0Button, activity1Button, activity2Button, activity3Button, activity4Button, activity5Button, homeButton,
-            activity6Button, activity7Button, activity8Button, activity9Button;
-    Switch logSwitch, ImuSwitch;
-    private ArrayList<DotDevice> mDeviceLst;
-    TextView thighScanStatus, footScanStatus, logContents;
-    TextView ValueF1, ValueF2, ValueF3, ValueF4, ValueT1, ValueT2, ValueT3, ValueT4;
-    EditText enterSubjectNumber;
-    DecimalFormat threePlaces = new DecimalFormat("##.#");
-    public int packetCounterCofficient = 0;
-
-    public int MeasurementMode;
+    TextView logContents;
     StorageReference storageReference;
-    //DatabaseReference databaseReference;
     public int SAMPLE_RATE = 60;
-    public String estimationResult;
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
-    public boolean conditionFindingPeak = false;
     private boolean isSyncing = false;
 
     @Override
@@ -125,10 +79,15 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         setContentView(R.layout.first_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
+
+
+
+
         checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, BLUETOOTH_PERMISSION_CODE);
         checkPermission(android.Manifest.permission.BLUETOOTH_SCAN, BLUETOOTH_SCAN_PERMISSION_CODE);
         checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, BLUETOOTH_PERMISSION_CODE);
         checkPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION, BLUETOOTH_PERMISSION_CODE);
+
 
         // ✅ Only create LogManager with null contents for now
         logManager = new LogManager(this, null, null);
@@ -147,130 +106,66 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         // NOW that logContents exists in this layout
         logManager.setLogContents(logContents);
 
+        // Set the root
+        uiManager = new UiManager();
+        uiManager.bindLabelingDataViews(getWindow().getDecorView().getRootView());
 
-        scanButton = findViewById(R.id.scanButton);
-        syncButton = findViewById(R.id.syncButton);
-        measureButton = findViewById(R.id.measureButton);
-        disconnectButton = findViewById(R.id.disconnectButton);
-        stopButton = findViewById(R.id.stopButton);
-        uploadButton = findViewById(R.id.uploadButton);
-        dataLogButton = findViewById(R.id.dataLogButton);
-        enterSubjectNumber = findViewById(R.id.enterSubjectNumber);
-        homeButton = findViewById(R.id.homeButton);
-
-        thighScanStatus = findViewById(R.id.thighStatusView);
-        footScanStatus = findViewById(R.id.footStatusView);
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
-        ValueF1 = findViewById(R.id.valueF1);
-        ValueF2 = findViewById(R.id.valueF2);
-        ValueF3 = findViewById(R.id.valueF3);
-        ValueF4 = findViewById(R.id.valueF4);
-        ValueT1 = findViewById(R.id.valueT1);
-        ValueT2 = findViewById(R.id.valueT2);
-        ValueT3 = findViewById(R.id.valueT3);
-        ValueT4 = findViewById(R.id.valueT4);
 
-        logSwitch = findViewById(R.id.logSwitch);
-        ImuSwitch = findViewById(R.id.ImuSwitch);
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
 
         // Before scanning all should be deactive; after each step they will be enabled
-        scanButton.setEnabled(false);
-        syncButton.setEnabled(false);
-        measureButton.setEnabled(false);
-        stopButton.setEnabled(false);
-        disconnectButton.setEnabled(false);
-        uploadButton.setEnabled(false);
-        dataLogButton.setEnabled(false);
+
+        uiManager.setButton(uiManager.scanButton,null, null, false);
+        uiManager.setButton(uiManager.syncButton, null, null, false);
+        uiManager.setButton(uiManager.measureButton, null, null, false);
+        uiManager.setButton(uiManager.stopButton, null, null, false);
+        uiManager.setButton(uiManager.disconnectButton, null, null, false);
+        uiManager.setButton(uiManager.uploadButton, null, null, false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, false);
 
 
-        //Log Show UI
-        logSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+        uiManager.setLogSwitchHandler(uiManager.logSwitch, logManager);
+        uiManager.setImuSwitchHandler(uiManager.ImuSwitch, logManager, new UiManager.OnImuSwitchChangedListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                logManager.setLogVisible(isChecked);
+            public void onLeftSideSelected() {
+                thighMAC = "D4:22:CD:00:A1:76";
+                footMAC = "D4:22:CD:00:9F:95";
+                logManager.log(thighMAC);
+                logManager.log(footMAC);
             }
-        });
-        ImuSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-
-                    thighMAC = "D4:22:CD:00:A1:76";
-                    footMAC = "D4:22:CD:00:9F:95";
-                    logManager.log("IMU switch is checked for left side");
-                    logManager.log(thighMAC);
-                    logManager.log(footMAC);
-
-                } else {
-                    thighMAC = "D4:22:CD:00:63:8B";
-                    footMAC = "D4:22:CD:00:63:A4";
-                    logManager.log("IMU switch is checked for right side");
-                    logManager.log(thighMAC);
-                    logManager.log(footMAC);
-                }
+            public void onRightSideSelected() {
+                thighMAC = "D4:22:CD:00:63:8B";
+                footMAC = "D4:22:CD:00:63:A4";
+                logManager.log(thighMAC);
+                logManager.log(footMAC);
             }
         });
 
-        enterSubjectNumber.addTextChangedListener(new TextWatcher() {
+        uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void onSubjectNumberEntered(int subjcetNu) {
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable string) {
-                if (!string.toString().isEmpty()) {
-                    try {
-                        subjectNumber = Integer.parseInt(enterSubjectNumber.getText().toString());
-                        subjectTitle = "Subject " + subjectNumber;
-                        subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
-                        logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
-                        logFile = new File(logFilePath, logFileName);
-                        logManager.setLogFile(logFile);
-
-                        logManager.log("Subject number set: " + subjectNumber);
-                        logManager.log("Log File Created");
-                        scanButton.setEnabled(true);
-                        //enterSubjectNumber.setEnabled(false);
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                        logManager.log("Subject Number is invalid");
-                    }
-                }
+                subjectTitle = "Subject " + subjcetNu;
+                subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+                logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
+                logFile = new File(logFilePath, logFileName);
+                logManager.setLogFile(logFile, subjcetNu);
+                subjectNumber = subjcetNu;
             }
         });
 
-        dataLogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dataLogButtonIndex++;
-                if (dataLogButtonIndex % 2 == 1) {
-                    imuManager.setLoggingData(true);
-                    dataLogButton.setBackgroundColor(Color.parseColor("#05edbb"));
-                    dataLogButton.setText("Data Logging ...");
-                    logManager.log(" ---- Data is Logging -----");
-                } else if (dataLogButtonIndex % 2 == 0 && dataLogButtonIndex > 1) {
-                    imuManager.setLoggingData(false);
-                    dataLogButton.setBackgroundColor(Color.parseColor("#4DBDDF"));
-                    dataLogButton.setText("Data Logging Stopped");
-                    logManager.log("---- Data Logging Stopped -----");
-                }
-            }
-        });
-        homeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setContentView(R.layout.first_page);
-            }
-        });
+        // DataLogger Button
+        uiManager.setDataLogButtonHandler(uiManager.dataLogButton, logManager, imuManager);
+
+        // Go back to firt page Button
+        uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
     }
 
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
@@ -287,8 +182,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         if (imuManager.startScan()) {
             logManager.log("Scan started!");
-            scanButton.setText("Scanning ...");
-            scanButton.setBackgroundColor(Color.parseColor("#FF9933"));
+
+            uiManager.setButton(uiManager.scanButton, "Scanning ...", "#FF9933", null);
         } else {
             logManager.log("Failed to start scan.");
         }
@@ -299,21 +194,22 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onImuConnectionChanged(String deviceName, boolean connected) {
         runOnUiThread(() -> {
             if (deviceName.equals("Thigh IMU")) {
-                thighScanStatus.setText(connected ? "Connected" : "Disconnected");
+                uiManager.setTextView(uiManager.thighScanStatus, connected ? "Connected" : "Disconnected", null, null);
             } else if (deviceName.equals("Foot IMU")) {
-                footScanStatus.setText(connected ? "Connected" : "Disconnected");
+                uiManager.setTextView(uiManager.footScanStatus, connected ? "Connected" : "Disconnected", null, null);
             }
 
             if (!connected && !isSyncing) {
                 // Only reset buttons on DISCONNECT
-                scanButton.setText("Scan");
-                measureButton.setText("Measure");
-                syncButton.setText("Start Sync");
-                disconnectButton.setText("Disconnect");
+                uiManager.setButton(uiManager.scanButton, "Scan", null, null);
+                uiManager.setButton(uiManager.measureButton, "Measure", null, null);
+                uiManager.setButton(uiManager.syncButton, "Start Sync", null, null);
+                uiManager.setButton(uiManager.disconnectButton, "Disconnect", null, null);
 
-                scanButton.setBackgroundColor(Color.parseColor("#4CAF50"));
-                syncButton.setBackgroundColor(Color.parseColor("#4CAF50"));
-                disconnectButton.setBackgroundColor(Color.parseColor("#FD8888"));
+
+                uiManager.setButton(uiManager.scanButton, null, "#4CAF50", null);
+                uiManager.setButton(uiManager.syncButton, null, "#4CAF50", null);
+                uiManager.setButton(uiManager.disconnectButton, null, "#FD8888", null);
             }
         });
     }
@@ -322,9 +218,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onImuScanned(String deviceName) {
         runOnUiThread(() -> {
             if (deviceName.equals("Thigh IMU")) {
-                thighScanStatus.setText("Scanned");
+                uiManager.setTextView(uiManager.thighScanStatus, "Scanned", null, null);
             } else if (deviceName.equals("Foot IMU")) {
-                footScanStatus.setText("Scanned");
+                uiManager.setTextView(uiManager.footScanStatus, "Scanned", null, null);
             }
         });
     }
@@ -333,24 +229,12 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onImuReady(String deviceName) {
         runOnUiThread(() -> {
             if (deviceName.equals("Thigh IMU")) {
-                thighScanStatus.setText("Ready");
+                uiManager.setTextView(uiManager.thighScanStatus, "Ready", null, null);
             } else if (deviceName.equals("Foot IMU")) {
-                footScanStatus.setText("Ready");
+                uiManager.setTextView(uiManager.footScanStatus, "Ready", null, null);
             }
-            scanButton.setEnabled(true);
-            syncButton.setEnabled(true);
-            scanButton.setText("Scanned");
-            scanButton.setBackgroundColor(Color.parseColor("#008080"));
-        });
-        runOnUiThread(new Runnable() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void run() {
-                scanButton.setEnabled(true);
-                syncButton.setEnabled(true);
-                scanButton.setText("Scanned");
-                scanButton.setBackgroundColor(Color.parseColor("#008080"));
-            }
+            uiManager.setButton(uiManager.syncButton, null, null, true);
+            uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
         });
     }
 
@@ -361,10 +245,11 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                syncButton.setText("Syncing...");
-                syncButton.setBackgroundColor(Color.parseColor("#FF9933"));
-                thighScanStatus.setText("Syncing");
-                footScanStatus.setText("Syncing");
+
+                uiManager.setButton(uiManager.syncButton, "Syncing...", "#FF9933", null);
+                uiManager.setTextView(uiManager.thighScanStatus, "Syncing", null, null);
+                uiManager.setTextView(uiManager.footScanStatus, "Syncing", null, null);
+
             }
         });
 
@@ -375,26 +260,30 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onSyncingDone() {
         isSyncing = false;
-        measureButton.setEnabled(true);
-        disconnectButton.setEnabled(true);
+
+        uiManager.setButton(uiManager.measureButton, null, null, true);
+        uiManager.setButton(uiManager.disconnectButton, null, null, true);
         runOnUiThread(() -> {
-            syncButton.setText("Sync Done");
-            syncButton.setBackgroundColor(Color.parseColor("#008080"));
-            measureButton.setEnabled(true);
-            disconnectButton.setEnabled(true);
+
+            uiManager.setButton(uiManager.syncButton, "Sync Done", "#008080", null);
+
+            uiManager.setButton(uiManager.measureButton, null, null, true);
+            uiManager.setButton(uiManager.disconnectButton, null, null, true);
             logManager.log("(Main): --- Syncing is done! ---- ");
         });
     }
 
     public void measureButton_onClick(View view) {
 
-        stopButton.setEnabled(true); // After starting measuring the stop button will be activated
-        dataLogButton.setEnabled(true);
+
+        uiManager.setButton(uiManager.stopButton, null, null, true);
+        uiManager.setButton(uiManager.dataLogButton, null, null, true);
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                measureButton.setText("Measuring...");
+                //measureButton.setText("Measuring...");
+                uiManager.setButton(uiManager.measureButton, "Measuring...", null, null);
             }
         });
 
@@ -404,27 +293,27 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             foot.normalDataLogger = createDataLog(foot.xsDevice);
         imuManager.startMeasurement();
     }
-
-    //  //////////////////////////////////////////////////// Callbacks ////////////////////////
+/////////////////// Callbacks ////////////////////////
 
 
     @Override
     public void onDataUpdated(String deviceAddress, double[] eulerAngles) {
 
-
         //logManager.log("onDataUpdated called for: " + deviceAddress + " euler: " + Arrays.toString(eulerAngles));
 
         runOnUiThread(() -> {
             if (deviceAddress.equals(thigh.MAC)) {
-                ValueT1.setText(String.format(Locale.US, "%.1f deg", eulerAngles[0]));
-                ValueT2.setText(String.format(Locale.US, "%.1f deg", eulerAngles[1]));
-                ValueT3.setText(String.valueOf(thigh.dataOutput[3]));  // Or show packetCounter if you want
-                ValueT4.setText(thigh.xsDevice.getBatteryPercentage() + "%");
+                uiManager.setTextView(uiManager.ValueT1, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
+                uiManager.setTextView(uiManager.ValueT2, String.format(Locale.US, "%.1f deg", eulerAngles[1]), null, null);
+                uiManager.setTextView(uiManager.ValueT3, String.valueOf(thigh.dataOutput[3]), null, null);
+                uiManager.setTextView(uiManager.ValueT4, thigh.xsDevice.getBatteryPercentage() + "%", null, null);
+
             } else if (deviceAddress.equals(foot.MAC)) {
-                ValueF1.setText(String.format(Locale.US, "%.1f deg", eulerAngles[0]));
-                ValueF2.setText(String.format(Locale.US, "%.1f deg", eulerAngles[1]));
-                ValueF3.setText(String.valueOf(foot.dataOutput[3]));
-                ValueF4.setText(foot.xsDevice.getBatteryPercentage() + "%");
+
+                uiManager.setTextView(uiManager.ValueF1, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
+                uiManager.setTextView(uiManager.ValueF2, String.format(Locale.US, "%.1f deg", eulerAngles[1]), null, null);
+                uiManager.setTextView(uiManager.ValueF3, String.valueOf(foot.dataOutput[3]), null, null);
+                uiManager.setTextView(uiManager.ValueF4, foot.xsDevice.getBatteryPercentage() + "%", null, null);
             }
         });
     }
@@ -438,38 +327,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     /////////////////////////////////////////////////////////      Functions     //////////////////////////////
      */
 
-    private void checkPermission(String permission, int requestCode) {
 
-        if (ContextCompat.checkSelfPermission(MainActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
-
-            // Requesting the permission
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, requestCode);
-        } else {
-            ////Toast.makeText(Page3.this, "Permission already granted", Toast.LENGTH_SHORT).show();
-        }
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode,
-                permissions,
-                grantResults);
-
-        if (requestCode == BLUETOOTH_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //Toast.makeText(Page3.this, "Bluetooth Connect Permission Granted", Toast.LENGTH_SHORT).show();
-            } else {
-                //Toast.makeText(Page3.this, "Bluetooth Connect Permission Denied", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == BLUETOOTH_SCAN_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //Toast.makeText(Page3.this, "Bluetooth Scan Permission Granted", Toast.LENGTH_SHORT).show();
-            } else {
-                //Toast.makeText(Page3.this, "Bluetooth Scan Permission Denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
 
     public DotLogger createDataLog(DotDevice device) {
 
@@ -502,39 +360,43 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
 
-
     public void disconnectButton_onClick(View view) {
-        measureButton.setEnabled(false);
-        dataLogButton.setEnabled(false);
+        // measureButton.setEnabled(false);
+        uiManager.setButton(uiManager.measureButton, null, null, false);
+        // dataLogButton.setEnabled(false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, false);
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                disconnectButton.setText("Disconnecting...");
-                disconnectButton.setBackgroundColor(Color.parseColor("#F60000"));
+                // disconnectButton.setText("Disconnecting...");
+                // disconnectButton.setBackgroundColor(Color.parseColor("#F60000"));
+                uiManager.setButton(uiManager.disconnectButton, "Disconnecting...", "#F60000", false);
             }
         });
         imuManager.disconnectAll();
 
     }
-
     public void stopButton_onClick(View view) { // After measuring, the dots should be stopped to for data logging
 
-        stopButton.setEnabled(false);
-        measureButton.setEnabled(false);
-        dataLogButton.setEnabled(false);
-        uploadButton.setEnabled(true);
+        uiManager.setButton(uiManager.stopButton, null, null, false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, false);
+        uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, false);
+        uiManager.setButton(uiManager.uploadButton, null, null, true);
+
         logManager.log("Stopping");
         imuManager.stopMeasurement();
-        measureButton.setText("Measuring Stopped");
+        //measureButton.setText("Measuring Stopped");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                measureButton.setText("Measuring Stopped");
+                // measureButton.setText("Measuring Stopped");
+                uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, null);
             }
         });
 
     }
+
 
     public void uploadButton_onClick(View view) {
         for (int i = 0; i < loggerFileNames.size(); i++) {
@@ -559,8 +421,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                     @SuppressLint("SetTextI18n")
                     @Override
                     public void onFailure(@NonNull Exception exception) {
-                        uploadButton.setText("Uploading Failed");
-                        uploadButton.setBackgroundColor(Color.parseColor("#f63e00"));
+                        //uploadButton.setText("Uploading Failed");
+                        //uploadButton.setBackgroundColor(Color.parseColor("#f63e00"));
+                        uiManager.setButton(uiManager.uploadButton, "Uploading Failed", "#f63e00", null);
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -569,8 +432,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                             @SuppressLint("SetTextI18n")
                             @Override
                             public void run() {
-                                uploadButton.setText("Uploading Done");
-                                uploadButton.setBackgroundColor(Color.parseColor("#0af056"));
+                                // uploadButton.setText("Uploading Done");
+                                // uploadButton.setBackgroundColor(Color.parseColor("#0af056"));
+                                uiManager.setButton(uiManager.uploadButton, "Uploading Done", "#0af056", null);
                             }
                         });
                         progressDialog.dismiss();
@@ -584,6 +448,33 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 });
 
     }
+
+
+    private void checkPermission(String permission, int requestCode) {
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, requestCode);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode,
+                permissions,
+                grantResults);
+
+        if (requestCode == BLUETOOTH_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //Toast.makeText(Page3.this, "Bluetooth Connect Permission Granted", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == BLUETOOTH_SCAN_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //Toast.makeText(Page3.this, "Bluetooth Scan Permission Granted", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+
 
 
 }
