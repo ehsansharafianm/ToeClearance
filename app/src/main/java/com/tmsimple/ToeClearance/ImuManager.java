@@ -74,6 +74,11 @@ public class ImuManager implements
 
     @Override
     public void onDotScanned(android.bluetooth.BluetoothDevice bluetoothDevice, int rssi) {
+
+        if (thigh == null || foot == null) {
+            logManager.log("Error: Segments not initialized before scanning!");
+            return;
+        }
         String address = bluetoothDevice.getAddress();
 
         if (address.equals(thigh.MAC) && !thigh.isScanned) {

@@ -12,11 +12,8 @@ import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -27,15 +24,11 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.utils.DotLogger;
-import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.text.method.ScrollingMovementMethod;
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import android.widget.Switch;
-
 
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
@@ -64,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     private ImuManager imuManager;
     private LogManager logManager;
     private UiManager uiManager;
+    private PermissionManager permissionManager;
+
 
     TextView logContents;
     StorageReference storageReference;
@@ -75,29 +70,21 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.first_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
+        logManager = new LogManager(this, logContents, null);
+        permissionManager = new PermissionManager(this, logManager);
+        permissionManager.requestAllPermissions();
 
-
-
-
-        checkPermission(android.Manifest.permission.BLUETOOTH_CONNECT, BLUETOOTH_PERMISSION_CODE);
-        checkPermission(android.Manifest.permission.BLUETOOTH_SCAN, BLUETOOTH_SCAN_PERMISSION_CODE);
-        checkPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, BLUETOOTH_PERMISSION_CODE);
-        checkPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION, BLUETOOTH_PERMISSION_CODE);
-
-
-        // ✅ Only create LogManager with null contents for now
-        logManager = new LogManager(this, null, null);
-
-        // ✅ Only create ImuManager ONCE here
-        imuManager = new ImuManager(this, this, logManager);
     }
 
     public void LabelingData(View view) {
         setContentView(R.layout.labeling_data);
+
 
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
@@ -117,6 +104,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
+
+        imuManager = new ImuManager(this, this, logManager);
+
 
         // Before scanning all should be deactive; after each step they will be enabled
 
@@ -233,8 +223,10 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             } else if (deviceName.equals("Foot IMU")) {
                 uiManager.setTextView(uiManager.footScanStatus, "Ready", null, null);
             }
-            uiManager.setButton(uiManager.syncButton, null, null, true);
-            uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
+            if (thigh.isReady && foot.isReady) {
+                uiManager.setButton(uiManager.syncButton, null, null, true);
+                uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
+            }
         });
     }
 
@@ -299,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onDataUpdated(String deviceAddress, double[] eulerAngles) {
 
-        //logManager.log("onDataUpdated called for: " + deviceAddress + " euler: " + Arrays.toString(eulerAngles));
+
 
         runOnUiThread(() -> {
             if (deviceAddress.equals(thigh.MAC)) {
@@ -359,7 +351,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     /*
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
-
     public void disconnectButton_onClick(View view) {
         // measureButton.setEnabled(false);
         uiManager.setButton(uiManager.measureButton, null, null, false);
@@ -375,7 +366,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             }
         });
         imuManager.disconnectAll();
-
     }
     public void stopButton_onClick(View view) { // After measuring, the dots should be stopped to for data logging
 
@@ -397,7 +387,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     }
 
-
     public void uploadButton_onClick(View view) {
         for (int i = 0; i < loggerFileNames.size(); i++) {
             logManager.log("Uploading data to cloud : " + loggerFileNames.get(i));
@@ -406,7 +395,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         uploadLogFileToCloud(Uri.fromFile(logFile), "log");
     }
-
     private void uploadLogFileToCloud(Uri file, String fileName) {
 
         final ProgressDialog progressDialog = new ProgressDialog(this);
@@ -448,32 +436,13 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 });
 
     }
-
-
-    private void checkPermission(String permission, int requestCode) {
-
-        if (ContextCompat.checkSelfPermission(MainActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, requestCode);
-        }
-    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode,
-                permissions,
-                grantResults);
-
-        if (requestCode == BLUETOOTH_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //Toast.makeText(Page3.this, "Bluetooth Connect Permission Granted", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == BLUETOOTH_SCAN_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                //Toast.makeText(Page3.this, "Bluetooth Scan Permission Granted", Toast.LENGTH_SHORT).show();
-            }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (permissionManager != null) {
+            permissionManager.handlePermissionResult(requestCode, grantResults);
         }
     }
-
-
 
 
 
