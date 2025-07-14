@@ -33,7 +33,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
 
-    public String Version = "v1.2";
+    //public String Version = "v1.2";
+    //public int SAMPLE_RATE = 60; //Hz
+
 
     private Segment thigh, foot;
     public String thighMAC = "D4:22:CD:00:63:8B"; //V2-17
@@ -47,8 +49,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     //RA: "D4:22:CD:00:04:D2";
     //CE-LA : "D4:CA:6E:F1:72:BF";
     public File logFile;
-    public ArrayList<File> loggerFilePaths = new ArrayList<>();
-    public ArrayList<String> loggerFileNames = new ArrayList<>();
+    //public ArrayList<File> loggerFilePaths = new ArrayList<>();
+    //public ArrayList<String> loggerFileNames = new ArrayList<>();
     public int subjectNumber = 0;
     public String subjectTitle;
     public String logFileName;
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     TextView logContents;
     StorageReference storageReference;
-    public int SAMPLE_RATE = 60;
+
 
     private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
     private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
@@ -106,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         logContents.setVisibility(View.INVISIBLE);
 
         imuManager = new ImuManager(this, this, logManager);
+        logManager.setImuManager(imuManager);
 
 
         // Before scanning all should be deactive; after each step they will be enabled
@@ -280,9 +283,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         });
 
         if (thigh.xsDevice != null)
-            thigh.normalDataLogger = createDataLog(thigh.xsDevice);
+            thigh.normalDataLogger = logManager.createDataLog(thigh.xsDevice, subjectTitle, subjectNumber, imuManager);
         if (foot.xsDevice != null)
-            foot.normalDataLogger = createDataLog(foot.xsDevice);
+            foot.normalDataLogger = logManager.createDataLog(foot.xsDevice, subjectTitle, subjectNumber, imuManager);
         imuManager.startMeasurement();
     }
 /////////////////// Callbacks ////////////////////////
@@ -321,6 +324,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
 
 
+    /*
     public DotLogger createDataLog(DotDevice device) {
 
         try {
@@ -348,6 +352,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             return logger;
         }
     }
+    */
+
     /*
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
@@ -388,13 +394,23 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     }
 
     public void uploadButton_onClick(View view) {
-        for (int i = 0; i < loggerFileNames.size(); i++) {
-            logManager.log("Uploading data to cloud : " + loggerFileNames.get(i));
-            uploadLogFileToCloud(Uri.fromFile(loggerFilePaths.get(i)), loggerFileNames.get(i));
+        for (int i = 0; i < logManager.loggerFileNames.size(); i++) {
+            logManager.log("Uploading data to cloud : " + logManager.loggerFileNames.get(i));
+            uploadLogFileToCloud(Uri.fromFile(logManager.loggerFilePaths.get(i)), logManager.loggerFileNames.get(i));
         }
 
         uploadLogFileToCloud(Uri.fromFile(logFile), "log");
     }
+    /*
+    public void uploadButton_onClick(View view) {
+        for (int i = 0; i < loggerFileNames.size(); i++) {
+            logManager.log("Uploading data to cloud : " + loggerFileNames.get(i));
+            uploadLogFileToCloud(Uri.fromFile(oggerFilePaths.get(i)), loggerFileNames.get(i));
+        }
+
+        uploadLogFileToCloud(Uri.fromFile(logFile), "log");
+    }
+     */
     private void uploadLogFileToCloud(Uri file, String fileName) {
 
         final ProgressDialog progressDialog = new ProgressDialog(this);
