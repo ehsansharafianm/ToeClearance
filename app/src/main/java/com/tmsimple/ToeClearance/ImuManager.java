@@ -11,6 +11,7 @@ import com.xsens.dot.android.sdk.interfaces.DotSyncCallback;
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.models.DotPayload;
 import com.xsens.dot.android.sdk.models.DotSyncManager;
+import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.bluetooth.le.ScanSettings;
 import android.graphics.Color;
@@ -143,7 +144,7 @@ public class ImuManager implements
     @Override
     public void onSyncingDone(HashMap<String, Boolean> results, boolean allSuccess, int errorCode) {
         // 1️⃣ Set measurement mode
-        measurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_1;
+        measurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_5;
         thigh.xsDevice.setMeasurementMode(measurementMode);
         foot.xsDevice.setMeasurementMode(measurementMode);
 
@@ -233,7 +234,9 @@ public class ImuManager implements
 
     @Override
     public void onDotDataChanged(String address, com.xsens.dot.android.sdk.events.DotData dotData) {
-        double[] eulerAngles = dotData.getEuler();
+
+        final float[] quats = dotData.getQuat();
+        final double[] eulerAngles = DotParser.quaternion2Euler(quats);
 
         /*logManager.log("onDotDataChanged: " + address + " euler: " +
                 String.format(Locale.US, "[%.3f, %.3f, %.3f]",

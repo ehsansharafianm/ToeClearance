@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#BBDDD6">
+    android:background="#FFFFFF">
 
 
     <TextView
@@ -62,7 +62,7 @@
         android:layout_marginRight="120dp"
         android:layout_toLeftOf="@+id/connectionStatusSpace"
         android:layout_below="@id/connectionStatusSpace"
-        android:backgroundTint="#977001"
+        android:backgroundTint="#717070"
         android:onClick="homeButton_onClick"
         android:textSize="10dp"
         android:textStyle="bold"
@@ -256,7 +256,7 @@
         android:layout_below="@id/valueT4"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="25dp"
-        android:backgroundTint="#3F51B5"
+        android:backgroundTint="#4DBDDF"
         android:onClick="measureButton_onClick"
         android:text="Measure" />
 
@@ -279,7 +279,7 @@
         android:layout_below="@id/valueT4"
         android:layout_marginLeft="30dp"
         android:layout_marginTop="414dp"
-        android:backgroundTint="#5C7EFA"
+        android:backgroundTint="#4DBDDF"
         android:onClick="uploadButton_onClick"
         android:text="Upload Data" />
 
@@ -322,7 +322,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="280dp"
         android:background="@drawable/rectangle"
-        android:backgroundTint="#045391"
+        android:backgroundTint="#426987"
         android:textColor="@color/white"
         android:textStyle="bold"
         android:visibility="invisible" />
@@ -334,7 +334,7 @@
         android:layout_below="@id/valueF4"
         android:layout_marginLeft="240dp"
         android:layout_marginTop="120dp"
-        android:backgroundTint="#BB3EFD"
+        android:backgroundTint="#FA5C5C"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
 

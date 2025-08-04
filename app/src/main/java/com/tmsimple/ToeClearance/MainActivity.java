@@ -295,7 +295,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onDataUpdated(String deviceAddress, double[] eulerAngles) {
 
 
-
         runOnUiThread(() -> {
             if (deviceAddress.equals(thigh.MAC)) {
                 uiManager.setTextView(uiManager.ValueT1, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#DAF0F3"
+    android:background="#FFFFFF"
     tools:context=".MainActivity">
 
     <TextView
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:text="Activity Detection"
+        android:text="Toe Clearance Study"
         android:textSize="30dp" />
 
     <Button
@@ -25,7 +25,7 @@
         android:onClick="LabelingData"
         android:layout_centerHorizontal="true"
         android:layout_below="@id/appTitle"
-        android:backgroundTint="#0A6814"
+        android:backgroundTint="#4DBDDF"
         android:layout_marginTop="50dp"/>
 
 
