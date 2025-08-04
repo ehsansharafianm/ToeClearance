@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/labeling_data_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
@@ -99,7 +100,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/thighStatusTitle"
         android:layout_toLeftOf="@+id/valueT1"
-        android:text="X Angle:"/>
+        android:text="Roll Angle:"/>
 
     <TextView
         android:id="@+id/valueT1"
@@ -196,7 +197,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/footStatusTitle"
         android:layout_toLeftOf="@+id/valueF1"
-        android:text="X Angle:"/>
+        android:text="Roll Angle:"/>
 
     <TextView
         android:id="@+id/valueF2"
@@ -261,13 +262,15 @@
         android:text="Measure" />
 
 
+
+
     <Button
         android:id="@+id/disconnectButton"
         android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueT4"
-        android:layout_marginLeft="210dp"
-        android:layout_marginTop="410dp"
+        android:layout_marginStart="230dp"
+        android:layout_marginTop="420dp"
         android:backgroundTint="#FA5C5C"
         android:onClick="disconnectButton_onClick"
         android:text="Disconnect" />
@@ -277,8 +280,8 @@
         android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueT4"
-        android:layout_marginLeft="30dp"
-        android:layout_marginTop="414dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="420dp"
         android:backgroundTint="#4DBDDF"
         android:onClick="uploadButton_onClick"
         android:text="Upload Data" />
@@ -308,10 +311,67 @@
         android:layout_width="180dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueF4"
-        android:layout_marginLeft="220dp"
+        android:layout_marginStart="220dp"
         android:layout_marginTop="20dp"
         android:backgroundTint="#4DBDDF"
         android:text="Data Log" />
+
+    <Button
+        android:id="@+id/labelButton1"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="110dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stand" />
+
+    <Button
+        android:id="@+id/labelButton2"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="160dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Level Walk" />
+    <Button
+        android:id="@+id/labelButton3"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="210dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Ramp Ascend" />
+    <Button
+        android:id="@+id/labelButton4"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="260dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Ramp Descend" />
+    <Button
+        android:id="@+id/labelButton5"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="310dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stair Ascend" />
+    <Button
+        android:id="@+id/labelButton6"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/valueT4"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="360dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stair Descend" />
+
 
 
     <TextView
@@ -332,8 +392,8 @@
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/valueF4"
-        android:layout_marginLeft="240dp"
-        android:layout_marginTop="120dp"
+        android:layout_marginStart="230dp"
+        android:layout_marginTop="150dp"
         android:backgroundTint="#FA5C5C"
         android:onClick="stopButton_onClick"
         android:text="Stop" />
