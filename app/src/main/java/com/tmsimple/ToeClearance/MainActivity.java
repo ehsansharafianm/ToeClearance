@@ -1,53 +1,34 @@
 package com.tmsimple.ToeClearance;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-
-import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
-
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.xsens.dot.android.sdk.models.DotDevice;
-import com.xsens.dot.android.sdk.utils.DotLogger;
 import android.text.method.ScrollingMovementMethod;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
 
-    //public String Version = "v1.2";
-    //public int SAMPLE_RATE = 60; //Hz
-
 
     private Segment thigh, foot;
     public String thighMAC = "D4:22:CD:00:63:8B"; //V2-17
     public String footMAC = "D4:22:CD:00:63:D6"; //V2-16
 
-    //RT: "D4:22:CD:00:63:71"
-    //RF: "D4:22:CD:00:63:D6"
-    //LT: "D4:22:CD:00:63:8B";
-    //LF: "D4:22:CD:00:63:A4";
-    //LA: "D4:CA:6E:F1:77:9B";
-    //RA: "D4:22:CD:00:04:D2";
-    //CE-LA : "D4:CA:6E:F1:72:BF";
     public File logFile;
     //public ArrayList<File> loggerFilePaths = new ArrayList<>();
     //public ArrayList<String> loggerFileNames = new ArrayList<>();
@@ -65,9 +46,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     TextView logContents;
     StorageReference storageReference;
 
-
-    private static final int BLUETOOTH_PERMISSION_CODE = 100; //Bluetooth Permission variable
-    private static final int BLUETOOTH_SCAN_PERMISSION_CODE = 101; //Bluetooth Permission variable
     private boolean isSyncing = false;
 
     @Override
@@ -87,17 +65,14 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void LabelingData(View view) {
         setContentView(R.layout.labeling_data);
 
-
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
         logContents.setVisibility(View.INVISIBLE);
-
         // NOW that logContents exists in this layout
         logManager.setLogContents(logContents);
 
-        // Set the root
-        uiManager = new UiManager();
-        uiManager.bindLabelingDataViews(getWindow().getDecorView().getRootView());
+
+        Button labelButton1 = findViewById(R.id.labelButton1);
 
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
@@ -109,6 +84,11 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         imuManager = new ImuManager(this, this, logManager);
         logManager.setImuManager(imuManager);
+
+        // Set the root
+        View root = findViewById(R.id.labeling_data_root);
+        uiManager = new UiManager(root, imuManager);
+        uiManager.bindLabelingDataViews(getWindow().getDecorView().getRootView());
 
 
         // Before scanning all should be deactive; after each step they will be enabled
@@ -157,8 +137,11 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         // DataLogger Button
         uiManager.setDataLogButtonHandler(uiManager.dataLogButton, logManager, imuManager);
 
-        // Go back to firt page Button
+        // Go back to first page Button
         uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
+        uiManager.bindLabelButtons();
+
+
     }
 
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
@@ -322,37 +305,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
      */
 
 
-
-    /*
-    public DotLogger createDataLog(DotDevice device) {
-
-        try {
-            File loggerFileFolder;
-            String loggerFileName;
-            loggerFileFolder = this.getApplicationContext().getExternalFilesDir(subjectTitle + "/" + device.getTag());
-            loggerFileName = device.getTag() + "_" + java.text.DateFormat.getDateTimeInstance().format(new Date()) + ", Subject " + subjectNumber + ".csv";
-            String path = loggerFileFolder.getPath() + "/" + loggerFileName;
-            File loggerFile = new File(path);
-
-            loggerFilePaths.add(loggerFile);
-            loggerFileNames.add(loggerFileName);
-            logManager.log(loggerFileName + " created");
-
-            DotLogger logger = new DotLogger(getApplicationContext(), 1, imuManager.getMeasurementMode(), path, device.getTag(),
-                    device.getFirmwareVersion(), true, SAMPLE_RATE, null, Version, 0);
-            return logger;
-
-
-        } catch (NullPointerException e) {
-            logManager.log("Error with creation of logger with" + device.getName());
-            DotLogger logger = new DotLogger(getApplicationContext(), 1, imuManager.getMeasurementMode(), "", device.getTag(),
-                    device.getFirmwareVersion(), true, SAMPLE_RATE, null,
-                    Version, 0);
-            return logger;
-        }
-    }
-    */
-
     /*
     ///////////////////////////////////////////////////////         Buttons      //////////////////////
      */
@@ -400,16 +352,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         uploadLogFileToCloud(Uri.fromFile(logFile), "log");
     }
-    /*
-    public void uploadButton_onClick(View view) {
-        for (int i = 0; i < loggerFileNames.size(); i++) {
-            logManager.log("Uploading data to cloud : " + loggerFileNames.get(i));
-            uploadLogFileToCloud(Uri.fromFile(oggerFilePaths.get(i)), loggerFileNames.get(i));
-        }
 
-        uploadLogFileToCloud(Uri.fromFile(logFile), "log");
-    }
-     */
     private void uploadLogFileToCloud(Uri file, String fileName) {
 
         final ProgressDialog progressDialog = new ProgressDialog(this);
@@ -458,7 +401,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             permissionManager.handlePermissionResult(requestCode, grantResults);
         }
     }
-
 
 
 }

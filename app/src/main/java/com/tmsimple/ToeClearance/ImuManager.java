@@ -39,7 +39,7 @@ public class ImuManager implements
     private Segment thigh;
     private Segment foot;
     private boolean isLoggingData = false;
-    private int packetCounterCoefficient = 0;
+    private int packetCounterOffset = 0;
 
     private LogManager logManager;
     int measurementMode;
@@ -71,6 +71,10 @@ public class ImuManager implements
 
     public boolean startScan() {
         return mScanner.startScan();
+    }
+
+    public void setPacketCounterOffset(int packetCounterOffset) {
+        this.packetCounterOffset = packetCounterOffset;
     }
 
     @Override
@@ -238,9 +242,7 @@ public class ImuManager implements
         final float[] quats = dotData.getQuat();
         final double[] eulerAngles = DotParser.quaternion2Euler(quats);
 
-        /*logManager.log("onDotDataChanged: " + address + " euler: " +
-                String.format(Locale.US, "[%.3f, %.3f, %.3f]",
-                        eulerAngles[0], eulerAngles[1], eulerAngles[2]));*/
+
 
         if (address.equals(thigh.MAC)) {
             thigh.angleValue = eulerAngles[0];
@@ -254,10 +256,13 @@ public class ImuManager implements
 
         if (isLoggingData) {
             if (address.equals(thigh.MAC)) {
+                dotData.setPacketCounter(dotData.getPacketCounter() + packetCounterOffset);
                 thigh.normalDataLogger.update(dotData);
                 thigh.sampleCounter++;
                 thigh.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+
             } else if (address.equals(foot.MAC)) {
+                dotData.setPacketCounter(dotData.getPacketCounter() + packetCounterOffset);
                 foot.normalDataLogger.update(dotData);
                 foot.sampleCounter++;
                 foot.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
