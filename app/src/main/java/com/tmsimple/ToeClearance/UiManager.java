@@ -21,9 +21,12 @@ public class UiManager {
     public Button scanButton, syncButton, measureButton, disconnectButton,
             stopButton, uploadButton, dataLogButton, homeButton;
     public Switch logSwitch, ImuSwitch;
-    public TextView thighScanStatus, footScanStatus, logContents;
-    public TextView ValueF1, ValueF2, ValueF3, ValueF4;
-    public TextView ValueT1, ValueT2, ValueT3, ValueT4;
+    public TextView imu1Status, imu2Status, logContents;
+    public TextView imu1Roll, imu2Roll;           // Roll angles
+    public TextView imu1Gyro, imu2Gyro;           // Gyro magnitudes
+    public TextView imu1Accel, imu2Accel;         // Linear accelerations
+    public TextView imu1Index, imu2Index;         // Packet indices
+    public TextView imu1Battery, imu2Battery;
     public EditText enterSubjectNumber;
 
     public UiManager(View rootView, ImuManager imuManager) {
@@ -33,6 +36,8 @@ public class UiManager {
 
     // Bind all Views from layout
     public void bindLabelingDataViews(View root) {
+
+        enterSubjectNumber = root.findViewById(R.id.enterSubjectNumber);
         scanButton = root.findViewById(R.id.scanButton);
         syncButton = root.findViewById(R.id.syncButton);
         measureButton = root.findViewById(R.id.measureButton);
@@ -45,21 +50,26 @@ public class UiManager {
         logSwitch = root.findViewById(R.id.logSwitch);
         ImuSwitch = root.findViewById(R.id.ImuSwitch);
 
-        thighScanStatus = root.findViewById(R.id.thighStatusView);
-        footScanStatus = root.findViewById(R.id.footStatusView);
+        // Status fields
+        imu1Status = root.findViewById(R.id.imu1Status);
+        imu2Status = root.findViewById(R.id.imu2Status);
         logContents = root.findViewById(R.id.logContents);
 
-        ValueF1 = root.findViewById(R.id.valueF1);
-        ValueF2 = root.findViewById(R.id.valueF2);
-        ValueF3 = root.findViewById(R.id.valueF3);
-        ValueF4 = root.findViewById(R.id.valueF4);
+        // IMU1 data fields
+        imu1Roll = root.findViewById(R.id.imu1Roll);
+        imu1Gyro = root.findViewById(R.id.imu1Gyro);
+        imu1Accel = root.findViewById(R.id.imu1Accel);
+        imu1Index = root.findViewById(R.id.imu1Index);
+        imu1Battery = root.findViewById(R.id.imu1Battery);
 
-        ValueT1 = root.findViewById(R.id.valueT1);
-        ValueT2 = root.findViewById(R.id.valueT2);
-        ValueT3 = root.findViewById(R.id.valueT3);
-        ValueT4 = root.findViewById(R.id.valueT4);
+        // IMU2 data fields
+        imu2Roll = root.findViewById(R.id.imu2Roll);
+        imu2Gyro = root.findViewById(R.id.imu2Gyro);
+        imu2Accel = root.findViewById(R.id.imu2Accel);
+        imu2Index = root.findViewById(R.id.imu2Index);
+        imu2Battery = root.findViewById(R.id.imu2Battery);
 
-        enterSubjectNumber = root.findViewById(R.id.enterSubjectNumber);
+
     }
 
 
@@ -245,13 +255,16 @@ public class UiManager {
 
     // Optional utility: clear all text fields
     public void clearAllValues() {
-        ValueF1.setText("");
-        ValueF2.setText("");
-        ValueF3.setText("");
-        ValueF4.setText("");
-        ValueT1.setText("");
-        ValueT2.setText("");
-        ValueT3.setText("");
-        ValueT4.setText("");
+        imu1Roll.setText("");
+        imu1Gyro.setText("");
+        imu1Accel.setText("");
+        imu1Index.setText("");
+        imu1Battery.setText("");
+
+        imu2Roll.setText("");
+        imu2Gyro.setText("");
+        imu2Accel.setText("");
+        imu2Index.setText("");
+        imu2Battery.setText("");
     }
 }

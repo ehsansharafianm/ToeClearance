@@ -25,9 +25,10 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
 
 
-    private Segment thigh, foot;
-    public String thighMAC = "D4:22:CD:00:63:8B"; //V2-17
-    public String footMAC = "D4:22:CD:00:63:D6"; //V2-16
+    private Segment IMU1, IMU2;
+    public String IMU1MAC = "D4:22:CD:00:63:D6"; //V2-16
+    public String IMU2MAC = "D4:22:CD:00:63:8B"; //V2-17
+
 
     public File logFile;
     //public ArrayList<File> loggerFilePaths = new ArrayList<>();
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         View root = findViewById(R.id.labeling_data_root);
         uiManager = new UiManager(root, imuManager);
         uiManager.bindLabelingDataViews(getWindow().getDecorView().getRootView());
+        //uiManager.bindLabelingDataViews(findViewById(R.id.labeling_data_root));
 
 
         // Before scanning all should be deactive; after each step they will be enabled
@@ -107,17 +109,17 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setImuSwitchHandler(uiManager.ImuSwitch, logManager, new UiManager.OnImuSwitchChangedListener() {
             @Override
             public void onLeftSideSelected() {
-                thighMAC = "D4:22:CD:00:A1:76";
-                footMAC = "D4:22:CD:00:9F:95";
-                logManager.log(thighMAC);
-                logManager.log(footMAC);
+                IMU1MAC = "D4:22:CD:00:A1:76";
+                IMU2MAC = "D4:22:CD:00:9F:95";
+                logManager.log(IMU1MAC);
+                logManager.log(IMU2MAC);
             }
             @Override
             public void onRightSideSelected() {
-                thighMAC = "D4:22:CD:00:63:8B";
-                footMAC = "D4:22:CD:00:63:A4";
-                logManager.log(thighMAC);
-                logManager.log(footMAC);
+                IMU1MAC = "D4:22:CD:00:63:8B";
+                IMU2MAC = "D4:22:CD:00:63:A4";
+                logManager.log(IMU1MAC);
+                logManager.log(IMU2MAC);
             }
         });
 
@@ -141,6 +143,12 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
         uiManager.bindLabelButtons();
 
+        // After uiManager.bindLabelingDataViews() call, add:
+        if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
+        if (uiManager.imu1Accel == null) logManager.log("ERROR: imu1Accel not bound!");
+        if (uiManager.imu2Gyro == null) logManager.log("ERROR: imu2Gyro not bound!");
+        if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
+
 
     }
 
@@ -152,9 +160,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void scanButton_onClick(View view) {
 
         // Configure IMU segments
-        thigh = new Segment("Thigh IMU", thighMAC);
-        foot = new Segment("Foot IMU", footMAC);
-        imuManager.setSegments(thigh, foot);
+        IMU1 = new Segment("IMU1 IMU", IMU1MAC);
+        IMU2 = new Segment("IMU2 IMU", IMU2MAC);
+        imuManager.setSegments(IMU1, IMU2);
 
         if (imuManager.startScan()) {
             logManager.log("Scan started!");
@@ -169,10 +177,10 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onImuConnectionChanged(String deviceName, boolean connected) {
         runOnUiThread(() -> {
-            if (deviceName.equals("Thigh IMU")) {
-                uiManager.setTextView(uiManager.thighScanStatus, connected ? "Connected" : "Disconnected", null, null);
-            } else if (deviceName.equals("Foot IMU")) {
-                uiManager.setTextView(uiManager.footScanStatus, connected ? "Connected" : "Disconnected", null, null);
+            if (deviceName.equals("IMU1 IMU")) {
+                uiManager.setTextView(uiManager.imu1Status, connected ? "Connected" : "Disconnected", null, null);
+            } else if (deviceName.equals("IMU2 IMU")) {
+                uiManager.setTextView(uiManager.imu2Status, connected ? "Connected" : "Disconnected", null, null);
             }
 
             if (!connected && !isSyncing) {
@@ -193,10 +201,10 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onImuScanned(String deviceName) {
         runOnUiThread(() -> {
-            if (deviceName.equals("Thigh IMU")) {
-                uiManager.setTextView(uiManager.thighScanStatus, "Scanned", null, null);
-            } else if (deviceName.equals("Foot IMU")) {
-                uiManager.setTextView(uiManager.footScanStatus, "Scanned", null, null);
+            if (deviceName.equals("IMU1 IMU")) {
+                uiManager.setTextView(uiManager.imu1Status, "Scanned", null, null);
+            } else if (deviceName.equals("IMU2 IMU")) {
+                uiManager.setTextView(uiManager.imu2Status, "Scanned", null, null);
             }
         });
     }
@@ -204,12 +212,12 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onImuReady(String deviceName) {
         runOnUiThread(() -> {
-            if (deviceName.equals("Thigh IMU")) {
-                uiManager.setTextView(uiManager.thighScanStatus, "Ready", null, null);
-            } else if (deviceName.equals("Foot IMU")) {
-                uiManager.setTextView(uiManager.footScanStatus, "Ready", null, null);
+            if (deviceName.equals("IMU1 IMU")) {
+                uiManager.setTextView(uiManager.imu1Status, "Ready", null, null);
+            } else if (deviceName.equals("IMU2 IMU")) {
+                uiManager.setTextView(uiManager.imu2Status, "Ready", null, null);
             }
-            if (thigh.isReady && foot.isReady) {
+            if (IMU1.isReady && IMU2.isReady) {
                 uiManager.setButton(uiManager.syncButton, null, null, true);
                 uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
             }
@@ -225,8 +233,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             public void run() {
 
                 uiManager.setButton(uiManager.syncButton, "Syncing...", "#FF9933", null);
-                uiManager.setTextView(uiManager.thighScanStatus, "Syncing", null, null);
-                uiManager.setTextView(uiManager.footScanStatus, "Syncing", null, null);
+                uiManager.setTextView(uiManager.imu1Status, "Syncing", null, null);
+                uiManager.setTextView(uiManager.imu2Status, "Syncing", null, null);
 
             }
         });
@@ -265,10 +273,10 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             }
         });
 
-        if (thigh.xsDevice != null)
-            thigh.normalDataLogger = logManager.createDataLog(thigh.xsDevice, subjectTitle, subjectNumber, imuManager);
-        if (foot.xsDevice != null)
-            foot.normalDataLogger = logManager.createDataLog(foot.xsDevice, subjectTitle, subjectNumber, imuManager);
+        if (IMU1.xsDevice != null)
+            IMU1.normalDataLogger = logManager.createDataLog(IMU1.xsDevice, subjectTitle, subjectNumber, imuManager);
+        if (IMU2.xsDevice != null)
+            IMU2.normalDataLogger = logManager.createDataLog(IMU2.xsDevice, subjectTitle, subjectNumber, imuManager);
         imuManager.startMeasurement();
     }
 /////////////////// Callbacks ////////////////////////
@@ -277,20 +285,29 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onDataUpdated(String deviceAddress, double[] eulerAngles) {
 
-
         runOnUiThread(() -> {
-            if (deviceAddress.equals(thigh.MAC)) {
-                uiManager.setTextView(uiManager.ValueT1, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
-                uiManager.setTextView(uiManager.ValueT2, String.format(Locale.US, "%.1f deg", eulerAngles[1]), null, null);
-                uiManager.setTextView(uiManager.ValueT3, String.valueOf(thigh.dataOutput[3]), null, null);
-                uiManager.setTextView(uiManager.ValueT4, thigh.xsDevice.getBatteryPercentage() + "%", null, null);
+            if (deviceAddress.equals(IMU1.MAC)) {
+                uiManager.setTextView(uiManager.imu1Roll, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
+                uiManager.setTextView(uiManager.imu1Index, String.valueOf(IMU1.dataOutput[3]), null, null);
+                uiManager.setTextView(uiManager.imu1Battery, IMU1.xsDevice.getBatteryPercentage() + "%", null, null);
+            } else if (deviceAddress.equals(IMU2.MAC)) {
+                uiManager.setTextView(uiManager.imu2Roll, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
+                uiManager.setTextView(uiManager.imu2Index, String.valueOf(IMU2.dataOutput[3]), null, null);
+                uiManager.setTextView(uiManager.imu2Battery, IMU2.xsDevice.getBatteryPercentage() + "%", null, null);
+            }
+        });
+    }
+    @Override
+    public void onZuptDataUpdated(String deviceAddress, double gyroMag, double linearAccelMag) {
+        runOnUiThread(() -> {
 
-            } else if (deviceAddress.equals(foot.MAC)) {
+            if (deviceAddress.equals("IMU1")) {  // Changed from IMU1.MAC
+                uiManager.setTextView(uiManager.imu1Gyro, String.format(Locale.US,"%.2f", gyroMag), null, null);
+                uiManager.setTextView(uiManager.imu1Accel, String.format(Locale.US,"%.2f", linearAccelMag), null, null);
 
-                uiManager.setTextView(uiManager.ValueF1, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
-                uiManager.setTextView(uiManager.ValueF2, String.format(Locale.US, "%.1f deg", eulerAngles[1]), null, null);
-                uiManager.setTextView(uiManager.ValueF3, String.valueOf(foot.dataOutput[3]), null, null);
-                uiManager.setTextView(uiManager.ValueF4, foot.xsDevice.getBatteryPercentage() + "%", null, null);
+            } else if (deviceAddress.equals("IMU2")) {  // Changed from IMU2.MAC
+                uiManager.setTextView(uiManager.imu2Gyro, String.format(Locale.US,"%.2f", gyroMag), null, null);
+                uiManager.setTextView(uiManager.imu2Accel, String.format(Locale.US,"%.2f", linearAccelMag), null, null);
             }
         });
     }

@@ -18,10 +18,17 @@ public class Segment {
 
     public DotLogger normalDataLogger;
 
+    // Calibration fields
+    public double sumOfInitialRoll = 0.0;
+    public double sumOfInitialGyroX = 0.0, sumOfInitialGyroY = 0.0, sumOfInitialGyroZ = 0.0;
+    public double sumOfInitialAccelX = 0.0, sumOfInitialAccelY = 0.0, sumOfInitialAccelZ = 0.0;
+
+    public double initRollValue = 0.0;
+    public double initGyroXValue = 0.0, initGyroYValue = 0.0, initGyroZValue = 0.0;
+    public double initAccelXValue = 0.0, initAccelYValue = 0.0, initAccelZValue = 0.0;
 
 
 
-    public double[][] initEulerSamples;
 
     public Segment(String Name, String MAC){
         this.MAC = MAC;
