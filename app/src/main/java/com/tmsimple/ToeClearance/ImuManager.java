@@ -46,7 +46,7 @@ public class ImuManager implements
     int measurementMode;
 
 
-    DecimalFormat threePlaces = new DecimalFormat("##.#");
+    DecimalFormat decimalFormat = new DecimalFormat("##.##");
 
     public ImuManager(Context context, ImuManagerListener listener, LogManager logManager) {
         this.context = context;
@@ -66,13 +66,11 @@ public class ImuManager implements
     }
 
 
-    @Override
     public void onZuptDetected(String imuId, int packetCounter) {
         // This gets called when ZUPT starts - you can leave it empty for now
         // or add any additional logic you want when ZUPT is detected
     }
 
-    @Override
     public void onZuptEnded(String imuId, int packetCounter) {
         // This gets called when ZUPT ends - you can leave it empty for now
         // or add any additional logic you want when ZUPT ends
@@ -80,13 +78,28 @@ public class ImuManager implements
 
     @Override
     public void onZuptDataUpdated(String imuId, double gyroMag, double linearAccelMag) {
-
         // This forwards the magnitude data to MainActivity for UI updates
         if (listener != null) {
             listener.onZuptDataUpdated(imuId, gyroMag, linearAccelMag);
         } else {
             logManager.log("ERROR: MainActivity listener is null!");
         }
+    }
+
+    // ADD THIS NEW METHOD:
+    @Override
+    public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag) {
+        /*// Handle the optimal ZUPT detection from sliding window
+        logManager.log("Optimal ZUPT received in ImuManager: " + imuId + " at packet: " + packetCounter +
+                    " with score - Gyro: " + String.format("%.3f", gyroMag) +
+                    ", Accel: " + String.format("%.3f", accelMag));*/
+        logManager.log("===================================");
+
+        // You can add additional processing here if needed:
+        // - Forward to MainActivity if needed
+        // - Trigger step counting logic
+        // - Update gait cycle analysis
+        // - etc.
     }
 
     public void setSegments(Segment IMU1, Segment IMU2) {
@@ -290,36 +303,41 @@ public class ImuManager implements
             listener.onDataUpdated(address, eulerAngles);
         }
 
+
+        // ZUPT PROCESSING - happens always (outside logging condition)
+        if (address.equals(IMU1.MAC)) {
+            // Use calibrated data for ZUPT
+            double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
+            double calibratedGyro = calibrated[1];
+            double calibratedAccel = calibrated[2];
+            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
+
+        } else if (address.equals(IMU2.MAC)) {
+            // Use calibrated data for ZUPT
+            double[] calibrated = applyCalibratedData(IMU2, eulerAngles, gyroData, accelData);
+            double calibratedGyro = calibrated[1];
+            double calibratedAccel = calibrated[2];
+            //zuptDetector.processNewImuData("IMU2", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
+        }
+
+
         // PRESERVE THE ORIGINAL LOGGING SECTION
         if (isLoggingData) {
             if (address.equals(IMU1.MAC)) {
 
                 IMU1.normalDataLogger.update(dotData);
                 IMU1.sampleCounter++;
-                IMU1.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+                IMU1.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
 
             } else if (address.equals(IMU2.MAC)) {
 
                 IMU2.normalDataLogger.update(dotData);
                 IMU2.sampleCounter++;
-                IMU2.dataOutput[3] = threePlaces.format(dotData.getPacketCounter());
+                IMU2.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
             }
         }
 
-        // ZUPT PROCESSING - happens always (outside logging condition)
-        if (address.equals(IMU1.MAC)) {
-            // Use calibrated data for ZUPT
-            double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
-            double[] calibratedGyro = {calibrated[1], calibrated[2], calibrated[3]};
-            double[] calibratedAccel = {calibrated[4], calibrated[5], calibrated[6]};
-            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, dotData.getPacketCounter());
 
-        } else if (address.equals(IMU2.MAC)) {
-            double[] calibrated = applyCalibratedData(IMU2, eulerAngles, gyroData, accelData);
-            double[] calibratedGyro = {calibrated[1], calibrated[2], calibrated[3]};
-            double[] calibratedAccel = {calibrated[4], calibrated[5], calibrated[6]};
-            zuptDetector.processNewImuData("IMU2", calibratedGyro, calibratedAccel, dotData.getPacketCounter());
-        }
     }
 
     public void setLoggingData(boolean logging) {
@@ -332,32 +350,30 @@ public class ImuManager implements
 
             // Accumulate all sensor values
             segment.sumOfInitialRoll += eulerAngles[0];
-            segment.sumOfInitialGyroX += gyroData[0];
-            segment.sumOfInitialGyroY += gyroData[1];
-            segment.sumOfInitialGyroZ += gyroData[2];
-            segment.sumOfInitialAccelX += accelData[0];
-            segment.sumOfInitialAccelY += accelData[1];
-            segment.sumOfInitialAccelZ += accelData[2];
+            segment.sumOfInitialGyro += Math.sqrt(
+                                            gyroData[0] * gyroData[0] +
+                                            gyroData[1] * gyroData[1] +
+                                            gyroData[2] * gyroData[2]);
+            segment.sumOfInitialAccel += Math.sqrt(
+                                            accelData[0] * accelData[0] +
+                                            accelData[1] * accelData[1] +
+                                            accelData[2] * accelData[2]);
 
             // Calculate running averages
             segment.initRollValue = segment.sumOfInitialRoll / segment.initializationCounter;
-            segment.initGyroXValue = segment.sumOfInitialGyroX / segment.initializationCounter;
-            segment.initGyroYValue = segment.sumOfInitialGyroY / segment.initializationCounter;
-            segment.initGyroZValue = segment.sumOfInitialGyroZ / segment.initializationCounter;
-            segment.initAccelXValue = segment.sumOfInitialAccelX / segment.initializationCounter;
-            segment.initAccelYValue = segment.sumOfInitialAccelY / segment.initializationCounter;
-            segment.initAccelZValue = segment.sumOfInitialAccelZ / segment.initializationCounter;
+            segment.initGyroValue = segment.sumOfInitialGyro / segment.initializationCounter;
+            segment.initAccelValue = segment.sumOfInitialAccel / segment.initializationCounter;
 
             // Log every 2 seconds (120 samples at 60Hz)
             if (segment.initializationCounter % 120 == 119) {
                 logManager.log("Initial values for " + segment.Name + ":");
-                logManager.log("  Roll: " + threePlaces.format(segment.initRollValue));
-                logManager.log("  Gyro: [" + threePlaces.format(segment.initGyroXValue) + ", " +
-                        threePlaces.format(segment.initGyroYValue) + ", " +
-                        threePlaces.format(segment.initGyroZValue) + "]");
-                logManager.log("  Accel: [" + threePlaces.format(segment.initAccelXValue) + ", " +
-                        threePlaces.format(segment.initAccelYValue) + ", " +
-                        threePlaces.format(segment.initAccelZValue) + "]");
+                logManager.log("  Roll: " + decimalFormat.format(segment.initRollValue));
+
+                logManager.log("  Gyro: " +
+                                decimalFormat.format(segment.initGyroValue));
+
+                logManager.log("  Accel: " +
+                        decimalFormat.format(segment.initAccelValue));
             }
 
             segment.initializationCounter++;
@@ -369,13 +385,13 @@ public class ImuManager implements
         double[] calibrated = new double[7];
 
         // Subtract initial values from current measurements
-        calibrated[0] = eulerAngles[0] - segment.initRollValue;        // Roll
-        calibrated[1] = gyroData[0] - segment.initGyroXValue;         // Gyro X
-        calibrated[2] = gyroData[1] - segment.initGyroYValue;         // Gyro Y
-        calibrated[3] = gyroData[2] - segment.initGyroZValue;         // Gyro Z
-        calibrated[4] = accelData[0] - segment.initAccelXValue;       // Accel X
-        calibrated[5] = accelData[1] - segment.initAccelYValue;       // Accel Y
-        calibrated[6] = accelData[2] - segment.initAccelZValue;       // Accel Z
+        calibrated[0] = eulerAngles[0] - segment.initRollValue;    // Roll
+
+        calibrated[1] = Math.sqrt(gyroData[0]*gyroData[0] + gyroData[1]*gyroData[1] + gyroData[2]*gyroData[2]) -
+                        segment.initGyroValue;
+
+        calibrated[2] = Math.sqrt(accelData[0]*accelData[0] + accelData[1]*accelData[1] + accelData[2]*accelData[2]) -
+                        segment.initAccelValue;
 
         return calibrated;
     }
