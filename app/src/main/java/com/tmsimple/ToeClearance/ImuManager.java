@@ -78,6 +78,7 @@ public class ImuManager implements
 
     @Override
     public void onZuptDataUpdated(String imuId, double gyroMag, double linearAccelMag) {
+
         // This forwards the magnitude data to MainActivity for UI updates
         if (listener != null) {
             listener.onZuptDataUpdated(imuId, gyroMag, linearAccelMag);
@@ -85,21 +86,9 @@ public class ImuManager implements
             logManager.log("ERROR: MainActivity listener is null!");
         }
     }
-
-    // ADD THIS NEW METHOD:
-    @Override
-    public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag) {
-        /*// Handle the optimal ZUPT detection from sliding window
-        logManager.log("Optimal ZUPT received in ImuManager: " + imuId + " at packet: " + packetCounter +
-                    " with score - Gyro: " + String.format("%.3f", gyroMag) +
-                    ", Accel: " + String.format("%.3f", accelMag));*/
-        logManager.log("===================================");
-
-        // You can add additional processing here if needed:
-        // - Forward to MainActivity if needed
-        // - Trigger step counting logic
-        // - Update gait cycle analysis
-        // - etc.
+    public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag){
+    }
+    public void onGaitWindowCreated(String imuId, int startPacket, int endPacket, double duration){
     }
 
     public void setSegments(Segment IMU1, Segment IMU2) {
@@ -188,7 +177,7 @@ public class ImuManager implements
     }
     @Override
     public void onSyncingDone(HashMap<String, Boolean> results, boolean allSuccess, int errorCode) {
-        // 1️⃣ Set measurement mode
+        // 1ï¸âƒ£ Set measurement mode
         measurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_5;
         IMU1.xsDevice.setMeasurementMode(measurementMode);
         IMU2.xsDevice.setMeasurementMode(measurementMode);
@@ -196,16 +185,16 @@ public class ImuManager implements
         // Optional: store if you need
         // this.measurementMode = measurementMode;
 
-        // 2️⃣ Log detailed mode info
+        // 2ï¸âƒ£ Log detailed mode info
         logManager.log("Measurement Mode set: "
                 + IMU1.xsDevice.getMeasurementMode()
                 + " / "
                 + IMU2.xsDevice.getMeasurementMode());
 
-        // 3️⃣ Log syncing result
+        // 3ï¸âƒ£ Log syncing result
         logManager.log("---------- Syncing is done! ----------");
 
-        // 4️⃣ Notify UI through listener
+        // 4ï¸âƒ£ Notify UI through listener
         listener.onSyncingDone();
     }
 
@@ -317,7 +306,7 @@ public class ImuManager implements
             double[] calibrated = applyCalibratedData(IMU2, eulerAngles, gyroData, accelData);
             double calibratedGyro = calibrated[1];
             double calibratedAccel = calibrated[2];
-            //zuptDetector.processNewImuData("IMU2", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
+            zuptDetector.processNewImuData("IMU2", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
         }
 
 
@@ -351,13 +340,13 @@ public class ImuManager implements
             // Accumulate all sensor values
             segment.sumOfInitialRoll += eulerAngles[0];
             segment.sumOfInitialGyro += Math.sqrt(
-                                            gyroData[0] * gyroData[0] +
-                                            gyroData[1] * gyroData[1] +
-                                            gyroData[2] * gyroData[2]);
+                    gyroData[0] * gyroData[0] +
+                            gyroData[1] * gyroData[1] +
+                            gyroData[2] * gyroData[2]);
             segment.sumOfInitialAccel += Math.sqrt(
-                                            accelData[0] * accelData[0] +
-                                            accelData[1] * accelData[1] +
-                                            accelData[2] * accelData[2]);
+                    accelData[0] * accelData[0] +
+                            accelData[1] * accelData[1] +
+                            accelData[2] * accelData[2]);
 
             // Calculate running averages
             segment.initRollValue = segment.sumOfInitialRoll / segment.initializationCounter;
@@ -370,7 +359,7 @@ public class ImuManager implements
                 logManager.log("  Roll: " + decimalFormat.format(segment.initRollValue));
 
                 logManager.log("  Gyro: " +
-                                decimalFormat.format(segment.initGyroValue));
+                        decimalFormat.format(segment.initGyroValue));
 
                 logManager.log("  Accel: " +
                         decimalFormat.format(segment.initAccelValue));
@@ -388,10 +377,10 @@ public class ImuManager implements
         calibrated[0] = eulerAngles[0] - segment.initRollValue;    // Roll
 
         calibrated[1] = Math.sqrt(gyroData[0]*gyroData[0] + gyroData[1]*gyroData[1] + gyroData[2]*gyroData[2]) -
-                        segment.initGyroValue;
+                segment.initGyroValue;
 
         calibrated[2] = Math.sqrt(accelData[0]*accelData[0] + accelData[1]*accelData[1] + accelData[2]*accelData[2]) -
-                        segment.initAccelValue;
+                segment.initAccelValue;
 
         return calibrated;
     }
