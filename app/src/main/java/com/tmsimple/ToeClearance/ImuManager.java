@@ -88,7 +88,11 @@ public class ImuManager implements
     }
     public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag){
     }
-    public void onGaitWindowCreated(String imuId, int startPacket, int endPacket, double duration){
+    public void onGaitWindowCreated(String imuId, int windowNum, int startPacket, int endPacket, double duration){
+        logManager.log("GAIT CYCLE is Recieved in  ImuManager - " + imuId +
+                " | Start Packet: " + startPacket +
+                " | End Packet: " + endPacket +
+                " | Duration: " + decimalFormat.format(duration) + "s");
     }
 
     public void setSegments(Segment IMU1, Segment IMU2) {
