@@ -163,7 +163,7 @@ public class ZuptDetector {
             if (size == 0) {
                 firstCandidateTime = System.currentTimeMillis();
                 candidateCounter = 0; // Reset counter for new window
-                logManager.log("--- NEW CANDIDATE WINDOW STARTED - " + imuId + " ---");
+                //logManager.log("--- NEW CANDIDATE WINDOW STARTED - " + imuId + " ---");
             }
 
             candidateCounter++;
@@ -178,20 +178,20 @@ public class ZuptDetector {
             long remainingWaitTime = Math.max(0, TIMEOUT_MS - currentWaitTime);
 
             // Log candidate details
-            logManager.log("Candidate #" + candidateCounter + " - " + imuId +
+           /* logManager.log("Candidate #" + candidateCounter + " - " + imuId +
                     " | Packet: " + candidate.packetCounter +
                     " | Position: " + size + "/" + capacity +
                     " | Gyro: " + new DecimalFormat("##.##").format(candidate.gyroMagnitude) +
                     " | Accel: " + new DecimalFormat("##.##").format(candidate.accelMagnitude) +
                     " | Score: " + new DecimalFormat("##.##").format(candidate.combinedScore) +
                     " | Wait time: " + currentWaitTime + "ms" +
-                    " | Remaining: " + remainingWaitTime + "ms");
+                    " | Remaining: " + remainingWaitTime + "ms");*/
 
             // Log buffer status
             if (isFull()) {
-                logManager.log("BUFFER FULL - " + imuId + " | Processing window with " + size + " candidates");
+//                logManager.log("BUFFER FULL - " + imuId + " | Processing window with " + size + " candidates");
             } else if (hasMinimumCandidates() && hasTimedOut()) {
-                logManager.log("TIMEOUT REACHED - " + imuId + " | Processing window with " + size + " candidates");
+//                logManager.log("TIMEOUT REACHED - " + imuId + " | Processing window with " + size + " candidates");
             }
         }
 
@@ -202,7 +202,7 @@ public class ZuptDetector {
             int bestIndex = -1;
 
             // Find the best candidate and log all candidates in the window
-            logManager.log("--- WINDOW ANALYSIS - " + imuId + " ---");
+//            logManager.log("--- WINDOW ANALYSIS - " + imuId + " ---");
             for (int i = 0; i < size; i++) {
                 if (buffer[i] != null) {
                     ZuptCandidate candidate = buffer[i];
@@ -216,12 +216,12 @@ public class ZuptDetector {
             }
 
             if (best != null) {
-                logManager.log("SELECTED CANDIDATE #" + best.candidateId + " - " + imuId +
+                /*logManager.log("SELECTED CANDIDATE #" + best.candidateId + " - " + imuId +
                         " | Position: " + (bestIndex + 1) + "/" + size +
                         " | Packet: " + best.packetCounter +
                         " | Gyro: " + new DecimalFormat("##.##").format(best.gyroMagnitude) +
                         " | Accel: " + new DecimalFormat("##.##").format(best.accelMagnitude) +
-                        " | Final Score: " + new DecimalFormat("##.##").format(best.combinedScore));
+                        " | Final Score: " + new DecimalFormat("##.##").format(best.combinedScore));*/
             }
 
             return best;
@@ -246,10 +246,8 @@ public class ZuptDetector {
 
         void clear() {
             if (size > 0) {
-                logManager.log("--- CANDIDATE WINDOW CLOSED - " + imuId + " ---");
-                if (size > 0) {
-                    logManager.log("=================================");
-                }
+//                logManager.log("--- CANDIDATE WINDOW CLOSED - " + imuId + " ---");
+//                logManager.log("=================================");
             }
             size = 0;
             head = 0;
@@ -343,7 +341,7 @@ public class ZuptDetector {
                     // Log gait cycle completion if we have one
                     if (completedGaitCycle != null) {
                         logManager.log("GAIT CYCLE COMPLETED - " + imuId +
-                                " Cycle #" + windowTracker.getGaitCycleCount() +
+                                " | Cycle #" + windowTracker.getGaitCycleCount() +
                                 " | Start ZUPT: " + completedGaitCycle.startPacketCounter +
                                 " | End ZUPT: " + completedGaitCycle.endPacketCounter +
                                 " | Duration: " + decimalFormat.format(completedGaitCycle.duration) + "s");
@@ -365,10 +363,10 @@ public class ZuptDetector {
                 } else {
                     double timeSinceLastZupt = windowTracker.getPacketTimeSinceLastZupt(bestCandidate.packetCounter);
 
-                    logManager.log("OPTIMAL ZUPT REJECTED - " + imuId +
+                    /*logManager.log("OPTIMAL ZUPT REJECTED - " + imuId +
                             " at packet: " + bestCandidate.packetCounter +
                             " At time: " + decimalFormat.format(timeSinceLastZupt) + "s < 0.5s)" +
-                            " to previous ZUPT");
+                            " to previous ZUPT");*/
                 }
             }
 
