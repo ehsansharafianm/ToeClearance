@@ -8,7 +8,7 @@ public class ZuptDetector {
     private double gyroThreshold = 15; // rad/s
     private double accelThreshold = 4; // m/s² (linear acceleration without gravity)
 
-    DecimalFormat decimalFormat = new DecimalFormat("##.##");
+    DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
     // Enhanced buffer parameters
     private static final int WINDOW_SIZE = 8; // Maximum window size
@@ -163,7 +163,7 @@ public class ZuptDetector {
             if (size == 0) {
                 firstCandidateTime = System.currentTimeMillis();
                 candidateCounter = 0; // Reset counter for new window
-                //logManager.log("--- NEW CANDIDATE WINDOW STARTED - " + imuId + " ---");
+                /*logManager.log("--- NEW CANDIDATE WINDOW STARTED - " + imuId + " ---");*/
             }
 
             candidateCounter++;
@@ -178,7 +178,7 @@ public class ZuptDetector {
             long remainingWaitTime = Math.max(0, TIMEOUT_MS - currentWaitTime);
 
             // Log candidate details
-           /* logManager.log("Candidate #" + candidateCounter + " - " + imuId +
+            /*logManager.log("Candidate #" + candidateCounter + " - " + imuId +
                     " | Packet: " + candidate.packetCounter +
                     " | Position: " + size + "/" + capacity +
                     " | Gyro: " + new DecimalFormat("##.##").format(candidate.gyroMagnitude) +
@@ -246,8 +246,8 @@ public class ZuptDetector {
 
         void clear() {
             if (size > 0) {
-//                logManager.log("--- CANDIDATE WINDOW CLOSED - " + imuId + " ---");
-//                logManager.log("=================================");
+               /* logManager.log("--- CANDIDATE WINDOW CLOSED - " + imuId + " ---");
+                logManager.log("----------------");*/
             }
             size = 0;
             head = 0;
@@ -328,23 +328,26 @@ public class ZuptDetector {
                 if (windowTracker.canAcceptNewZupt(bestCandidate.packetCounter)) {
 
                     double timeSinceLastZupt = windowTracker.getPacketTimeSinceLastZupt(bestCandidate.packetCounter);
-
+                    logManager.log("================================================");
                     // Log that ZUPT is detected and accepted
                     logManager.log("OPTIMAL ZUPT ACCEPTED - " + imuId +
-                            " at packet: " + bestCandidate.packetCounter +
-                            " At time: " + decimalFormat.format(timeSinceLastZupt) + "s" +
-                            " to previous ZUPT");
+                            "| at packet: " + bestCandidate.packetCounter +
+                            "| At time: " + decimalFormat.format(timeSinceLastZupt) + "s" +
+                            "| to previous ZUPT " +
+                            "| Accel Mag: " + decimalFormat.format(bestCandidate.accelMagnitude) +
+                            "| Velocity Mag: " + decimalFormat.format(bestCandidate.gyroMagnitude) +
+                            "| Score Mag: " + decimalFormat.format(bestCandidate.combinedScore));
 
                     // Accept the new ZUPT and get the completed gait cycle
                     GaitWindow completedGaitCycle = windowTracker.acceptNewZupt(bestCandidate.packetCounter);
 
                     // Log gait cycle completion if we have one
                     if (completedGaitCycle != null) {
-                        logManager.log("GAIT CYCLE COMPLETED - " + imuId +
+                        /*logManager.log("GAIT CYCLE COMPLETED - " + imuId +
                                 " | Cycle #" + windowTracker.getGaitCycleCount() +
                                 " | Start ZUPT: " + completedGaitCycle.startPacketCounter +
                                 " | End ZUPT: " + completedGaitCycle.endPacketCounter +
-                                " | Duration: " + decimalFormat.format(completedGaitCycle.duration) + "s");
+                                " | Duration: " + decimalFormat.format(completedGaitCycle.duration) + "s");*/
 
                         // Notify listener about completed gait cycle
                         if (listener != null) {
