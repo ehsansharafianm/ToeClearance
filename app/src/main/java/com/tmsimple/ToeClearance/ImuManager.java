@@ -46,6 +46,7 @@ public class ImuManager implements
     int measurementMode;
 
 
+
     DecimalFormat decimalFormat = new DecimalFormat("##.##");
 
     public ImuManager(Context context, ImuManagerListener listener, LogManager logManager) {
@@ -64,6 +65,7 @@ public class ImuManager implements
 
         deviceList = new ArrayList<>();
     }
+
 
 
     public void onZuptDetected(String imuId, int packetCounter) {
@@ -88,11 +90,55 @@ public class ImuManager implements
     }
     public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag){
     }
-    public void onGaitWindowCreated(String imuId, int windowNum, int startPacket, int endPacket, double duration){
+    public void onGaitWindowCreated(String imuId, int windowNum, int startPacket, int endPacket, double duration){ //This is called when a gait cycle is detected, is coming from ZuptDetector
+        logManager.log("=================================");
         logManager.log("GAIT CYCLE is Recieved in  ImuManager - " + imuId +
                 " | Start Packet: " + startPacket +
                 " | End Packet: " + endPacket +
                 " | Duration: " + decimalFormat.format(duration) + "s");
+
+        if (isLoggingData) {
+
+            // Extract the gait window data
+            GaitWindowData windowData = extractGaitWindowData(imuId, startPacket, endPacket);
+
+            logManager.log("Extracted " + windowData.packetCountersInWindow.size() +
+                    " samples for gait window #" + windowNum);
+
+            // Verify data is not null and show first/last values
+            if (windowData.eulerAnglesInWindow.isEmpty()) {
+                logManager.log("WARNING: eulerAnglesInWindow is EMPTY!");
+            } else {
+                // Show first sample
+                double[] firstEuler = windowData.eulerAnglesInWindow.get(0);
+                double[] firstAccel = windowData.accelDataInWindow.get(0);
+                int firstPacket = windowData.packetCountersInWindow.get(0);
+
+
+                logManager.log("First sample - Packet: " + firstPacket +
+                        " | Euler: [" + decimalFormat.format(firstEuler[0]) + "]" +
+                        " | Accel: [" + decimalFormat.format(Math.sqrt(firstAccel[0]*firstAccel[0] + firstAccel[1]*firstAccel[1] + firstAccel[2]*firstAccel[2]) -
+                        IMU1.initAccelValue) + "]");
+
+                // Show last sample
+                int lastIdx = windowData.eulerAnglesInWindow.size() - 1;
+                double[] lastEuler = windowData.eulerAnglesInWindow.get(lastIdx);
+                double[] lastAccel = windowData.accelDataInWindow.get(lastIdx);
+                int lastPacket = windowData.packetCountersInWindow.get(lastIdx);
+
+                logManager.log("Last sample - Packet: " + lastPacket +
+                        " | Euler: [" + decimalFormat.format(lastEuler[0]) + "]" +
+                        " | Accel: [" + decimalFormat.format(Math.sqrt(lastAccel[0]*lastAccel[0] + lastAccel[1]*lastAccel[1] + lastAccel[2]*lastAccel[2]) -
+                        IMU1.initAccelValue) + "]");
+
+                // Verify packet counter range matches
+                logManager.log("Packet range check - Expected: [" + startPacket + " - " + endPacket +
+                        "] | Actual: [" + firstPacket + " - " + lastPacket + "]");
+            }
+
+
+        }
+
     }
 
     public void setSegments(Segment IMU1, Segment IMU2) {
@@ -296,6 +342,46 @@ public class ImuManager implements
             listener.onDataUpdated(address, eulerAngles);
         }
 
+        // PRESERVE THE ORIGINAL LOGGING SECTION
+        if (isLoggingData) {
+            if (address.equals(IMU1.MAC)) {
+
+                IMU1.normalDataLogger.update(dotData);
+                IMU1.sampleCounter++;
+                IMU1.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
+
+                // Store data in the segment object
+                IMU1.storeData(eulerAngles, accelData, dotData.getPacketCounter());
+
+                // Get the last stored values
+                int lastIndex = IMU1.storedEulerAngles.size() - 1;
+                double[] lastEuler = IMU1.storedEulerAngles.get(lastIndex);
+                double[] lastAccel = IMU1.storedAccelData.get(lastIndex);
+                int lastPacket = IMU1.storedPacketCounters.get(lastIndex);
+
+                // Log stored data info
+                /*logManager.log("IMU1 Stored - Size: " + IMU1.storedEulerAngles.size() +
+                        " | Last Euler: [" + decimalFormat.format(lastEuler[0]) + ", " +
+                        decimalFormat.format(lastEuler[1]) + ", " +
+                        decimalFormat.format(lastEuler[2]) + "]" +
+                        " | Last Accel: [" + decimalFormat.format(lastAccel[0]) + ", " +
+                        decimalFormat.format(lastAccel[1]) + ", " +
+                        decimalFormat.format(lastAccel[2]) + "]" +
+                        " | Last Packet: " + lastPacket);*/
+
+
+            } else if (address.equals(IMU2.MAC)) {
+
+                IMU2.normalDataLogger.update(dotData);
+                IMU2.sampleCounter++;
+                IMU2.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
+
+                // Store data in the segment object
+                // IMU2.storeData(eulerAngles, accelData, dotData.getPacketCounter());
+
+            }
+        }
+
 
         // ZUPT PROCESSING - happens always (outside logging condition)
         if (address.equals(IMU1.MAC)) {
@@ -312,24 +398,6 @@ public class ImuManager implements
             double calibratedAccel = calibrated[2];
             //zuptDetector.processNewImuData("IMU2", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
         }
-
-
-        // PRESERVE THE ORIGINAL LOGGING SECTION
-        if (isLoggingData) {
-            if (address.equals(IMU1.MAC)) {
-
-                IMU1.normalDataLogger.update(dotData);
-                IMU1.sampleCounter++;
-                IMU1.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
-
-            } else if (address.equals(IMU2.MAC)) {
-
-                IMU2.normalDataLogger.update(dotData);
-                IMU2.sampleCounter++;
-                IMU2.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
-            }
-        }
-
 
     }
 
@@ -388,6 +456,61 @@ public class ImuManager implements
 
         return calibrated;
     }
+
+    // Data structure to hold extracted window data
+    public static class GaitWindowData {
+        public ArrayList<double[]> eulerAnglesInWindow;
+        public ArrayList<double[]> accelDataInWindow;
+        public ArrayList<Integer> packetCountersInWindow;
+        public int startPacket;
+        public int endPacket;
+        public String imuId;
+
+        public GaitWindowData(String imuId) {
+            this.imuId = imuId;
+            eulerAnglesInWindow = new ArrayList<>();
+            accelDataInWindow = new ArrayList<>();
+            packetCountersInWindow = new ArrayList<>();
+        }
+    }
+
+    // Extract gait window data from stored arrays
+    private GaitWindowData extractGaitWindowData(String imuId, int startPacket, int endPacket) {
+        GaitWindowData windowData = new GaitWindowData(imuId);
+        windowData.startPacket = startPacket;
+        windowData.endPacket = endPacket;
+
+        Segment segment = null;
+        if (imuId.equals("IMU1")) {
+            segment = IMU1;
+        } else if (imuId.equals("IMU2")) {
+            segment = IMU2;
+        }
+
+        if (segment == null) return windowData;
+
+        // Iterate through stored data and extract matching packets
+        for (int i = 0; i < segment.storedPacketCounters.size(); i++) {
+            int packet = segment.storedPacketCounters.get(i);
+
+            // Check if this packet is within the gait window
+            if (packet >= startPacket && packet <= endPacket) {
+                // Create copies to avoid reference issues
+                double[] eulerCopy = new double[segment.storedEulerAngles.get(i).length];
+                System.arraycopy(segment.storedEulerAngles.get(i), 0, eulerCopy, 0, eulerCopy.length);
+
+                double[] accelCopy = new double[segment.storedAccelData.get(i).length];
+                System.arraycopy(segment.storedAccelData.get(i), 0, accelCopy, 0, accelCopy.length);
+
+                windowData.eulerAnglesInWindow.add(eulerCopy);
+                windowData.accelDataInWindow.add(accelCopy);
+                windowData.packetCountersInWindow.add(packet);
+            }
+        }
+
+        return windowData;
+    }
+
 
     @Override
     public void onDotButtonClicked(String s, long l) {}
