@@ -357,7 +357,7 @@ public class ImuManager implements
                 IMU1.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
 
                 // Store data in the segment object
-                IMU1.storeData(eulerAngles, accelData, dotData.getPacketCounter());
+                IMU1.storeData(eulerAngles, quats, accelData, dotData.getPacketCounter());
 
 
                 // Log stored data info
@@ -378,7 +378,7 @@ public class ImuManager implements
                 IMU2.dataOutput[3] = decimalFormat.format(dotData.getPacketCounter());
 
                 // Store data in the segment object
-                // IMU2.storeData(eulerAngles, accelData, dotData.getPacketCounter());
+                // IMU2.storeData(eulerAngles, quats, accelData, dotData.getPacketCounter());
 
             }
         }
@@ -463,6 +463,7 @@ public class ImuManager implements
         public ArrayList<double[]> eulerAnglesInWindow;
         public ArrayList<double[]> accelDataInWindow;
         public ArrayList<Integer> packetCountersInWindow;
+        public ArrayList<float[]> quaternionsInWindow;
         public int startPacket;
         public int endPacket;
         public String imuId;
@@ -473,6 +474,7 @@ public class ImuManager implements
             eulerAnglesInWindow = new ArrayList<>();
             accelDataInWindow = new ArrayList<>();
             packetCountersInWindow = new ArrayList<>();
+            quaternionsInWindow = new ArrayList<>();
         }
     }
 
@@ -506,9 +508,14 @@ public class ImuManager implements
                 double[] accelCopy = new double[segment.storedAccelData.get(i).length];
                 System.arraycopy(segment.storedAccelData.get(i), 0, accelCopy, 0, accelCopy.length);
 
+                float[] quatsCopy = new float[segment.storedQuaternions.get(i).length];
+                System.arraycopy(segment.storedQuaternions.get(i), 0, quatsCopy, 0, quatsCopy.length);
+
+
                 windowData.eulerAnglesInWindow.add(eulerCopy);
                 windowData.accelDataInWindow.add(accelCopy);
                 windowData.packetCountersInWindow.add(packet);
+                windowData.quaternionsInWindow.add(quatsCopy);
             }
         }
 
