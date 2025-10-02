@@ -10,10 +10,16 @@ public class BiasCalculation {
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
+    // Terrain classification thresholds
+    private static final double THRESHOLD_VALUE1 = 0.3;
+    private static final double THRESHOLD_VALUE2 = 0.11;
+    private static final double THRESHOLD_VALUE3 = -0.11;
+    private static final double THRESHOLD_VALUE4 = -0.40;
+
 
     // Keep only ONE interface
     public interface BiasCalculationListener {
-        void onBiasCalculationComplete(String imuId, int windowNum, double biasValue);
+        void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected);
     }
 
     // Constructor
@@ -44,7 +50,7 @@ public class BiasCalculation {
         double gravity = 9.80665; // m/s²
         double sampleRate = 60.0; // Hz
         double delta_t = 1.0 / sampleRate;
-        double gain_hs = 0.95;
+        double gain_hs = 1.00;
 
         // Initialize arrays for integration
         ArrayList<double[]> v = new ArrayList<>();
@@ -65,9 +71,6 @@ public class BiasCalculation {
             double[] currentAccel = accelData.get(k);
             float[] currentQuat = quaternions.get(k);
 
-            /*double roll = currentEuler[0];
-            double pitch = currentEuler[1];
-            double yaw = currentEuler[2];*/
 
             // Calculate Euler angles from quaternion using ZYX convention (matching MATLAB)
             double[] eulerZYX = quaternionToEulerZYX(currentQuat);
@@ -76,6 +79,7 @@ public class BiasCalculation {
             double yaw   = eulerZYX[2];
 
             double[][] rotationMatrix = calculateRotationMatrix(roll, pitch, yaw);
+
 
             // double[][] rotationMatrixTranspose = transposeMatrix(rotationMatrix);
 
@@ -105,27 +109,34 @@ public class BiasCalculation {
 
 
             // Log the calculated values for this sample
-            /*logManager.log("-------------------------");
-            logManager.log("packetCounter: " + packetCounters.get(k));
-            logManager.log("Sample " + k + ":");
-            logManager.log("  qaternion: [" + decimalFormat.format(currentQuat[0]) + ", " + decimalFormat.format(currentQuat[1]) + ", " + decimalFormat.format(currentQuat[2]) + ", " + decimalFormat.format(currentQuat[3]) + "]");
-            logManager.log("  currentEuler: [" + decimalFormat.format(roll) + ", " + decimalFormat.format(pitch) + ", " + decimalFormat.format(yaw) + "]");
-            logManager.log("  currentAccel: [" + decimalFormat.format(currentAccel[0]) + ", " +
-                    decimalFormat.format(currentAccel[1]) + ", " +
-                    decimalFormat.format(currentAccel[2]) + "]");
-            logManager.log("  currentAccelMag: [" + decimalFormat.format(Math.sqrt(currentAccel[0]*currentAccel[0] + currentAccel[1]*currentAccel[1] + currentAccel[2]*currentAccel[2])) + "]");
-            logManager.log("  currentAccelMagCalibrated: [" + decimalFormat.format(Math.sqrt(currentAccel[0]*currentAccel[0] + currentAccel[1]*currentAccel[1] + currentAccel[2]*currentAccel[2])
-                                                             - windowData.segmentWindow.initAccelValue) + "]");
-            logManager.log("  accWorld: [" + decimalFormat.format(acc_world[0]) + ", " +
-                    decimalFormat.format(acc_world[1]) + ", " +
-                    decimalFormat.format(acc_world[2]) + "]");
-            logManager.log("  accWorldMag: [" + decimalFormat.format(Math.sqrt(acc_world[0]*acc_world[0] + acc_world[1]*acc_world[1] + acc_world[2]*acc_world[2])) + "]");
-            logManager.log("  velocity: [" + String.format("%.4f", v_new[0]) + ", " +
-                    String.format("%.4f", v_new[1]) + ", " +
-                    String.format("%.4f", v_new[2]) + "]");
-            logManager.log("  position: [" + String.format("%.4f", p_new[0]) + ", " +
-                    String.format("%.4f", p_new[1]) + ", " +
-                    String.format("%.4f", p_new[2]) + "]");*/
+            if (k == 0 || k == sampleCount - 1) {
+                logManager.log("---------------------------");
+                logManager.log("packetCounter: " + packetCounters.get(k));
+                logManager.log("Sample " + k + ":");
+                logManager.log("  measuredQaternion: [" + decimalFormat.format(currentQuat[0]) + ", " + decimalFormat.format(currentQuat[1]) + ", " +
+                        decimalFormat.format(currentQuat[2]) + ", " + decimalFormat.format(currentQuat[3]) + "]");
+                logManager.log("  eulerXsens: [" + decimalFormat.format(currentEuler[0]) + ", " + decimalFormat.format(currentEuler[1]) + ", " + decimalFormat.format(currentEuler[2]) + "]");
+                logManager.log("  rotationMatrix: [" + decimalFormat.format(rotationMatrix[0][0]) + " " + decimalFormat.format(rotationMatrix[0][1]) + " " + decimalFormat.format(rotationMatrix[0][2]) + "]");
+                logManager.log("                  [" + decimalFormat.format(rotationMatrix[1][0]) + " " + decimalFormat.format(rotationMatrix[1][1]) + " " + decimalFormat.format(rotationMatrix[1][2]) + "]");
+                logManager.log("                  [" + decimalFormat.format(rotationMatrix[2][0]) + " " + decimalFormat.format(rotationMatrix[2][1]) + " " + decimalFormat.format(rotationMatrix[2][2]) + "]");
+                logManager.log("  calculatedEuler: [" + decimalFormat.format(roll) + ", " + decimalFormat.format(pitch) + ", " + decimalFormat.format(yaw) + "]");
+                logManager.log("  localAccel: [" + decimalFormat.format(currentAccel[0]) + ", " +
+                        decimalFormat.format(currentAccel[1]) + ", " +
+                        decimalFormat.format(currentAccel[2]) + "]");
+                logManager.log("  localAccelMag: [" + decimalFormat.format(Math.sqrt(currentAccel[0] * currentAccel[0] + currentAccel[1] * currentAccel[1] + currentAccel[2] * currentAccel[2])) + "]");
+                logManager.log("  localAccelMagCalibrated: [" + decimalFormat.format(Math.sqrt(currentAccel[0] * currentAccel[0] + currentAccel[1] * currentAccel[1] + currentAccel[2] * currentAccel[2])
+                        - windowData.segmentWindow.initAccelValue) + "]");
+                logManager.log("  accWorld: [" + decimalFormat.format(acc_world[0]) + ", " +
+                        decimalFormat.format(acc_world[1]) + ", " +
+                        decimalFormat.format(acc_world[2]) + "]");
+                logManager.log("  worldAcceldMag: [" + decimalFormat.format(Math.sqrt(acc_world[0] * acc_world[0] + acc_world[1] * acc_world[1] + acc_world[2] * acc_world[2])) + "]");
+                logManager.log("  velocity: [" + decimalFormat.format(v_new[0]) + ", " +
+                        decimalFormat.format(v_new[1]) + ", " +
+                        decimalFormat.format(v_new[2]) + "]");
+                logManager.log("  position: [" + decimalFormat.format(p_new[0]) + ", " +
+                        decimalFormat.format(p_new[1]) + ", " +
+                        decimalFormat.format(p_new[2]) + "]");
+            }
 
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -192,6 +203,9 @@ public class BiasCalculation {
         double biasAccZ = biasVector[2];
         double biasV_hs = biasVector[3];
 
+        // Create biasAcc array for terrain determination
+        double[] biasAcc = new double[]{biasAccX, biasAccY, biasAccZ};
+
         // Log the calculated bias
         logManager.log("----------------------------------");
         logManager.log("Bias calculated for " + windowData.imuId + " Window #" + windowNum);
@@ -202,11 +216,180 @@ public class BiasCalculation {
         // double calculatedBias = Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ);
         double calculatedBias = biasV_hs;
 
-        // Call the callback
+
+        // Terrain Determination
+        String terrainType = terrainDetermination(biasV_hs, biasAcc);
+
+        logManager.log("-----------------");
+        logManager.log("Terrain Type: " + terrainType);
+        logManager.log("-----------------");
+
+        // Check if terrain requires recalculation
+        if (terrainType.equals("Stair_Descend") || terrainType.equals("Stair_Ascend") ||
+                terrainType.equals("Ramp_Descend") || terrainType.equals("Ramp_Ascend")) {
+
+            logManager.log(" Detected Activity: " + terrainType);
+
+            // Recalculate with modified Jacobian (3x3 using only Bv)
+            double[][] modifiedJacobian = new double[3][3];
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    modifiedJacobian[i][j] = Bv[i][j];
+                }
+            }
+
+            // New measurements vector (only velocity)
+            double[] modifiedMeasurements = new double[3];
+            modifiedMeasurements[0] = v_last[0];
+            modifiedMeasurements[1] = v_last[1];
+            modifiedMeasurements[2] = v_last[2];
+
+            // Recalculate bias
+            double[] modifiedBiasVector = solveLinearSystem(modifiedJacobian, modifiedMeasurements);
+
+            biasAccX = modifiedBiasVector[0];
+            biasAccY = modifiedBiasVector[1];
+            biasAccZ = modifiedBiasVector[2];
+            biasV_hs = 0;
+
+            biasAcc = new double[]{biasAccX, biasAccY, biasAccZ};
+
+        }
+
+        // Log the calculated bias
+        logManager.log("----------------------------------");
+        logManager.log("Bias calculated for " + windowData.imuId + " Window #" + windowNum);
+        logManager.log("  Bias Acc: [" + decimalFormat.format(Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ)) + "]");
+        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));
+
+        // For now, return the magnitude of acceleration bias
+        double recalculatedBias = biasV_hs;
+
+
+        //===================================================================================
+        // SECOND INTEGRATION: WITH BIAS CORRECTION
+        //===================================================================================
+        logManager.log("----------------------------------");
+        logManager.log("Starting Second Integration with Bias Correction");
+
+        // Clear arrays for second integration
+        ArrayList<double[]> v_corrected = new ArrayList<>();
+        ArrayList<double[]> p_corrected = new ArrayList<>();
+        ArrayList<double[]> a_corrected = new ArrayList<>();
+
+        // Initial conditions for second integration
+        double[] v_initial = new double[3];
+        v_initial[0] = 0;
+        v_initial[1] = 0;
+        v_initial[2] = 0 - gain_hs * biasV_hs;
+        v_corrected.add(v_initial);
+
+        double[] p_initial = new double[]{0, 0, 0};
+        p_corrected.add(p_initial);
+
+        // Second integration loop with bias correction
+        for (int k = 0; k < sampleCount; k++) {
+            double[] currentAccel = accelData.get(k);
+            float[] currentQuat = quaternions.get(k);
+
+            // Calculate Euler angles from quaternion
+            double[] eulerZYX = quaternionToEulerZYX(currentQuat);
+            double roll  = eulerZYX[0];
+            double pitch = eulerZYX[1];
+            double yaw   = eulerZYX[2];
+
+            double[][] rotationMatrix = calculateRotationMatrix(roll, pitch, yaw);
+
+            // Subtract bias from acceleration: (acceleration_IMU - biasAcc)
+            double[] accel_unbiased = new double[3];
+            accel_unbiased[0] = currentAccel[0] - biasAcc[0];
+            accel_unbiased[1] = currentAccel[1] - biasAcc[1];
+            accel_unbiased[2] = currentAccel[2] - biasAcc[2];
+
+            // Transform to world frame and subtract gravity
+            double[] acc_world_corrected = multiplyMatrixVector(rotationMatrix, accel_unbiased);
+            acc_world_corrected[0] = acc_world_corrected[0] - 0;
+            acc_world_corrected[1] = acc_world_corrected[1] - 0;
+            acc_world_corrected[2] = acc_world_corrected[2] - gravity;
+
+            a_corrected.add(acc_world_corrected);
+
+            // Get previous velocity and position
+            double[] v_prev_corrected = v_corrected.get(k);
+            double[] p_prev_corrected = p_corrected.get(k);
+
+            // Update velocity: v(k+1,:) = v(k,:) + acc_world * delta_t
+            double[] v_new_corrected = new double[3];
+            v_new_corrected[0] = v_prev_corrected[0] + acc_world_corrected[0] * delta_t;
+            v_new_corrected[1] = v_prev_corrected[1] + acc_world_corrected[1] * delta_t;
+            v_new_corrected[2] = v_prev_corrected[2] + acc_world_corrected[2] * delta_t;
+            v_corrected.add(v_new_corrected);
+
+            // Update position: p(k+1,:) = p(k,:) + v(k,:) * delta_t + 0.5 * acc_world * delta_t^2
+            double[] p_new_corrected = new double[3];
+            p_new_corrected[0] = p_prev_corrected[0] + v_prev_corrected[0] * delta_t + 0.5 * acc_world_corrected[0] * delta_t * delta_t;
+            p_new_corrected[1] = p_prev_corrected[1] + v_prev_corrected[1] * delta_t + 0.5 * acc_world_corrected[1] * delta_t * delta_t;
+            p_new_corrected[2] = p_prev_corrected[2] + v_prev_corrected[2] * delta_t + 0.5 * acc_world_corrected[2] * delta_t * delta_t;
+            p_corrected.add(p_new_corrected);
+
+            // Optional: Log some samples for verification
+            if (k == 0 || k == sampleCount - 1) {
+                logManager.log("Sample " + k + " (Corrected):");
+                logManager.log("  Packet: " + packetCounters.get(k));
+                logManager.log("  Accel (unbiased): [" + decimalFormat.format(accel_unbiased[0]) + ", " +
+                        decimalFormat.format(accel_unbiased[1]) + ", " +
+                        decimalFormat.format(accel_unbiased[2]) + "]");
+                logManager.log("  Accel (world): [" + decimalFormat.format(acc_world_corrected[0]) + ", " +
+                        decimalFormat.format(acc_world_corrected[1]) + ", " +
+                        decimalFormat.format(acc_world_corrected[2]) + "]");
+                logManager.log("  Velocity: [" + decimalFormat.format(v_new_corrected[0]) + ", " +
+                        decimalFormat.format(v_new_corrected[1]) + ", " +
+                        decimalFormat.format(v_new_corrected[2]) + "]");
+                logManager.log("  Position: [" + decimalFormat.format(p_new_corrected[0]) + ", " +
+                        decimalFormat.format(p_new_corrected[1]) + ", " +
+                        decimalFormat.format(p_new_corrected[2]) + "]");
+            }
+        }
+
+        // Log final results after bias correction
+        double[] v_final_corrected = v_corrected.get(v_corrected.size() - 1);
+        double[] p_final_corrected = p_corrected.get(p_corrected.size() - 1);
+
+        logManager.log("----------------------------------");
+        logManager.log("Second Integration Complete");
+        logManager.log("  Final Velocity: [" + decimalFormat.format(v_final_corrected[0]) + ", " +
+                decimalFormat.format(v_final_corrected[1]) + ", " +
+                decimalFormat.format(v_final_corrected[2]) + "]");
+        logManager.log("  Final Position: [" + decimalFormat.format(p_final_corrected[0]) + ", " +
+                decimalFormat.format(p_final_corrected[1]) + ", " +
+                decimalFormat.format(p_final_corrected[2]) + "]");
+
+        double v_mag_final = Math.sqrt(v_final_corrected[0]*v_final_corrected[0] +
+                v_final_corrected[1]*v_final_corrected[1] +
+                v_final_corrected[2]*v_final_corrected[2]);
+        logManager.log("  Final Velocity Magnitude: " + decimalFormat.format(v_mag_final) + " m/s");
+
+        double p_stride = Math.sqrt(p_final_corrected[0]*p_final_corrected[0] +
+                p_final_corrected[1]*p_final_corrected[1]);
+        logManager.log("  Stride Length: " + decimalFormat.format(p_stride) + " m");
+
+        double p_displacement = Math.sqrt(p_final_corrected[0]*p_final_corrected[0] +
+                p_final_corrected[1]*p_final_corrected[1] +
+                p_final_corrected[2]*p_final_corrected[2]);
+        logManager.log("  Total Displacement: " + decimalFormat.format(p_displacement) + " m");
+        logManager.log("----------------------------------");
+
+        logManager.log(" Detected Activity: " + terrainType);
+        logManager.log("====================================");
+        // Call the callback with terrain type and corrected trajectory data
         if (listener != null) {
-            listener.onBiasCalculationComplete(windowData.imuId, windowNum, calculatedBias);
+            listener.onBiasCalculationComplete(windowData.imuId, windowNum, calculatedBias, recalculatedBias, terrainType,
+                    a_corrected, v_corrected, p_corrected);
         }
     }
+    // ============================================      End of the Bias Calculation ===========================================
+    // ============================================                                  ===========================================
+    // ============================================                                  ===========================================
 
     // Calculate rotation matrix from Euler angles (ZYX convention)
     private double[][] calculateRotationMatrix(double roll, double pitch, double yaw) {
@@ -344,6 +527,27 @@ public class BiasCalculation {
         }
 
         return x;
+    }
+
+    private String terrainDetermination(double biasV_hs, double[] biasAcc) {
+        String terrainType;
+
+        if (biasV_hs < THRESHOLD_VALUE4) {
+            terrainType = "Stair_Descend";
+        } else if (biasV_hs >= THRESHOLD_VALUE4 && biasV_hs < THRESHOLD_VALUE3) {
+            terrainType = "Ramp_Descend";
+        } else if (biasV_hs >= THRESHOLD_VALUE3 && biasV_hs <= THRESHOLD_VALUE2) {
+            terrainType = "Level_Walk";
+        } else if (biasV_hs > THRESHOLD_VALUE2 && biasV_hs <= THRESHOLD_VALUE1) {
+            terrainType = "Ramp_Ascend";
+        } else if (biasV_hs > THRESHOLD_VALUE1) {
+            terrainType = "Stair_Ascend";
+        } else {
+            logManager.log("ERROR: Terrain could not be detected");
+            terrainType = "Unknown";
+        }
+
+        return terrainType;
     }
 
 }

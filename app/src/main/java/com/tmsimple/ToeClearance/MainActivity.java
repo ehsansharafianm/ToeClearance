@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
                 subjectTitle = "Subject " + subjcetNu;
                 subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
-                logFileName = subjectTitle + " " + subjectDateAndTime + ".txt";
+                logFileName = "Logger " + subjectTitle + " " + subjectDateAndTime + ".txt";
                 logFile = new File(logFilePath, logFileName);
                 logManager.setLogFile(logFile, subjcetNu);
                 subjectNumber = subjcetNu;
@@ -367,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             uploadLogFileToCloud(Uri.fromFile(logManager.loggerFilePaths.get(i)), logManager.loggerFileNames.get(i));
         }
 
-        uploadLogFileToCloud(Uri.fromFile(logFile), "log");
+        uploadLogFileToCloud(Uri.fromFile(logFile), logFileName);
     }
 
     private void uploadLogFileToCloud(Uri file, String fileName) {

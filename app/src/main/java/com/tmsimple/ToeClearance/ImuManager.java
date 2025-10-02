@@ -148,10 +148,11 @@ public class ImuManager implements
 
         }
     }
-    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue) {
-        logManager.log("Bias calculation completed for " + imuId +
+    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected) {
+
+        /*logManager.log("Bias calculation completed for " + imuId +
                 " window #" + windowNum +
-                " | Bias: " + decimalFormat.format(biasValue));
+                " | Bias: " + decimalFormat.format(biasValue));*/
         // Handle the results here
     }
     /*===========================================================================*/
@@ -314,9 +315,6 @@ public class ImuManager implements
                 }
             }
         }
-
-
-
     }
 
     @Override
@@ -326,10 +324,25 @@ public class ImuManager implements
         final double[] gyroData = dotData.getGyr();
         final double[] accelData = dotData.getAcc();
 
+
         if (address.equals(IMU1.MAC)) {
             dotData.setPacketCounter(dotData.getPacketCounter() + packetCounterOffset);
             // Calculate initial values during standing
+
+            // Log quaternions and Euler angles
+            /*logManager.log("Packet: " + dotData.getPacketCounter());
+            logManager.log("  Quats: [" +
+                    decimalFormat.format(quats[0]) + ", " +
+                    decimalFormat.format(quats[1]) + ", " +
+                    decimalFormat.format(quats[2]) + ", " +
+                    decimalFormat.format(quats[3]) + "]");
+            logManager.log("  Euler (Xsens): [" +
+                    decimalFormat.format(eulerAngles[0]) + ", " +
+                    decimalFormat.format(eulerAngles[1]) + ", " +
+                    decimalFormat.format(eulerAngles[2]) + "]");*/
+
             calculateInitialValues(IMU1, dotData, eulerAngles, gyroData, accelData);
+
 
             // Apply calibration
             double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
@@ -447,7 +460,8 @@ public class ImuManager implements
         double[] calibrated = new double[7];
 
         // Subtract initial values from current measurements
-        calibrated[0] = eulerAngles[0] - segment.initRollValue;    // Roll
+        /*calibrated[0] = eulerAngles[0] - segment.initRollValue;*/   // Roll
+        calibrated[0] = eulerAngles[0];
 
         calibrated[1] = Math.sqrt(gyroData[0]*gyroData[0] + gyroData[1]*gyroData[1] + gyroData[2]*gyroData[2]) -
                 segment.initGyroValue;
@@ -510,7 +524,6 @@ public class ImuManager implements
 
                 float[] quatsCopy = new float[segment.storedQuaternions.get(i).length];
                 System.arraycopy(segment.storedQuaternions.get(i), 0, quatsCopy, 0, quatsCopy.length);
-
 
                 windowData.eulerAnglesInWindow.add(eulerCopy);
                 windowData.accelDataInWindow.add(accelCopy);
