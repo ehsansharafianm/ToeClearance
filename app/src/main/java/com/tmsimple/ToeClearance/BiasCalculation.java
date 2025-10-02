@@ -38,6 +38,7 @@ public class BiasCalculation {
         ArrayList<Integer> packetCounters = windowData.packetCountersInWindow;
         ArrayList<double[]> eulerAngles = windowData.eulerAnglesInWindow;
         ArrayList<double[]> accelData = windowData.accelDataInWindow;
+        ArrayList<float[]> quaternions = windowData.quaternionsInWindow;
 
         // Constants
         double gravity = 9.80665; // m/s²
@@ -62,17 +63,24 @@ public class BiasCalculation {
         for (int k = 0; k < sampleCount; k++) {
             double[] currentEuler = eulerAngles.get(k);
             double[] currentAccel = accelData.get(k);
+            float[] currentQuat = quaternions.get(k);
 
-            double roll = currentEuler[0];
+            /*double roll = currentEuler[0];
             double pitch = currentEuler[1];
-            double yaw = currentEuler[2];
+            double yaw = currentEuler[2];*/
+
+            // Calculate Euler angles from quaternion using ZYX convention (matching MATLAB)
+            double[] eulerZYX = quaternionToEulerZYX(currentQuat);
+            double roll  = eulerZYX[0];
+            double pitch = eulerZYX[1];
+            double yaw   = eulerZYX[2];
 
             double[][] rotationMatrix = calculateRotationMatrix(roll, pitch, yaw);
 
-            double[][] rotationMatrixTranspose = transposeMatrix(rotationMatrix);
+            // double[][] rotationMatrixTranspose = transposeMatrix(rotationMatrix);
 
-            //double[] acc_world = multiplyMatrixVector(rotationMatrix, currentAccel);
-            double[] acc_world = multiplyMatrixVector(rotationMatrixTranspose, currentAccel);
+            double[] acc_world = multiplyMatrixVector(rotationMatrix, currentAccel);
+            //double[] acc_world = multiplyMatrixVector(rotationMatrixTranspose, currentAccel);
 
             acc_world[0] = acc_world[0] - 0;
             acc_world[1] = acc_world[1] - 0;
@@ -97,9 +105,10 @@ public class BiasCalculation {
 
 
             // Log the calculated values for this sample
-            logManager.log("-------------------------");
+            /*logManager.log("-------------------------");
             logManager.log("packetCounter: " + packetCounters.get(k));
             logManager.log("Sample " + k + ":");
+            logManager.log("  qaternion: [" + decimalFormat.format(currentQuat[0]) + ", " + decimalFormat.format(currentQuat[1]) + ", " + decimalFormat.format(currentQuat[2]) + ", " + decimalFormat.format(currentQuat[3]) + "]");
             logManager.log("  currentEuler: [" + decimalFormat.format(roll) + ", " + decimalFormat.format(pitch) + ", " + decimalFormat.format(yaw) + "]");
             logManager.log("  currentAccel: [" + decimalFormat.format(currentAccel[0]) + ", " +
                     decimalFormat.format(currentAccel[1]) + ", " +
@@ -107,14 +116,14 @@ public class BiasCalculation {
             logManager.log("  currentAccelMag: [" + decimalFormat.format(Math.sqrt(currentAccel[0]*currentAccel[0] + currentAccel[1]*currentAccel[1] + currentAccel[2]*currentAccel[2])) + "]");
             logManager.log("  currentAccelMagCalibrated: [" + decimalFormat.format(Math.sqrt(currentAccel[0]*currentAccel[0] + currentAccel[1]*currentAccel[1] + currentAccel[2]*currentAccel[2])
                                                              - windowData.segmentWindow.initAccelValue) + "]");
-            logManager.log("  a: [" + decimalFormat.format(acc_world[0]) + ", " +
+            logManager.log("  accWorld: [" + decimalFormat.format(acc_world[0]) + ", " +
                     decimalFormat.format(acc_world[1]) + ", " +
                     decimalFormat.format(acc_world[2]) + "]");
-            logManager.log("  aMag: [" + decimalFormat.format(Math.sqrt(acc_world[0]*acc_world[0] + acc_world[1]*acc_world[1] + acc_world[2]*acc_world[2])) + "]");
-            /*logManager.log("  v: [" + String.format("%.4f", v_new[0]) + ", " +
+            logManager.log("  accWorldMag: [" + decimalFormat.format(Math.sqrt(acc_world[0]*acc_world[0] + acc_world[1]*acc_world[1] + acc_world[2]*acc_world[2])) + "]");
+            logManager.log("  velocity: [" + String.format("%.4f", v_new[0]) + ", " +
                     String.format("%.4f", v_new[1]) + ", " +
                     String.format("%.4f", v_new[2]) + "]");
-            logManager.log("  p: [" + String.format("%.4f", p_new[0]) + ", " +
+            logManager.log("  position: [" + String.format("%.4f", p_new[0]) + ", " +
                     String.format("%.4f", p_new[1]) + ", " +
                     String.format("%.4f", p_new[2]) + "]");*/
 
@@ -184,10 +193,10 @@ public class BiasCalculation {
         double biasV_hs = biasVector[3];
 
         // Log the calculated bias
-        /*logManager.log("----------------------------------");
+        logManager.log("----------------------------------");
         logManager.log("Bias calculated for " + windowData.imuId + " Window #" + windowNum);
         logManager.log("  Bias Acc: [" + decimalFormat.format(Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ)) + "]");
-        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));*/
+        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));
 
         // For now, return the magnitude of acceleration bias
         // double calculatedBias = Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ);
@@ -266,6 +275,24 @@ public class BiasCalculation {
             }
         }
         return result;
+    }
+    private double[] quaternionToEulerZYX(float[] q) {
+        double w = q[0];
+        double x = q[1];
+        double y = q[2];
+        double z = q[3];
+
+        // ZYX Euler angles (Yaw-Pitch-Roll sequence)
+        double roll = Math.atan2(2.0 * (w*x + y*z), 1.0 - 2.0 * (x*x + y*y));
+        double pitch = Math.asin(2.0 * (w*y - z*x));
+        double yaw = Math.atan2(2.0 * (w*z + x*y), 1.0 - 2.0 * (y*y + z*z));
+
+        // Convert to degrees
+        yaw = Math.toDegrees(yaw);
+        pitch = Math.toDegrees(pitch);
+        roll = Math.toDegrees(roll);
+
+        return new double[]{roll, pitch, yaw};
     }
 
 
