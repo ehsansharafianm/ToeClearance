@@ -110,55 +110,19 @@ public class ImuManager implements
             // Extract the gait window data
             GaitWindowData windowData = extractGaitWindowData(imuId, startPacket, endPacket);
 
-
-
-            /*logManager.log("Extracted " + windowData.packetCountersInWindow.size() +
-                    " samples for gait window #" + windowNum);
-
-            // Verify data is not null and show first/last values
-            if (windowData.eulerAnglesInWindow.isEmpty()) {
-                logManager.log("WARNING: eulerAnglesInWindow is EMPTY!");
-            } else {
-                // Show first sample
-                double[] firstEuler = windowData.eulerAnglesInWindow.get(0);
-                double[] firstAccel = windowData.accelDataInWindow.get(0);
-                int firstPacket = windowData.packetCountersInWindow.get(0);
-
-
-                logManager.log("First sample - Packet: " + firstPacket +
-                        " | Euler: [" + decimalFormat.format(firstEuler[0]) + "]" +
-                        " | Accel: [" + decimalFormat.format(Math.sqrt(firstAccel[0]*firstAccel[0] + firstAccel[1]*firstAccel[1] + firstAccel[2]*firstAccel[2]) -
-                        IMU1.initAccelValue) + "]");
-
-                // Show last sample
-                int lastIdx = windowData.eulerAnglesInWindow.size() - 1;
-                double[] lastEuler = windowData.eulerAnglesInWindow.get(lastIdx);
-                double[] lastAccel = windowData.accelDataInWindow.get(lastIdx);
-                int lastPacket = windowData.packetCountersInWindow.get(lastIdx);
-
-                logManager.log("Last sample - Packet: " + lastPacket +
-                        " | Euler: [" + decimalFormat.format(lastEuler[0]) + "]" +
-                        " | Accel: [" + decimalFormat.format(Math.sqrt(lastAccel[0]*lastAccel[0] + lastAccel[1]*lastAccel[1] + lastAccel[2]*lastAccel[2]) -
-                        IMU1.initAccelValue) + "]");
-
-                // Verify packet counter range matches
-                logManager.log("Packet range check - Expected: [" + startPacket + " - " + endPacket +
-                        "] | Actual: [" + firstPacket + " - " + lastPacket + "]");
-            }*/
-
-            biasCalculation.processBiasCalculation(windowData, windowNum);
+            biasCalculation.processBiasCalculation(windowData, windowNum, startPacket, endPacket);
 
         }
     }
-    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected) {
+    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected, int startPacket, int endPacket) {
 
         // Pass the data to the feature detector
         featureDetectorThroughWindow.processFeatureDetectionInWindowData(imuId, windowNum, biasValue, recalculatedBias,
-                terrainType, a_corrected, v_corrected, p_corrected);
+                terrainType, a_corrected, v_corrected, p_corrected, startPacket, endPacket);
     }
     @Override
     public void onFeatureDetectionComplete(String imuId, int windowNum, String terrainType,
-                                           ArrayList<Double> extractedFeatures, double biasValue) {
+                                           ArrayList<Double> extractedFeatures, double biasValue, int startPacket, int endPacket) {
 
         logManager.log("Feature Detection Complete for " + imuId + " Window #" + windowNum);
 
@@ -171,6 +135,16 @@ public class ImuManager implements
 
             logManager.log("  Max Stride Length (XY): " + decimalFormat.format(maxStrideLength) + " m");
             logManager.log("  Max Height (Z): " + decimalFormat.format(maxHeight) + " m");
+
+            // Log to feature CSV
+            if (isLoggingData) {
+                logManager.logFeatureData(imuId, windowNum, terrainType, maxHeight, maxStrideLength, biasValue, startPacket, endPacket);
+                // NEW: Update UI display for IMU1 only
+                if (imuId.equals("IMU1") && listener != null) {
+                    listener.onFeatureDetectionUpdate(windowNum, terrainType, biasValue,
+                            maxHeight, maxStrideLength);
+                }
+            }
         } else {
             logManager.log("  ERROR: Insufficient features extracted! Expected 2, got " + extractedFeatures.size());
         }
@@ -345,6 +319,7 @@ public class ImuManager implements
 
     @Override
     public void onDotDataChanged(String address, com.xsens.dot.android.sdk.events.DotData dotData) {
+
         final float[] quats = dotData.getQuat();
         final double[] eulerAngles = DotParser.quaternion2Euler(quats);
         final double[] gyroData = dotData.getGyr();
@@ -355,20 +330,7 @@ public class ImuManager implements
             dotData.setPacketCounter(dotData.getPacketCounter() + packetCounterOffset);
             // Calculate initial values during standing
 
-            // Log quaternions and Euler angles
-            /*logManager.log("Packet: " + dotData.getPacketCounter());
-            logManager.log("  Quats: [" +
-                    decimalFormat.format(quats[0]) + ", " +
-                    decimalFormat.format(quats[1]) + ", " +
-                    decimalFormat.format(quats[2]) + ", " +
-                    decimalFormat.format(quats[3]) + "]");
-            logManager.log("  Euler (Xsens): [" +
-                    decimalFormat.format(eulerAngles[0]) + ", " +
-                    decimalFormat.format(eulerAngles[1]) + ", " +
-                    decimalFormat.format(eulerAngles[2]) + "]");*/
-
             calculateInitialValues(IMU1, dotData, eulerAngles, gyroData, accelData);
-
 
             // Apply calibration
             double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
@@ -399,17 +361,6 @@ public class ImuManager implements
                 IMU1.storeData(eulerAngles, quats, accelData, dotData.getPacketCounter());
 
 
-                // Log stored data info
-                /*logManager.log("IMU1 Stored - Size: " + IMU1.storedEulerAngles.size() +
-                        " | Last Euler: [" + decimalFormat.format(lastEuler[0]) + ", " +
-                        decimalFormat.format(lastEuler[1]) + ", " +
-                        decimalFormat.format(lastEuler[2]) + "]" +
-                        " | Last Accel: [" + decimalFormat.format(lastAccel[0]) + ", " +
-                        decimalFormat.format(lastAccel[1]) + ", " +
-                        decimalFormat.format(lastAccel[2]) + "]" +
-                        " | Last Packet: " + lastPacket);*/
-
-
             } else if (address.equals(IMU2.MAC)) {
 
                 IMU2.normalDataLogger.update(dotData);
@@ -422,14 +373,15 @@ public class ImuManager implements
             }
         }
 
-
         // ZUPT PROCESSING - happens always (outside logging condition)
         if (address.equals(IMU1.MAC)) {
             // Use calibrated data for ZUPT
             double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
             double calibratedGyro = calibrated[1];
             double calibratedAccel = calibrated[2];
-            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
+
+
+            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, eulerAngles[0], removeLabelOffset(dotData.getPacketCounter()));
 
         } else if (address.equals(IMU2.MAC)) {
             // Use calibrated data for ZUPT
@@ -559,6 +511,16 @@ public class ImuManager implements
         }
 
         return windowData;
+    }
+
+    // Remove label offset from packet counter
+    private int removeLabelOffset(int labeledPacketCounter) {
+        if (labeledPacketCounter >= 1000000 && labeledPacketCounter < 10000000){
+            int offsetMultiplier = labeledPacketCounter / 1000000;
+            return labeledPacketCounter - (offsetMultiplier * 1000000);
+        } else {
+            return labeledPacketCounter;
+        }
     }
 
 

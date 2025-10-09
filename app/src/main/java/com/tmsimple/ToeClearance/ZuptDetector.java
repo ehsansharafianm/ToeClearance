@@ -281,21 +281,12 @@ public class ZuptDetector {
     }
 
     // Main processing method
-    public void processNewImuData(String imuId, double gyroMagnitude, double accelMagnitude, double rollAngle, int labeledPacketCounter) {
-
-        // Remove label offset from packet counter
-        int packetCounter;
-        if (labeledPacketCounter > 1000000 && labeledPacketCounter < 2000000) {
-            packetCounter = labeledPacketCounter - 1000000;
-        } else {
-            packetCounter = labeledPacketCounter;
-        }
+    public void processNewImuData(String imuId, double gyroMagnitude, double accelMagnitude, double rollAngle, int packetCounter) {
 
         // Always update UI with current values
         if (listener != null) {
             listener.onZuptDataUpdated(imuId, gyroMagnitude, accelMagnitude);
         }
-
         // Check if current sample meets threshold criteria
         boolean meetsCriteria = (gyroMagnitude < gyroThreshold) && (accelMagnitude < accelThreshold);
 

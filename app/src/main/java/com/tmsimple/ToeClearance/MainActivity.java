@@ -105,23 +105,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
 
 
-        uiManager.setLogSwitchHandler(uiManager.logSwitch, logManager);
-        uiManager.setImuSwitchHandler(uiManager.ImuSwitch, logManager, new UiManager.OnImuSwitchChangedListener() {
-            @Override
-            public void onLeftSideSelected() {
-                IMU1MAC = "D4:22:CD:00:A1:76";
-                IMU2MAC = "D4:22:CD:00:9F:95";
-                logManager.log(IMU1MAC);
-                logManager.log(IMU2MAC);
-            }
-            @Override
-            public void onRightSideSelected() {
-                IMU1MAC = "D4:22:CD:00:63:8B";
-                IMU2MAC = "D4:22:CD:00:63:A4";
-                logManager.log(IMU1MAC);
-                logManager.log(IMU2MAC);
-            }
-        });
+        uiManager.setLogToggleButtonHandler(uiManager.logToggleButton, logManager);
 
         uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
             @Override
@@ -277,6 +261,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             IMU1.normalDataLogger = logManager.createDataLog(IMU1.xsDevice, subjectTitle, subjectNumber, imuManager);
         if (IMU2.xsDevice != null)
             IMU2.normalDataLogger = logManager.createDataLog(IMU2.xsDevice, subjectTitle, subjectNumber, imuManager);
+
+        logManager.initializeFeatureLogs(subjectTitle, subjectNumber);
+
         imuManager.startMeasurement();
     }
 /////////////////// Callbacks ////////////////////////
@@ -309,6 +296,14 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 uiManager.setTextView(uiManager.imu2Gyro, String.format(Locale.US,"%.2f", gyroMag), null, null);
                 uiManager.setTextView(uiManager.imu2Accel, String.format(Locale.US,"%.2f", linearAccelMag), null, null);
             }
+        });
+    }
+    @Override
+    public void onFeatureDetectionUpdate(int windowNum, String terrainType, double biasValue,
+                                         double maxHeight, double maxStride) {
+        runOnUiThread(() -> {
+            uiManager.updateFeatureDisplay(windowNum, terrainType, biasValue,
+                    maxHeight, maxStride);
         });
     }
 
@@ -350,7 +345,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         logManager.log("Stopping");
         imuManager.stopMeasurement();
-        //measureButton.setText("Measuring Stopped");
+
+        logManager.closeFeatureLogs();
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
