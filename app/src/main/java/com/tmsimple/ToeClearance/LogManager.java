@@ -7,11 +7,14 @@ import android.content.Context;
 import com.xsens.dot.android.sdk.models.DotDevice;
 import com.xsens.dot.android.sdk.utils.DotLogger;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 public class LogManager {
 
@@ -23,6 +26,10 @@ public class LogManager {
     public ArrayList<File> loggerFilePaths = new ArrayList<>();
     public ArrayList<String> loggerFileNames = new ArrayList<>();
     private ImuManager imuManager;
+
+    private HashMap<String, File> featureLogFiles = new HashMap<>();
+    private HashMap<String, BufferedWriter> featureLogWriters = new HashMap<>();
+    private boolean isFeatureLoggingActive = false;
 
     public LogManager(Context context, TextView logContents, File logFile) {
         this.context = context;
@@ -103,6 +110,92 @@ public class LogManager {
                     Version, 0);
             return logger;
         }
+    }
+
+    public void createFeatureLog(String imuId, String subjectTitle, int subjectNumber) {
+        try {
+            File featureLogFolder = context.getApplicationContext().getExternalFilesDir(subjectTitle);
+            String featureLogFileName = "FeatureLog_" + imuId + "_Subject" + subjectNumber + "_" +
+                    java.text.DateFormat.getDateTimeInstance().format(new Date()) + ".csv";
+            String path = featureLogFolder.getPath() + "/" + featureLogFileName;
+            File featureLogFile = new File(path);
+
+            // Create the file and write header
+            BufferedWriter featureLogWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(featureLogFile, false)));
+
+            // Write CSV header
+            featureLogWriter.write("Window_Number,Terrain_Type,Start_Packet,End_Packet,Max_Height_m,Max_Stride_Length_m,Bias_Value\n");
+            featureLogWriter.flush();
+
+            // Store in HashMaps
+            featureLogFiles.put(imuId, featureLogFile);
+            featureLogWriters.put(imuId, featureLogWriter);
+
+            // Add to the list of files to upload
+            loggerFilePaths.add(featureLogFile);
+            loggerFileNames.add(featureLogFileName);
+
+            log("Feature log created for " + imuId + ": " + featureLogFileName);
+
+        } catch (IOException e) {
+            log("Error creating feature log for " + imuId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void initializeFeatureLogs(String subjectTitle, int subjectNumber) {
+        createFeatureLog("IMU1", subjectTitle, subjectNumber);
+        createFeatureLog("IMU2", subjectTitle, subjectNumber);
+        isFeatureLoggingActive = true;
+        log("Feature logging initialized for all IMUs");
+    }
+
+    public void logFeatureData(String imuId, int windowNum, String terrainType,
+                               double maxHeight, double maxStrideLength, double biasValue, int startPacket, int endPacket) {
+        if (!isFeatureLoggingActive) {
+            log("WARNING: Feature logging not active!");
+            return;
+        }
+
+        BufferedWriter writer = featureLogWriters.get(imuId);
+        if (writer == null) {
+            log("WARNING: No feature log writer found for " + imuId);
+            return;
+        }
+
+        try {
+            // Format: Window_Number,Terrain_Type,Start_Packet,End_Packet,Max_Height_m,Max_Stride_Length_m,Bias_Value
+            String row = String.format("%d,%s,%d,%d,%.4f,%.4f,%.4f\n",
+                    windowNum, terrainType, startPacket, endPacket,
+                    maxHeight, maxStrideLength, biasValue);
+
+            writer.write(row);
+            writer.flush(); // Flush immediately to ensure data is written
+
+            log("Feature data logged for " + imuId + ": Window #" + windowNum + " | " + terrainType);
+
+        } catch (IOException e) {
+            log("Error writing feature data for " + imuId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    public void closeFeatureLogs() {
+        for (String imuId : featureLogWriters.keySet()) {
+            BufferedWriter writer = featureLogWriters.get(imuId);
+            if (writer != null) {
+                try {
+                    writer.close();
+                    log("Feature log closed for " + imuId);
+                } catch (IOException e) {
+                    log("Error closing feature log for " + imuId + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
+        featureLogWriters.clear();
+        featureLogFiles.clear();
+        isFeatureLoggingActive = false;
+        log("All feature logs closed successfully");
     }
 
 

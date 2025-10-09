@@ -11,6 +11,16 @@
         android:background="#FFFFFF">
 
         <TextView
+            android:id="@+id/imu1BiasTitle"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1WindowTitle"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="21dp"
+            android:text="Bias Value:"
+            android:textSize="15sp" />
+
+        <TextView
             android:id="@+id/topLine"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -73,6 +83,20 @@
             android:text="Home" />
 
         <Button
+            android:id="@+id/listImusButton"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/connectionStatusSpace"
+            android:layout_marginLeft="93dp"
+            android:layout_marginTop="1dp"
+            android:layout_toRightOf="@+id/connectionStatusSpace"
+            android:backgroundTint="#717070"
+            android:onClick="listImusButton_onClick"
+            android:text="Search IMUs"
+            android:textSize="10dp"
+            android:textStyle="bold" />
+
+        <Button
             android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:id="@+id/syncButton"
@@ -100,7 +124,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="Disconnected"/>
 
-        <!-- IMU1 Roll Angle -->
         <TextView
             android:id="@+id/imu1RollTitle"
             android:layout_width="90dp"
@@ -118,7 +141,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="0.0"/>
 
-        <!-- IMU1 Gyro Magnitude -->
         <TextView
             android:id="@+id/imu1GyroTitle"
             android:layout_width="90dp"
@@ -136,7 +158,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="0.0"/>
 
-        <!-- IMU1 Linear Acceleration -->
         <TextView
             android:id="@+id/imu1AccelTitle"
             android:layout_width="90dp"
@@ -154,7 +175,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="0.0"/>
 
-        <!-- IMU1 Packet Index -->
         <TextView
             android:id="@+id/imu1IndexTitle"
             android:layout_width="90dp"
@@ -172,7 +192,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="0"/>
 
-        <!-- IMU1 Battery -->
         <TextView
             android:id="@+id/imu1BatteryTitle"
             android:layout_width="90dp"
@@ -209,7 +228,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:text="Disconnected" />
 
-        <!-- IMU2 Roll Angle -->
         <TextView
             android:id="@+id/imu2RollTitle"
             android:layout_width="90dp"
@@ -229,7 +247,6 @@
             android:background="@drawable/rectangle"
             android:text="0.0" />
 
-        <!-- IMU2 Gyro Magnitude -->
         <TextView
             android:id="@+id/imu2GyroTitle"
             android:layout_width="90dp"
@@ -249,7 +266,6 @@
             android:background="@drawable/rectangle"
             android:text="0.0"/>
 
-        <!-- IMU2 Linear Acceleration -->
         <TextView
             android:id="@+id/imu2AccelTitle"
             android:layout_width="90dp"
@@ -269,7 +285,6 @@
             android:background="@drawable/rectangle"
             android:text="0.0"/>
 
-        <!-- IMU2 Packet Index -->
         <TextView
             android:id="@+id/imu2IndexTitle"
             android:layout_width="90dp"
@@ -289,7 +304,6 @@
             android:background="@drawable/rectangle"
             android:text="0" />
 
-        <!-- IMU2 Battery -->
         <TextView
             android:id="@+id/imu2BatteryTitle"
             android:layout_width="90dp"
@@ -309,7 +323,7 @@
             android:background="@drawable/rectangle"
             android:text="0%" />
 
-        <!-- Buttons and controls -->
+        <!-- Buttons -->
         <Button
             android:id="@+id/measureButton"
             android:layout_width="160dp"
@@ -343,25 +357,8 @@
             android:onClick="uploadButton_onClick"
             android:text="Upload Data" />
 
-        <Switch
-            android:id="@+id/logSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/measureButton"
-            android:layout_marginLeft="-127dp"
-            android:layout_marginTop="410dp"
-            android:layout_toRightOf="@+id/scanButton"
-            android:text="Show Log" />
+        <!-- Log Contents -->
 
-        <Switch
-            android:id="@+id/ImuSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/measureButton"
-            android:layout_marginLeft="40dp"
-            android:layout_marginTop="410dp"
-            android:layout_toRightOf="@+id/scanButton"
-            android:text="L-R IMU" />
 
         <Button
             android:id="@+id/dataLogButton"
@@ -433,6 +430,17 @@
             android:backgroundTint="#4CAF50"
             android:text="Stair Descend" />
 
+        <Button
+            android:id="@+id/stopButton"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/imu2Battery"
+            android:layout_marginStart="230dp"
+            android:layout_marginTop="150dp"
+            android:backgroundTint="#FA5C5C"
+            android:onClick="stopButton_onClick"
+            android:text="Stop" />
+
         <TextView
             android:id="@+id/logContents"
             android:layout_width="2000dp"
@@ -446,16 +454,164 @@
             android:textStyle="bold"
             android:visibility="invisible" />
 
+        <!-- REPLACED SWITCH WITH BUTTON -->
         <Button
-            android:id="@+id/stopButton"
+            android:id="@+id/logToggleButton"
             android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/imu2Battery"
+            android:layout_below="@id/measureButton"
             android:layout_marginStart="230dp"
-            android:layout_marginTop="150dp"
-            android:backgroundTint="#FA5C5C"
-            android:onClick="stopButton_onClick"
-            android:text="Stop" />
+            android:layout_marginTop="25dp"
+            android:backgroundTint="#4DBDDF"
+            android:text="Show Log" />
+
+        <!-- NEW: Feature Detection Results Section for IMU1 -->
+        <TextView
+            android:id="@+id/featuresSectionDivider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/uploadButton"
+            android:layout_marginTop="110dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="_________________________________________"
+            android:textAlignment="center"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/featuresSectionTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/featuresSectionDivider"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="Feature Detection Results"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#2196F3"/>
+
+        <!-- Terrain Type - LARGE AND PROMINENT -->
+        <TextView
+            android:id="@+id/imu1TerrainLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/featuresSectionTitle"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="TERRAIN TYPE"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#666666"/>
+
+        <TextView
+            android:id="@+id/imu1TerrainType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1TerrainLabel"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/rectangle"
+            android:padding="20dp"
+            android:text="--"
+            android:textAlignment="center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"/>
+
+        <!-- Window Number -->
+        <TextView
+            android:id="@+id/imu1WindowTitle"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1TerrainType"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="35dp"
+            android:text="Window #:"
+            android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/imu1WindowNumber"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1TerrainType"
+            android:layout_toRightOf="@+id/imu1WindowTitle"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#E3F2FD"
+            android:padding="8dp"
+            android:text="--"
+            android:textSize="15sp"/>
+
+        <!-- Bias Value -->
+
+        <TextView
+            android:id="@+id/imu1BiasValue"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1WindowNumber"
+            android:layout_toRightOf="@+id/imu1BiasTitle"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#E3F2FD"
+            android:padding="8dp"
+            android:text="--"
+            android:textSize="15sp"/>
+
+        <!-- Max Height -->
+
+        <TextView
+            android:id="@+id/imu1HeightTitle"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1BiasTitle"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="24dp"
+            android:text="Max Height:"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/imu1MaxHeight"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1BiasValue"
+            android:layout_toRightOf="@+id/imu1HeightTitle"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#E3F2FD"
+            android:padding="8dp"
+            android:text="-- m"
+            android:textSize="15sp"/>
+
+        <!-- Max Stride Length -->
+        <TextView
+            android:id="@+id/imu1StrideTitle"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1HeightTitle"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="25dp"
+            android:text="Max Stride Length:"
+            android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/imu1MaxStride"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imu1MaxHeight"
+            android:layout_toRightOf="@+id/imu1StrideTitle"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="20dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="#E3F2FD"
+            android:padding="8dp"
+            android:text="-- m"
+            android:textSize="15sp"/>
+
+
 
     </RelativeLayout>
 </ScrollView>

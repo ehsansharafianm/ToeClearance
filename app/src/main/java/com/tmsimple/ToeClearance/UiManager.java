@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.util.Locale;
 
 
 public class UiManager {
@@ -19,8 +20,8 @@ public class UiManager {
     private final ImuManager imuManager;
 
     public Button scanButton, syncButton, measureButton, disconnectButton,
-            stopButton, uploadButton, dataLogButton, homeButton;
-    public Switch logSwitch, ImuSwitch;
+            stopButton, uploadButton, dataLogButton, homeButton, listImusButton;
+    public Button logToggleButton;
     public TextView imu1Status, imu2Status, logContents;
     public TextView imu1Roll, imu2Roll;           // Roll angles
     public TextView imu1Gyro, imu2Gyro;           // Gyro magnitudes
@@ -28,6 +29,8 @@ public class UiManager {
     public TextView imu1Index, imu2Index;         // Packet indices
     public TextView imu1Battery, imu2Battery;
     public EditText enterSubjectNumber;
+    // Feature detection display fields
+    public TextView imu1WindowNumber, imu1TerrainType, imu1BiasValue, imu1MaxHeight, imu1MaxStride;
 
     public UiManager(View rootView, ImuManager imuManager) {
         this.root = rootView;
@@ -43,13 +46,12 @@ public class UiManager {
         measureButton = root.findViewById(R.id.measureButton);
         disconnectButton = root.findViewById(R.id.disconnectButton);
         stopButton = root.findViewById(R.id.stopButton);
+        listImusButton = root.findViewById(R.id.listImusButton);
         uploadButton = root.findViewById(R.id.uploadButton);
         dataLogButton = root.findViewById(R.id.dataLogButton);
         homeButton = root.findViewById(R.id.homeButton);
 
-        logSwitch = root.findViewById(R.id.logSwitch);
-        ImuSwitch = root.findViewById(R.id.ImuSwitch);
-
+        logToggleButton = root.findViewById(R.id.logToggleButton);
         // Status fields
         imu1Status = root.findViewById(R.id.imu1Status);
         imu2Status = root.findViewById(R.id.imu2Status);
@@ -68,6 +70,13 @@ public class UiManager {
         imu2Accel = root.findViewById(R.id.imu2Accel);
         imu2Index = root.findViewById(R.id.imu2Index);
         imu2Battery = root.findViewById(R.id.imu2Battery);
+
+        // Feature detection display fields
+        imu1WindowNumber = root.findViewById(R.id.imu1WindowNumber);
+        imu1TerrainType = root.findViewById(R.id.imu1TerrainType);
+        imu1BiasValue = root.findViewById(R.id.imu1BiasValue);
+        imu1MaxHeight = root.findViewById(R.id.imu1MaxHeight);
+        imu1MaxStride = root.findViewById(R.id.imu1MaxStride);
 
 
     }
@@ -121,11 +130,20 @@ public class UiManager {
             }
         });
     }
-    public void setLogSwitchHandler(Switch logSwitch, LogManager logManager) {
-        if (logSwitch == null || logManager == null) return;
+    private boolean isLogVisible = false;
 
-        logSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            logManager.setLogVisible(isChecked);
+    public void setLogToggleButtonHandler(Button logToggleButton, LogManager logManager) {
+        if (logToggleButton == null || logManager == null) return;
+
+        logToggleButton.setOnClickListener(v -> {
+            isLogVisible = !isLogVisible;
+            logManager.setLogVisible(isLogVisible);
+
+            if (isLogVisible) {
+                logToggleButton.setText("Hide Log");
+            } else {
+                logToggleButton.setText("Show Log");
+            }
         });
     }
 
@@ -155,24 +173,6 @@ public class UiManager {
                     }
 
                 }
-            }
-        });
-    }
-
-    public interface OnImuSwitchChangedListener {
-        void onLeftSideSelected();
-        void onRightSideSelected();
-    }
-    public void setImuSwitchHandler(Switch imuSwitch, LogManager logManager, OnImuSwitchChangedListener listener) {
-        if (imuSwitch == null || listener == null) return;
-
-        imuSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                logManager.log("IMU switch is checked for left side");
-                listener.onLeftSideSelected();
-            } else {
-                logManager.log("IMU switch is checked for right side");
-                listener.onRightSideSelected();
             }
         });
     }
@@ -266,5 +266,58 @@ public class UiManager {
         imu2Accel.setText("");
         imu2Index.setText("");
         imu2Battery.setText("");
+    }
+
+    // Method to update feature detection display with dynamic colors
+    public void updateFeatureDisplay(int windowNum, String terrainType, double biasValue,
+                                     double maxHeight, double maxStride) {
+        if (imu1WindowNumber != null) {
+            imu1WindowNumber.setText(String.valueOf(windowNum));
+        }
+
+        if (imu1TerrainType != null) {
+            imu1TerrainType.setText(terrainType);
+
+            // Set different background colors for different terrain types
+            int backgroundColor;
+            switch (terrainType) {
+                case "Level_Walk":
+                    backgroundColor = Color.parseColor("#4CAF50"); // Green
+                    break;
+                case "Stair_Ascend":
+                    backgroundColor = Color.parseColor("#FF5722"); // Red-Orange
+                    break;
+                case "Stair_Descend":
+                    backgroundColor = Color.parseColor("#F44336"); // Red
+                    break;
+                case "Ramp_Ascend":
+                    backgroundColor = Color.parseColor("#FF9800"); // Orange
+                    break;
+                case "Ramp_Descend":
+                    backgroundColor = Color.parseColor("#FFC107"); // Amber
+                    break;
+                default:
+                    backgroundColor = Color.parseColor("#9E9E9E"); // Gray for unknown
+                    break;
+            }
+
+            // Create a GradientDrawable to maintain rounded corners (if your rectangle has them)
+            android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
+            drawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            drawable.setColor(backgroundColor);
+            drawable.setCornerRadius(8); // Adjust corner radius as needed, or set to 0 for sharp corners
+
+            imu1TerrainType.setBackground(drawable);
+        }
+
+        if (imu1BiasValue != null) {
+            imu1BiasValue.setText(String.format(Locale.US, "%.3f", biasValue));
+        }
+        if (imu1MaxHeight != null) {
+            imu1MaxHeight.setText(String.format(Locale.US, "%.3f m", maxHeight));
+        }
+        if (imu1MaxStride != null) {
+            imu1MaxStride.setText(String.format(Locale.US, "%.3f m", maxStride));
+        }
     }
 }

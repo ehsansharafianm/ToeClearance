@@ -1,5 +1,6 @@
 package com.tmsimple.ToeClearance;
 
+import android.Manifest;
 import android.content.Context;
 
 import com.xsens.dot.android.sdk.DotSdk;
@@ -14,12 +15,17 @@ import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.bluetooth.le.ScanSettings;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
+import com.tmsimple.ToeClearance.R;
+import androidx.core.app.ActivityCompat;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -51,7 +57,9 @@ public class ImuManager implements
 
 
     private int SelectionMesurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_5;
-
+    private boolean isDiscoveryMode = false;
+    private java.util.HashSet<String> discoveredDevices = new java.util.HashSet<>();
+    private HashMap<String, String> macToTagMap;
 
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
@@ -60,12 +68,15 @@ public class ImuManager implements
         this.context = context;
         this.listener = listener;
         this.logManager = logManager;
+        this.discoveredDevices = new HashSet<>();
 
         // Initialize zuptDetector with UiManager reference (will be set later)
         this.zuptDetector = new ZuptDetector(this, logManager);
 
         DotSdk.setDebugEnabled(true);
         DotSdk.setReconnectEnabled(true);
+
+        initializeSensorMap();
 
         mScanner = new DotScanner(context, this);
         mScanner.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
@@ -110,55 +121,19 @@ public class ImuManager implements
             // Extract the gait window data
             GaitWindowData windowData = extractGaitWindowData(imuId, startPacket, endPacket);
 
-
-
-            /*logManager.log("Extracted " + windowData.packetCountersInWindow.size() +
-                    " samples for gait window #" + windowNum);
-
-            // Verify data is not null and show first/last values
-            if (windowData.eulerAnglesInWindow.isEmpty()) {
-                logManager.log("WARNING: eulerAnglesInWindow is EMPTY!");
-            } else {
-                // Show first sample
-                double[] firstEuler = windowData.eulerAnglesInWindow.get(0);
-                double[] firstAccel = windowData.accelDataInWindow.get(0);
-                int firstPacket = windowData.packetCountersInWindow.get(0);
-
-
-                logManager.log("First sample - Packet: " + firstPacket +
-                        " | Euler: [" + decimalFormat.format(firstEuler[0]) + "]" +
-                        " | Accel: [" + decimalFormat.format(Math.sqrt(firstAccel[0]*firstAccel[0] + firstAccel[1]*firstAccel[1] + firstAccel[2]*firstAccel[2]) -
-                        IMU1.initAccelValue) + "]");
-
-                // Show last sample
-                int lastIdx = windowData.eulerAnglesInWindow.size() - 1;
-                double[] lastEuler = windowData.eulerAnglesInWindow.get(lastIdx);
-                double[] lastAccel = windowData.accelDataInWindow.get(lastIdx);
-                int lastPacket = windowData.packetCountersInWindow.get(lastIdx);
-
-                logManager.log("Last sample - Packet: " + lastPacket +
-                        " | Euler: [" + decimalFormat.format(lastEuler[0]) + "]" +
-                        " | Accel: [" + decimalFormat.format(Math.sqrt(lastAccel[0]*lastAccel[0] + lastAccel[1]*lastAccel[1] + lastAccel[2]*lastAccel[2]) -
-                        IMU1.initAccelValue) + "]");
-
-                // Verify packet counter range matches
-                logManager.log("Packet range check - Expected: [" + startPacket + " - " + endPacket +
-                        "] | Actual: [" + firstPacket + " - " + lastPacket + "]");
-            }*/
-
-            biasCalculation.processBiasCalculation(windowData, windowNum);
+            biasCalculation.processBiasCalculation(windowData, windowNum, startPacket, endPacket);
 
         }
     }
-    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected) {
+    public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected, int startPacket, int endPacket) {
 
         // Pass the data to the feature detector
         featureDetectorThroughWindow.processFeatureDetectionInWindowData(imuId, windowNum, biasValue, recalculatedBias,
-                terrainType, a_corrected, v_corrected, p_corrected);
+                terrainType, a_corrected, v_corrected, p_corrected, startPacket, endPacket);
     }
     @Override
     public void onFeatureDetectionComplete(String imuId, int windowNum, String terrainType,
-                                           ArrayList<Double> extractedFeatures, double biasValue) {
+                                           ArrayList<Double> extractedFeatures, double biasValue, int startPacket, int endPacket) {
 
         logManager.log("Feature Detection Complete for " + imuId + " Window #" + windowNum);
 
@@ -171,6 +146,16 @@ public class ImuManager implements
 
             logManager.log("  Max Stride Length (XY): " + decimalFormat.format(maxStrideLength) + " m");
             logManager.log("  Max Height (Z): " + decimalFormat.format(maxHeight) + " m");
+
+            // Log to feature CSV
+            if (isLoggingData) {
+                logManager.logFeatureData(imuId, windowNum, terrainType, maxHeight, maxStrideLength, biasValue, startPacket, endPacket);
+                // NEW: Update UI display for IMU1 only
+                if (imuId.equals("IMU1") && listener != null) {
+                    listener.onFeatureDetectionUpdate(windowNum, terrainType, biasValue,
+                            maxHeight, maxStrideLength);
+                }
+            }
         } else {
             logManager.log("  ERROR: Insufficient features extracted! Expected 2, got " + extractedFeatures.size());
         }
@@ -195,14 +180,38 @@ public class ImuManager implements
     public void setPacketCounterOffset(int packetCounterOffset) {
         this.packetCounterOffset = packetCounterOffset;
     }
+
+
+    @android.annotation.SuppressLint("MissingPermission") // To recall we had the premission previously
     @Override
     public void onDotScanned(android.bluetooth.BluetoothDevice bluetoothDevice, int rssi) {
+
+
 
         if (IMU1 == null || IMU2 == null) {
             logManager.log("Error: Segments not initialized before scanning!");
             return;
         }
+
         String address = bluetoothDevice.getAddress();
+        // String name = bluetoothDevice.getName() != null ? bluetoothDevice.getName() : "Unknown";
+
+        // === Get tag from your local HashMap ===
+        String tagFromMap = macToTagMap.getOrDefault(address, "Unknown Tag");
+
+        // If in discovery mode, log all details for devices found
+        if (isDiscoveryMode) {
+            // Construct a more detailed device info string, now including the tag
+            String deviceInfo = "Address= " + address +
+                    ", Tag= " + tagFromMap;
+            if (!discoveredDevices.contains(address)) {
+                discoveredDevices.add(address);
+                logManager.log("IMU Found: " + deviceInfo);
+            }
+            return; // Don't connect in discovery mode
+        }
+        // ----------
+
 
         if (address.equals(IMU1.MAC) && !IMU1.isScanned) {
             IMU1.isScanned = true;
@@ -308,43 +317,21 @@ public class ImuManager implements
 
         boolean isConnected = (state == DotDevice.CONN_STATE_CONNECTED);
 
-        if (state == DotDevice.CONN_STATE_CONNECTED){
-            if(address.equals(IMU1.MAC)){
-                if(address.equals(IMU1.MAC)){
-                    IMU1.isConnected = true;
-                    logManager.log("IMU1 IMU is connected!");
-                    listener.onImuConnectionChanged(IMU1.Name, isConnected);
-                }
-            }
-            else if(address.equals(IMU2.MAC)){
-                if(address.equals(IMU2.MAC)){
-                    IMU2.isConnected = true;
-                    logManager.log("IMU2 IMU is connected!");
-                    listener.onImuConnectionChanged(IMU2.Name, isConnected);
-                }
-            }
+        if (address.equals(IMU1.MAC)) {
+            IMU1.isConnected = isConnected;
+            logManager.log("IMU1 IMU is " + (isConnected ? "connected!" : "disconnected!"));
+            listener.onImuConnectionChanged(IMU1.Name, isConnected);
 
-        }
-        else if (state == DotDevice.CONN_STATE_DISCONNECTED){
-            if(address.equals(IMU1.MAC)){
-                if(address.equals(IMU1.MAC)){
-                    IMU1.isConnected = false;
-                    logManager.log("IMU1 IMU is disconnected!");
-                    listener.onImuConnectionChanged(IMU1.Name, isConnected);
-                }
-            }
-            else if(address.equals(IMU2.MAC)){
-                if(address.equals(IMU2.MAC)){
-                    IMU2.isConnected = false;
-                    logManager.log("IMU2 IMU is disconnected!");
-                    listener.onImuConnectionChanged(IMU2.Name, isConnected);
-                }
-            }
+        } else if (address.equals(IMU2.MAC)) {
+            IMU2.isConnected = isConnected;
+            logManager.log("IMU2 IMU is " + (isConnected ? "connected!" : "disconnected!"));
+            listener.onImuConnectionChanged(IMU2.Name, isConnected);
         }
     }
 
     @Override
     public void onDotDataChanged(String address, com.xsens.dot.android.sdk.events.DotData dotData) {
+
         final float[] quats = dotData.getQuat();
         final double[] eulerAngles = DotParser.quaternion2Euler(quats);
         final double[] gyroData = dotData.getGyr();
@@ -355,20 +342,7 @@ public class ImuManager implements
             dotData.setPacketCounter(dotData.getPacketCounter() + packetCounterOffset);
             // Calculate initial values during standing
 
-            // Log quaternions and Euler angles
-            /*logManager.log("Packet: " + dotData.getPacketCounter());
-            logManager.log("  Quats: [" +
-                    decimalFormat.format(quats[0]) + ", " +
-                    decimalFormat.format(quats[1]) + ", " +
-                    decimalFormat.format(quats[2]) + ", " +
-                    decimalFormat.format(quats[3]) + "]");
-            logManager.log("  Euler (Xsens): [" +
-                    decimalFormat.format(eulerAngles[0]) + ", " +
-                    decimalFormat.format(eulerAngles[1]) + ", " +
-                    decimalFormat.format(eulerAngles[2]) + "]");*/
-
             calculateInitialValues(IMU1, dotData, eulerAngles, gyroData, accelData);
-
 
             // Apply calibration
             double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
@@ -399,17 +373,6 @@ public class ImuManager implements
                 IMU1.storeData(eulerAngles, quats, accelData, dotData.getPacketCounter());
 
 
-                // Log stored data info
-                /*logManager.log("IMU1 Stored - Size: " + IMU1.storedEulerAngles.size() +
-                        " | Last Euler: [" + decimalFormat.format(lastEuler[0]) + ", " +
-                        decimalFormat.format(lastEuler[1]) + ", " +
-                        decimalFormat.format(lastEuler[2]) + "]" +
-                        " | Last Accel: [" + decimalFormat.format(lastAccel[0]) + ", " +
-                        decimalFormat.format(lastAccel[1]) + ", " +
-                        decimalFormat.format(lastAccel[2]) + "]" +
-                        " | Last Packet: " + lastPacket);*/
-
-
             } else if (address.equals(IMU2.MAC)) {
 
                 IMU2.normalDataLogger.update(dotData);
@@ -422,14 +385,15 @@ public class ImuManager implements
             }
         }
 
-
         // ZUPT PROCESSING - happens always (outside logging condition)
         if (address.equals(IMU1.MAC)) {
             // Use calibrated data for ZUPT
             double[] calibrated = applyCalibratedData(IMU1, eulerAngles, gyroData, accelData);
             double calibratedGyro = calibrated[1];
             double calibratedAccel = calibrated[2];
-            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, eulerAngles[0], dotData.getPacketCounter());
+
+
+            zuptDetector.processNewImuData("IMU1", calibratedGyro, calibratedAccel, eulerAngles[0], removeLabelOffset(dotData.getPacketCounter()));
 
         } else if (address.equals(IMU2.MAC)) {
             // Use calibrated data for ZUPT
@@ -561,6 +525,81 @@ public class ImuManager implements
         return windowData;
     }
 
+    // Remove label offset from packet counter
+    private int removeLabelOffset(int labeledPacketCounter) {
+        if (labeledPacketCounter >= 1000000 && labeledPacketCounter < 10000000){
+            int offsetMultiplier = labeledPacketCounter / 1000000;
+            return labeledPacketCounter - (offsetMultiplier * 1000000);
+        } else {
+            return labeledPacketCounter;
+        }
+    }
+
+    // Start discovery mode to list all available IMUs
+    public boolean startDiscoveryScan() {
+        isDiscoveryMode = true;
+        discoveredDevices.clear();
+        logManager.log("=== IMU Discovery Mode Started ===");
+        logManager.log("Scanning for all available Xsens DOT devices...");
+
+        // Start scanning for 10 seconds
+        boolean started = mScanner.startScan();
+
+        if (started) {
+            // Schedule automatic stop after 10 seconds
+            new android.os.Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    stopDiscoveryScan();
+                }
+            }, 10000); // 10 seconds
+        }
+
+        return started;
+    }
+
+    // Stop discovery mode
+    public void stopDiscoveryScan() {
+        if (isDiscoveryMode) {
+            mScanner.stopScan();
+            isDiscoveryMode = false;
+            logManager.log("=== IMU Discovery Completed ===");
+            logManager.log("Total IMUs found: " + discoveredDevices.size());
+            if (discoveredDevices.isEmpty()) {
+                logManager.log("No Xsens DOT devices found nearby.");
+                logManager.log("Make sure IMUs are powered on and in range.");
+            }
+        }
+    }
+
+    private void initializeSensorMap() {
+        // Create a new HashMap to store the mappings
+        macToTagMap = new HashMap<>();
+        try {
+            // Get the application's resources
+            Resources res = context.getResources();
+
+            // Read the single combined array from strings.xml
+            String[] sensorMappings = res.getStringArray(R.array.sensor_mac_map);
+
+            // Loop through each "MAC,Tag" string
+            for (String mapping : sensorMappings) {
+                // Split the string by the comma
+                String[] parts = mapping.split(",");
+
+                // Ensure the format is correct (exactly one comma)
+                if (parts.length == 2) {
+                    String macAddress = parts[0].trim(); // The MAC address
+                    String tag = parts[1].trim();        // The Tag
+                    macToTagMap.put(macAddress, tag);
+                }
+            }
+            logManager.log("Sensor map initialized from strings.xml with " + macToTagMap.size() + " entries.");
+        } catch (Exception e) {
+            // Log an error if the string array is missing or something goes wrong
+            logManager.log("Error initializing sensor map from strings.xml: " + e.getMessage());
+        }
+    }
 
     @Override
     public void onDotButtonClicked(String s, long l) {}

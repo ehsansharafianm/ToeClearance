@@ -23,7 +23,7 @@ public class FeatureDetectorThroughWindow {
     // Interface for callbacks
     public interface FeatureDetectionListener {
         void onFeatureDetectionComplete(String imuId, int windowNum, String terrainType,
-                                        ArrayList<Double> extractedFeatures, double biasValue);
+                                        ArrayList<Double> extractedFeatures, double biasValue, int startPacket, int endPacket);
     }
 
     // Constructor
@@ -37,7 +37,7 @@ public class FeatureDetectorThroughWindow {
                                   double recalculatedBias, String terrainType,
                                   ArrayList<double[]> a_corrected,
                                   ArrayList<double[]> v_corrected,
-                                  ArrayList<double[]> p_corrected) {
+                                  ArrayList<double[]> p_corrected, int startPacket, int endPacket) {
 
         logManager.log("---------------------------------------------------");
         logManager.log("Feature Detection Started for " + imuId + " Window #" + windowNum);
@@ -85,7 +85,7 @@ public class FeatureDetectorThroughWindow {
 
         // Notify listener when processing is complete
         if (listener != null) {
-            listener.onFeatureDetectionComplete(imuId, windowNum, terrainType, extractedFeatures, biasValue);
+            listener.onFeatureDetectionComplete(imuId, windowNum, terrainType, extractedFeatures, biasValue,  startPacket, endPacket);
         }
     }
 

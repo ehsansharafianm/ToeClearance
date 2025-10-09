@@ -19,7 +19,7 @@ public class BiasCalculation {
 
     // Keep only ONE interface
     public interface BiasCalculationListener {
-        void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected);
+        void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected, int startPacket, int endPacket);
     }
 
     // Constructor
@@ -29,7 +29,7 @@ public class BiasCalculation {
     }
 
     // Method to process bias calculation
-    public void processBiasCalculation(ImuManager.GaitWindowData windowData, int windowNum) {
+    public void processBiasCalculation(ImuManager.GaitWindowData windowData, int windowNum, int startPacket, int endPacket) {
 
         if (windowData.eulerAnglesInWindow.isEmpty()) {
             logManager.log("ERROR: Empty window data received!");
@@ -387,7 +387,7 @@ public class BiasCalculation {
         // Call the callback with terrain type and corrected trajectory data
         if (listener != null) {
             listener.onBiasCalculationComplete(windowData.imuId, windowNum, calculatedBias, recalculatedBias, terrainType,
-                    a_corrected, v_corrected, p_corrected);
+                    a_corrected, v_corrected, p_corrected, startPacket, endPacket);
         }
     }
     // ============================================      End of the Bias Calculation ===========================================
