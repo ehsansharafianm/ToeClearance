@@ -268,7 +268,6 @@ public class ZuptDetector {
     // Interface for callbacks
     public interface ZuptListener {
         void onZuptDataUpdated(String imuId, double gyroMag, double linearAccelMag);
-        void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag);
         void onGaitWindowCreated(String imuId, int windowNum, int startPacket, int endPacket, double duration);
     }
 
@@ -328,7 +327,7 @@ public class ZuptDetector {
                 if (windowTracker.canAcceptNewZupt(bestCandidate.packetCounter)) {
 
                     double timeSinceLastZupt = windowTracker.getPacketTimeSinceLastZupt(bestCandidate.packetCounter);
-                    logManager.log("================================================");
+                    logManager.log("=================   START    ========================");
                     // Log that ZUPT is detected and accepted
                     logManager.log("OPTIMAL ZUPT ACCEPTED - " + imuId +
                             "| at packet: " + bestCandidate.packetCounter +
@@ -356,12 +355,7 @@ public class ZuptDetector {
                         }
                     }
 
-                    // Trigger optimal ZUPT detection callback
-                    if (listener != null) {
-                        listener.onOptimalZuptDetected(imuId, bestCandidate.packetCounter,
-                                bestCandidate.rollAngle, bestCandidate.gyroMagnitude,
-                                bestCandidate.accelMagnitude);
-                    }
+
 
                 } else {
                     double timeSinceLastZupt = windowTracker.getPacketTimeSinceLastZupt(bestCandidate.packetCounter);

@@ -37,6 +37,7 @@ public class BiasCalculation {
         }
 
         int sampleCount = windowData.packetCountersInWindow.size();
+        logManager.log("------------------------------------------");
         logManager.log("Processing " + sampleCount + " samples from packet " +
                 windowData.startPacket + " to " + windowData.endPacket);
 
@@ -109,7 +110,7 @@ public class BiasCalculation {
 
 
             // Log the calculated values for this sample
-            if (k == 0 || k == sampleCount - 1) {
+            /*if (k == 0 || k == sampleCount - 1) {
                 logManager.log("---------------------------");
                 logManager.log("packetCounter: " + packetCounters.get(k));
                 logManager.log("Sample " + k + ":");
@@ -136,7 +137,7 @@ public class BiasCalculation {
                 logManager.log("  position: [" + decimalFormat.format(p_new[0]) + ", " +
                         decimalFormat.format(p_new[1]) + ", " +
                         decimalFormat.format(p_new[2]) + "]");
-            }
+            }*/
 
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -207,10 +208,10 @@ public class BiasCalculation {
         double[] biasAcc = new double[]{biasAccX, biasAccY, biasAccZ};
 
         // Log the calculated bias
-        logManager.log("----------------------------------");
+        /*logManager.log("----------------------------------");
         logManager.log("Bias calculated for " + windowData.imuId + " Window #" + windowNum);
         logManager.log("  Bias Acc: [" + decimalFormat.format(Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ)) + "]");
-        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));
+        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));*/
 
         // For now, return the magnitude of acceleration bias
         // double calculatedBias = Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ);
@@ -220,16 +221,16 @@ public class BiasCalculation {
         // Terrain Determination
         String terrainType = terrainDetermination(biasV_hs, biasAcc);
 
-        logManager.log("-----------------");
+        /*logManager.log("-----------------");
         logManager.log("Terrain Type: " + terrainType);
-        logManager.log("-----------------");
+        logManager.log("-----------------");*/
 
         // Check if terrain requires recalculation
         if (terrainType.equals("Stair_Descend") || terrainType.equals("Stair_Ascend") ||
                 terrainType.equals("Ramp_Descend") || terrainType.equals("Ramp_Ascend")) {
 
-            logManager.log(" Detected Activity: " + terrainType);
-
+            /*logManager.log(" Detected Activity: " + terrainType);
+*/
             // Recalculate with modified Jacobian (3x3 using only Bv)
             double[][] modifiedJacobian = new double[3][3];
             for (int i = 0; i < 3; i++) {
@@ -257,10 +258,10 @@ public class BiasCalculation {
         }
 
         // Log the calculated bias
-        logManager.log("----------------------------------");
+        /*logManager.log("----------------------------------");
         logManager.log("Bias calculated for " + windowData.imuId + " Window #" + windowNum);
         logManager.log("  Bias Acc: [" + decimalFormat.format(Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ)) + "]");
-        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));
+        logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));*/
 
         // For now, return the magnitude of acceleration bias
         double recalculatedBias = biasV_hs;
@@ -269,8 +270,8 @@ public class BiasCalculation {
         //===================================================================================
         // SECOND INTEGRATION: WITH BIAS CORRECTION
         //===================================================================================
-        logManager.log("----------------------------------");
-        logManager.log("Starting Second Integration with Bias Correction");
+        /*logManager.log("----------------------------------");
+        logManager.log("Starting Second Integration with Bias Correction");*/
 
         // Clear arrays for second integration
         ArrayList<double[]> v_corrected = new ArrayList<>();
@@ -333,7 +334,7 @@ public class BiasCalculation {
             p_corrected.add(p_new_corrected);
 
             // Optional: Log some samples for verification
-            if (k == 0 || k == sampleCount - 1) {
+            /*if (k == 0 || k == sampleCount - 1) {
                 logManager.log("Sample " + k + " (Corrected):");
                 logManager.log("  Packet: " + packetCounters.get(k));
                 logManager.log("  Accel (unbiased): [" + decimalFormat.format(accel_unbiased[0]) + ", " +
@@ -348,14 +349,14 @@ public class BiasCalculation {
                 logManager.log("  Position: [" + decimalFormat.format(p_new_corrected[0]) + ", " +
                         decimalFormat.format(p_new_corrected[1]) + ", " +
                         decimalFormat.format(p_new_corrected[2]) + "]");
-            }
+            }*/
         }
 
         // Log final results after bias correction
         double[] v_final_corrected = v_corrected.get(v_corrected.size() - 1);
         double[] p_final_corrected = p_corrected.get(p_corrected.size() - 1);
 
-        logManager.log("----------------------------------");
+        /*logManager.log("----------------------------------");
         logManager.log("Second Integration Complete");
         logManager.log("  Final Velocity: [" + decimalFormat.format(v_final_corrected[0]) + ", " +
                 decimalFormat.format(v_final_corrected[1]) + ", " +
@@ -380,7 +381,9 @@ public class BiasCalculation {
         logManager.log("----------------------------------");
 
         logManager.log(" Detected Activity: " + terrainType);
-        logManager.log("====================================");
+        logManager.log("====================================");*/
+
+
         // Call the callback with terrain type and corrected trajectory data
         if (listener != null) {
             listener.onBiasCalculationComplete(windowData.imuId, windowNum, calculatedBias, recalculatedBias, terrainType,

@@ -30,7 +30,8 @@ public class ImuManager implements
         DotSyncCallback,
         DotMeasurementCallback,
         ZuptDetector.ZuptListener,
-        BiasCalculation.BiasCalculationListener {
+        BiasCalculation.BiasCalculationListener,
+        FeatureDetectorThroughWindow.FeatureDetectionListener {
 
     private Context context;
     private ImuManagerListener listener;
@@ -46,6 +47,7 @@ public class ImuManager implements
     private LogManager logManager;
     int measurementMode;
     private BiasCalculation biasCalculation;
+    private FeatureDetectorThroughWindow featureDetectorThroughWindow;
 
 
     private int SelectionMesurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_5;
@@ -70,6 +72,8 @@ public class ImuManager implements
 
         deviceList = new ArrayList<>();
         this.biasCalculation = new BiasCalculation(this , logManager);
+        // In the constructor, after biasCalculation initialization
+        this.featureDetectorThroughWindow = new FeatureDetectorThroughWindow(this, logManager);
     }
 
 
@@ -93,8 +97,6 @@ public class ImuManager implements
         } else {
             logManager.log("ERROR: MainActivity listener is null!");
         }
-    }
-    public void onOptimalZuptDetected(String imuId, int packetCounter, double rollAngle, double gyroMag, double accelMag){
     }
     public void onGaitWindowCreated(String imuId, int windowNum, int startPacket, int endPacket, double duration){ //This is called when a gait cycle is detected, is coming from ZuptDetector
 
@@ -150,11 +152,35 @@ public class ImuManager implements
     }
     public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected) {
 
-        /*logManager.log("Bias calculation completed for " + imuId +
-                " window #" + windowNum +
-                " | Bias: " + decimalFormat.format(biasValue));*/
-        // Handle the results here
+        // Pass the data to the feature detector
+        featureDetectorThroughWindow.processFeatureDetectionInWindowData(imuId, windowNum, biasValue, recalculatedBias,
+                terrainType, a_corrected, v_corrected, p_corrected);
     }
+    @Override
+    public void onFeatureDetectionComplete(String imuId, int windowNum, String terrainType,
+                                           ArrayList<Double> extractedFeatures, double biasValue) {
+
+        logManager.log("Feature Detection Complete for " + imuId + " Window #" + windowNum);
+
+
+        // Extract the two features
+        if (extractedFeatures.size() >= 2) {
+            double maxHeight = extractedFeatures.get(0);
+            double maxStrideLength = extractedFeatures.get(1);
+
+
+            logManager.log("  Max Stride Length (XY): " + decimalFormat.format(maxStrideLength) + " m");
+            logManager.log("  Max Height (Z): " + decimalFormat.format(maxHeight) + " m");
+        } else {
+            logManager.log("  ERROR: Insufficient features extracted! Expected 2, got " + extractedFeatures.size());
+        }
+        logManager.log("  Terrain Type: " + terrainType);
+        logManager.log("=================   END    ========================");
+
+    }
+
+
+
     /*===========================================================================*/
     public void setSegments(Segment IMU1, Segment IMU2) {
         this.IMU1 = IMU1;
