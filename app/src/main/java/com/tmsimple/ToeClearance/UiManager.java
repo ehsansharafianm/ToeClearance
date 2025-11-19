@@ -10,6 +10,9 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.Locale;
 
 
@@ -31,6 +34,10 @@ public class UiManager {
     public EditText enterSubjectNumber;
     // Feature detection display fields
     public TextView imu1WindowNumber, imu1TerrainType, imu1BiasValue, imu1MaxHeight, imu1MaxStride;
+
+    public CardView imuListDialog;
+    public RecyclerView imuRecyclerView;
+    public Button closeImuListButton;
 
     public UiManager(View rootView, ImuManager imuManager) {
         this.root = rootView;
@@ -82,7 +89,6 @@ public class UiManager {
     }
 
 
-
     //
     // ---------- CONFIGURATION METHODS ----------
     //
@@ -109,27 +115,7 @@ public class UiManager {
             logContents.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
     }
-    public void setDataLogButtonHandler(Button button, LogManager logManager, ImuManager imuManager) {
-        button.setOnClickListener(new View.OnClickListener() {
-            int index = 0;
 
-            @Override
-            public void onClick(View v) {
-                index++;
-                if (index % 2 == 1) {
-                    imuManager.setLoggingData(true);
-                    button.setBackgroundColor(Color.parseColor("#05edbb"));
-                    button.setText("Data Logging ...");
-                    logManager.log(" ---- Data is Logging -----");
-                } else if (index % 2 == 0 && index > 1) {
-                    imuManager.setLoggingData(false);
-                    button.setBackgroundColor(Color.parseColor("#4DBDDF"));
-                    button.setText("Data Logging Stopped");
-                    logManager.log("---- Data Logging Stopped -----");
-                }
-            }
-        });
-    }
     private boolean isLogVisible = false;
 
     public void setLogToggleButtonHandler(Button logToggleButton, LogManager logManager) {
@@ -318,6 +304,14 @@ public class UiManager {
         }
         if (imu1MaxStride != null) {
             imu1MaxStride.setText(String.format(Locale.US, "%.3f m", maxStride));
+        }
+    }
+
+
+    // Add a method to show the dialog
+    public void showImuListDialog() {
+        if (imuListDialog != null) {
+            imuListDialog.setVisibility(View.VISIBLE);
         }
     }
 }

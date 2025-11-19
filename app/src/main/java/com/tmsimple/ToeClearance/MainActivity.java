@@ -1,13 +1,19 @@
 package com.tmsimple.ToeClearance;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothDevice;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -18,8 +24,10 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import android.text.method.ScrollingMovementMethod;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import android.bluetooth.BluetoothDevice;
 
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
@@ -104,34 +112,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setButton(uiManager.dataLogButton, null, null, false);
 
 
-
         uiManager.setLogToggleButtonHandler(uiManager.logToggleButton, logManager);
-
-        uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
-            @Override
-            public void onSubjectNumberEntered(int subjcetNu) {
-
-                subjectTitle = "Subject " + subjcetNu;
-                subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
-                logFileName = "Logger " + subjectTitle + " " + subjectDateAndTime + ".txt";
-                logFile = new File(logFilePath, logFileName);
-                logManager.setLogFile(logFile, subjcetNu);
-                subjectNumber = subjcetNu;
-            }
-        });
-
-        // DataLogger Button
-        uiManager.setDataLogButtonHandler(uiManager.dataLogButton, logManager, imuManager);
-
-        // Go back to first page Button
-        uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
-        uiManager.bindLabelButtons();
-
-        // After uiManager.bindLabelingDataViews() call, add:
-        if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
-        if (uiManager.imu1Accel == null) logManager.log("ERROR: imu1Accel not bound!");
-        if (uiManager.imu2Gyro == null) logManager.log("ERROR: imu2Gyro not bound!");
-        if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
 
 
     }
@@ -158,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     }
     // Added newly for discovery
+
     public void listImusButton_onClick(View view) {
         // Initialize segments to prevent null pointer exception
         if (IMU1 == null || IMU2 == null) {
@@ -195,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             logManager.log("Failed to start discovery scan.");
         }
     }
-
 
     // ---------------
     @Override
@@ -455,6 +436,5 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             permissionManager.handlePermissionResult(requestCode, grantResults);
         }
     }
-
 
 }

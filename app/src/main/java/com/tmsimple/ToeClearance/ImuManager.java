@@ -1,6 +1,8 @@
 package com.tmsimple.ToeClearance;
 
-import android.Manifest;
+import androidx.bluetooth.BluetoothDevice;
+
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 
 import com.xsens.dot.android.sdk.DotSdk;
@@ -15,19 +17,11 @@ import com.xsens.dot.android.sdk.models.DotSyncManager;
 import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.bluetooth.le.ScanSettings;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Color;
-import com.tmsimple.ToeClearance.R;
-import androidx.core.app.ActivityCompat;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
 
 public class ImuManager implements
         DotDeviceCallback,
@@ -60,7 +54,10 @@ public class ImuManager implements
     private boolean isDiscoveryMode = false;
     private java.util.HashSet<String> discoveredDevices = new java.util.HashSet<>();
     private HashMap<String, String> macToTagMap;
-
+    // This list MUST use the androidx type, as this is what getDiscoveredDevices() will return.
+    private final ArrayList<BluetoothDevice> discoveredDevicesList = new ArrayList<>();
+    // You need the BluetoothAdapter to perform the translation.
+    private final BluetoothAdapter bluetoothAdapter;
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
@@ -68,7 +65,6 @@ public class ImuManager implements
         this.context = context;
         this.listener = listener;
         this.logManager = logManager;
-        this.discoveredDevices = new HashSet<>();
 
         // Initialize zuptDetector with UiManager reference (will be set later)
         this.zuptDetector = new ZuptDetector(this, logManager);
@@ -76,6 +72,7 @@ public class ImuManager implements
         DotSdk.setDebugEnabled(true);
         DotSdk.setReconnectEnabled(true);
 
+        this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         initializeSensorMap();
 
         mScanner = new DotScanner(context, this);
@@ -181,12 +178,9 @@ public class ImuManager implements
         this.packetCounterOffset = packetCounterOffset;
     }
 
-
     @android.annotation.SuppressLint("MissingPermission") // To recall we had the premission previously
     @Override
     public void onDotScanned(android.bluetooth.BluetoothDevice bluetoothDevice, int rssi) {
-
-
 
         if (IMU1 == null || IMU2 == null) {
             logManager.log("Error: Segments not initialized before scanning!");
@@ -194,18 +188,15 @@ public class ImuManager implements
         }
 
         String address = bluetoothDevice.getAddress();
-        // String name = bluetoothDevice.getName() != null ? bluetoothDevice.getName() : "Unknown";
 
-        // === Get tag from your local HashMap ===
-        String tagFromMap = macToTagMap.getOrDefault(address, "Unknown Tag");
-
-        // If in discovery mode, log all details for devices found
         if (isDiscoveryMode) {
-            // Construct a more detailed device info string, now including the tag
-            String deviceInfo = "Address= " + address +
-                    ", Tag= " + tagFromMap;
+            // Use your existing HashSet to check for duplicates efficiently
             if (!discoveredDevices.contains(address)) {
-                discoveredDevices.add(address);
+                discoveredDevices.add(address); // Add address to the tracker set
+
+                // Your logging logic remains the same
+                String tagFromMap = macToTagMap.getOrDefault(address, "Unknown Tag");
+                String deviceInfo = "Address= " + address + ", Tag= " + tagFromMap;
                 logManager.log("IMU Found: " + deviceInfo);
             }
             return; // Don't connect in discovery mode
@@ -558,19 +549,7 @@ public class ImuManager implements
         return started;
     }
 
-    // Stop discovery mode
-    public void stopDiscoveryScan() {
-        if (isDiscoveryMode) {
-            mScanner.stopScan();
-            isDiscoveryMode = false;
-            logManager.log("=== IMU Discovery Completed ===");
-            logManager.log("Total IMUs found: " + discoveredDevices.size());
-            if (discoveredDevices.isEmpty()) {
-                logManager.log("No Xsens DOT devices found nearby.");
-                logManager.log("Make sure IMUs are powered on and in range.");
-            }
-        }
-    }
+
 
     private void initializeSensorMap() {
         // Create a new HashMap to store the mappings
@@ -599,6 +578,18 @@ public class ImuManager implements
             // Log an error if the string array is missing or something goes wrong
             logManager.log("Error initializing sensor map from strings.xml: " + e.getMessage());
         }
+    }
+
+
+    public void stopDiscoveryScan() {
+        isDiscoveryMode = false;
+        mScanner.stopScan();
+        logManager.log("Discovery scan stopped.");
+    }
+
+    // --- MODIFICATION 4: Add a getter for the discovered devices list ---
+    public ArrayList<BluetoothDevice> getDiscoveredDevices() {
+        return discoveredDevicesList;
     }
 
     @Override
