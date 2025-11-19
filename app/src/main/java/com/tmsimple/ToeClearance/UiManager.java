@@ -1,4 +1,5 @@
 package com.tmsimple.ToeClearance;
+import android.content.Context;
 import android.graphics.Color;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -7,13 +8,19 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.HashSet;
 import java.util.Locale;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.AdapterView;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class UiManager {
@@ -36,9 +43,17 @@ public class UiManager {
     public TextView imu1WindowNumber, imu1TerrainType, imu1BiasValue, imu1MaxHeight, imu1MaxStride;
 
     public CardView imuListDialog;
-    public RecyclerView imuRecyclerView;
-    public Button closeImuListButton;
+    public Spinner spinnerIMU1, spinnerIMU2;
+    private Map<String, String> macToNameMap; // Maps MAC address to name
+    private Map<String, String> nameToMacMap; // Maps name to MAC address
+    private String selectedIMU1Mac;
+    private String selectedIMU2Mac;
+    private LogManager logManager;
 
+
+    public void setLogManager(LogManager logManager) {
+        this.logManager = logManager;
+    }
     public UiManager(View rootView, ImuManager imuManager) {
         this.root = rootView;
         this.imuManager = imuManager;
@@ -84,6 +99,10 @@ public class UiManager {
         imu1BiasValue = root.findViewById(R.id.imu1BiasValue);
         imu1MaxHeight = root.findViewById(R.id.imu1MaxHeight);
         imu1MaxStride = root.findViewById(R.id.imu1MaxStride);
+
+        // FOR SPINNERS
+        spinnerIMU1 = root.findViewById(R.id.spinnerIMU1);
+        spinnerIMU2 = root.findViewById(R.id.spinnerIMU2);
 
 
     }
@@ -335,4 +354,162 @@ public class UiManager {
             imuListDialog.setVisibility(View.VISIBLE);
         }
     }
+
+    // Parse and setup the spinners
+    public void setupImuSpinners(android.content.Context context) {
+        // Load the sensor list from strings.xml
+        String[] sensorArray = context.getResources().getStringArray(R.array.sensor_mac_map);
+
+        // Initialize maps
+        macToNameMap = new HashMap<>();
+        nameToMacMap = new HashMap<>();
+        List<String> namesList = new ArrayList<>();
+
+        // Parse each item: "MAC,Name"
+        for (String item : sensorArray) {
+            String[] parts = item.split(",");
+            if (parts.length == 2) {
+                String mac = parts[0].trim();
+                String name = parts[1].trim();
+                macToNameMap.put(mac, name);
+                nameToMacMap.put(name, mac);
+                namesList.add(name); // Only names will be displayed
+            }
+        }
+
+        // Create adapter with just the names
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                context,
+                android.R.layout.simple_spinner_item,
+                namesList
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        // Setup IMU1 spinner
+        if (spinnerIMU1 != null) {
+            spinnerIMU1.setAdapter(adapter);
+            spinnerIMU1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String selectedName = (String) parent.getItemAtPosition(position);
+                    selectedIMU1Mac = nameToMacMap.get(selectedName);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    selectedIMU1Mac = null;
+                }
+            });
+        }
+
+        // Setup IMU2 spinner
+        if (spinnerIMU2 != null) {
+            spinnerIMU2.setAdapter(adapter);
+            spinnerIMU2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String selectedName = (String) parent.getItemAtPosition(position);
+                    selectedIMU2Mac = nameToMacMap.get(selectedName);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    selectedIMU2Mac = null;
+                }
+            });
+        }
+    }
+
+    // Getter methods for selected MAC addresses
+    public String getSelectedIMU1Mac() {
+        return selectedIMU1Mac;
+    }
+
+    public String getSelectedIMU2Mac() {
+        return selectedIMU2Mac;
+    }
+
+    // Getter methods for selected names
+    public String getSelectedIMU1Name() {
+        if (spinnerIMU1 != null && spinnerIMU1.getSelectedItem() != null) {
+            return (String) spinnerIMU1.getSelectedItem();
+        }
+        return null;
+    }
+
+    public String getSelectedIMU2Name() {
+        if (spinnerIMU2 != null && spinnerIMU2.getSelectedItem() != null) {
+            return (String) spinnerIMU2.getSelectedItem();
+        }
+        return null;
+    }
+
+    // Get MAC address from name
+    public String getMacFromName(String name) {
+        return nameToMacMap != null ? nameToMacMap.get(name) : null;
+    }
+
+    // Get name from MAC address
+    public String getNameFromMac(String mac) {
+        return macToNameMap != null ? macToNameMap.get(mac) : null;
+    }
+
+    // Method to update spinners with only discoverable devices
+    public void updateSpinnersWithDiscoveredDevices(Context context, HashSet<String> discoveredMacAddresses) {
+        if (discoveredMacAddresses == null || discoveredMacAddresses.isEmpty()) {
+            // If no devices discovered yet, show all IMUs
+            setupImuSpinners(context);
+            return;
+        }
+
+        // Filter the list to only include discovered devices
+        List<String> discoveredNamesList = new ArrayList<>();
+
+        for (String mac : discoveredMacAddresses) {
+            String name = macToNameMap.get(mac);
+            if (name != null) {
+                discoveredNamesList.add(name);
+            }
+        }
+
+        // If no matching devices found, keep the spinners empty or show a message
+        if (discoveredNamesList.isEmpty()) {
+            logManager.log("No matching IMUs found in discovery.");
+            return;
+        }
+
+        // Create adapter with only discovered devices
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                context,
+                android.R.layout.simple_spinner_item,
+                discoveredNamesList
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        // Update IMU1 spinner
+        if (spinnerIMU1 != null) {
+            String previousSelection = getSelectedIMU1Name();
+            spinnerIMU1.setAdapter(adapter);
+
+            // Try to restore previous selection if it's still in the list
+            if (previousSelection != null && discoveredNamesList.contains(previousSelection)) {
+                int position = discoveredNamesList.indexOf(previousSelection);
+                spinnerIMU1.setSelection(position);
+            }
+        }
+
+        // Update IMU2 spinner
+        if (spinnerIMU2 != null) {
+            String previousSelection = getSelectedIMU2Name();
+            spinnerIMU2.setAdapter(adapter);
+
+            // Try to restore previous selection if it's still in the list
+            if (previousSelection != null && discoveredNamesList.contains(previousSelection)) {
+                int position = discoveredNamesList.indexOf(previousSelection);
+                spinnerIMU2.setSelection(position);
+            }
+        }
+    }
+
+
 }

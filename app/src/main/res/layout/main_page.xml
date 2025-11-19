@@ -442,6 +442,44 @@
             android:text="Stop" />
 
         <TextView
+            android:id="@+id/labelIMU1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/stopButton"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="230dp"
+            android:text="IMU 1"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/spinnerIMU1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/stopButton"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="280dp"
+            android:minWidth="100dp"/>
+
+        <TextView
+            android:id="@+id/labelIMU2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/labelIMU1"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="230dp"
+            android:text="IMU 2"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/spinnerIMU2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/spinnerIMU1"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="280dp"
+            android:minWidth="100dp"/>
+
+        <TextView
             android:id="@+id/logContents"
             android:layout_width="2000dp"
             android:layout_height="400dp"
@@ -454,7 +492,8 @@
             android:textStyle="bold"
             android:visibility="invisible" />
 
-        <!-- REPLACED SWITCH WITH BUTTON -->
+
+
         <Button
             android:id="@+id/logToggleButton"
             android:layout_width="150dp"

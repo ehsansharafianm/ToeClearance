@@ -1,19 +1,13 @@
 package com.tmsimple.ToeClearance;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothDevice;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -24,10 +18,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import android.text.method.ScrollingMovementMethod;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import android.bluetooth.BluetoothDevice;
 
 
 public class MainActivity extends AppCompatActivity implements ImuManagerListener {
@@ -72,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     }
 
     public void LabelingData(View view) {
-        setContentView(R.layout.labeling_data);
+        setContentView(R.layout.main_page);
 
         logContents = findViewById(R.id.logContents);
         logContents.setMovementMethod(new ScrollingMovementMethod());
@@ -98,8 +90,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         View root = findViewById(R.id.labeling_data_root);
         uiManager = new UiManager(root, imuManager);
         uiManager.bindLabelingDataViews(getWindow().getDecorView().getRootView());
-        //uiManager.bindLabelingDataViews(findViewById(R.id.labeling_data_root));
+        uiManager.setupImuSpinners(this);
 
+        imuManager.setUiManager(uiManager);
 
         // Before scanning all should be deactive; after each step they will be enabled
 
@@ -141,6 +134,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
 
 
+
+
+
     }
 
 //*//*////*//*////*//*////*//*////*//*////*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*// //*//*//
@@ -149,6 +145,36 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     /// ///////////////////////////////////  Sequence of syncing  ///////////////////////////////////////////////////////////////////
 
     public void scanButton_onClick(View view) {
+
+        // Get selected MAC addresses
+        IMU1MAC = uiManager.getSelectedIMU1Mac();
+        IMU2MAC = uiManager.getSelectedIMU2Mac();
+
+        // Get selected names
+        String imu1Name = uiManager.getSelectedIMU1Name();
+        String imu2Name = uiManager.getSelectedIMU2Name();
+
+        logManager.log("IMU1: Name = " + imu1Name + ",MAC: " + IMU1MAC);
+        logManager.log("IMU2: Name = " + imu2Name + ",MAC: " + IMU2MAC);
+
+        // Check if the same IMU is selected for both
+        if (IMU1MAC.equals(IMU2MAC)) {
+            // Show error popup
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Selection Error")
+                    .setMessage("Please choose different IMUs for IMU1 and IMU2!")
+                    .setPositiveButton("OK", null)
+                    .show();
+
+            // Vibrate phone
+            android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if (vibrator != null && vibrator.hasVibrator()) {
+                vibrator.vibrate(500); // Vibrate for 500ms
+            }
+
+            logManager.log("Error: IMU1 and IMU2 cannot be the same!");
+            return;
+        }
 
         // Configure IMU segments
         IMU1 = new Segment("IMU1 IMU", IMU1MAC);

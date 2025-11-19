@@ -17,7 +17,7 @@ import com.xsens.dot.android.sdk.utils.DotParser;
 import com.xsens.dot.android.sdk.utils.DotScanner;
 import android.bluetooth.le.ScanSettings;
 import android.content.res.Resources;
-
+import java.util.Set;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +56,11 @@ public class ImuManager implements
     // This list MUST use the androidx type, as this is what getDiscoveredDevices() will return.
     private final ArrayList<BluetoothDevice> discoveredDevicesList = new ArrayList<>();
     // You need the BluetoothAdapter to perform the translation.
+
+    private UiManager uiManager;
+    public void setUiManager(UiManager uiManager) {
+        this.uiManager = uiManager;
+    }
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
@@ -175,6 +180,7 @@ public class ImuManager implements
         this.packetCounterOffset = packetCounterOffset;
     }
 
+
     @Override
     public void onDotScanned(android.bluetooth.BluetoothDevice bluetoothDevice, int rssi) {
 
@@ -187,14 +193,17 @@ public class ImuManager implements
         String address = bluetoothDevice.getAddress();
 
         if (isDiscoveryMode) {
-            // Use your existing HashSet to check for duplicates efficiently
             if (!discoveredDevices.contains(address)) {
-                discoveredDevices.add(address); // Add address to the tracker set
+                discoveredDevices.add(address);
 
-                // Your logging logic remains the same
                 String tagFromMap = macToTagMap.getOrDefault(address, "Unknown Tag");
                 String deviceInfo = "Address= " + address + ", Tag= " + tagFromMap;
                 logManager.log("IMU Found: " + deviceInfo);
+
+                // ADD THIS LINE: Update spinners with new discovered devices
+                if (uiManager != null) {
+                    uiManager.updateSpinnersWithDiscoveredDevices(context, discoveredDevices);
+                }
             }
             return;
         }
@@ -588,6 +597,7 @@ public class ImuManager implements
     public ArrayList<BluetoothDevice> getDiscoveredDevices() {
         return discoveredDevicesList;
     }
+
 
     @Override
     public void onDotButtonClicked(String s, long l) {}
