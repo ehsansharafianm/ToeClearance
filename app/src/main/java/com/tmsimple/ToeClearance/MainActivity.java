@@ -114,6 +114,32 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         uiManager.setLogToggleButtonHandler(uiManager.logToggleButton, logManager);
 
+        uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
+            @Override
+            public void onSubjectNumberEntered(int subjcetNu) {
+
+                subjectTitle = "Subject " + subjcetNu;
+                subjectDateAndTime = java.text.DateFormat.getDateTimeInstance().format(new Date());
+                logFileName = "Logger " + subjectTitle + " " + subjectDateAndTime + ".txt";
+                logFile = new File(logFilePath, logFileName);
+                logManager.setLogFile(logFile, subjcetNu);
+                subjectNumber = subjcetNu;
+            }
+        });
+
+        // DataLogger Button
+        uiManager.setDataLogButtonHandler(uiManager.dataLogButton, logManager, imuManager);
+
+        // Go back to first page Button
+        uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
+        uiManager.bindLabelButtons();
+
+        // After uiManager.bindLabelingDataViews() call, add:
+        if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
+        if (uiManager.imu1Accel == null) logManager.log("ERROR: imu1Accel not bound!");
+        if (uiManager.imu2Gyro == null) logManager.log("ERROR: imu2Gyro not bound!");
+        if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
+
 
     }
 
@@ -140,8 +166,10 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     }
     // Added newly for discovery
 
+
     public void listImusButton_onClick(View view) {
         // Initialize segments to prevent null pointer exception
+
         if (IMU1 == null || IMU2 == null) {
             IMU1 = new Segment("IMU1 IMU", IMU1MAC);
             IMU2 = new Segment("IMU2 IMU", IMU2MAC);
@@ -167,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 runOnUiThread(() -> {
                     Button listButton = findViewById(R.id.listImusButton);
                     if (listButton != null) {
-                        listButton.setText("List Available IMUs");
+                        listButton.setText("Available IMUs");
                         listButton.setBackgroundColor(Color.parseColor("#2196F3"));
                         listButton.setEnabled(true);
                     }

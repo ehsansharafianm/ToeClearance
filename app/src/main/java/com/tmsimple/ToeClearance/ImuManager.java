@@ -2,7 +2,6 @@ package com.tmsimple.ToeClearance;
 
 import androidx.bluetooth.BluetoothDevice;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 
 import com.xsens.dot.android.sdk.DotSdk;
@@ -57,7 +56,6 @@ public class ImuManager implements
     // This list MUST use the androidx type, as this is what getDiscoveredDevices() will return.
     private final ArrayList<BluetoothDevice> discoveredDevicesList = new ArrayList<>();
     // You need the BluetoothAdapter to perform the translation.
-    private final BluetoothAdapter bluetoothAdapter;
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
@@ -72,7 +70,6 @@ public class ImuManager implements
         DotSdk.setDebugEnabled(true);
         DotSdk.setReconnectEnabled(true);
 
-        this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         initializeSensorMap();
 
         mScanner = new DotScanner(context, this);
@@ -178,7 +175,6 @@ public class ImuManager implements
         this.packetCounterOffset = packetCounterOffset;
     }
 
-    @android.annotation.SuppressLint("MissingPermission") // To recall we had the premission previously
     @Override
     public void onDotScanned(android.bluetooth.BluetoothDevice bluetoothDevice, int rssi) {
 
@@ -186,6 +182,7 @@ public class ImuManager implements
             logManager.log("Error: Segments not initialized before scanning!");
             return;
         }
+
 
         String address = bluetoothDevice.getAddress();
 
@@ -199,7 +196,6 @@ public class ImuManager implements
                 String deviceInfo = "Address= " + address + ", Tag= " + tagFromMap;
                 logManager.log("IMU Found: " + deviceInfo);
             }
-            return; // Don't connect in discovery mode
         }
         // ----------
 

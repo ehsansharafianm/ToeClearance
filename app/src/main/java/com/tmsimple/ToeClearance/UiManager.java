@@ -115,6 +115,27 @@ public class UiManager {
             logContents.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         }
     }
+    public void setDataLogButtonHandler(Button button, LogManager logManager, ImuManager imuManager) {
+        button.setOnClickListener(new View.OnClickListener() {
+            int index = 0;
+
+            @Override
+            public void onClick(View v) {
+                index++;
+                if (index % 2 == 1) {
+                    imuManager.setLoggingData(true);
+                    button.setBackgroundColor(Color.parseColor("#05edbb"));
+                    button.setText("Data Logging ...");
+                    logManager.log(" ---- Data is Logging -----");
+                } else if (index % 2 == 0 && index > 1) {
+                    imuManager.setLoggingData(false);
+                    button.setBackgroundColor(Color.parseColor("#4DBDDF"));
+                    button.setText("Data Logging Stopped");
+                    logManager.log("---- Data Logging Stopped -----");
+                }
+            }
+        });
+    }
 
     private boolean isLogVisible = false;
 
