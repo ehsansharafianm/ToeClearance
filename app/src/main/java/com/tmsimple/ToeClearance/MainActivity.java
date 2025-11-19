@@ -166,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     }
     // Added newly for discovery
 
+
     public void listImusButton_onClick(View view) {
         // Initialize segments to prevent null pointer exception
 
