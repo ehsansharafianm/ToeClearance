@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     }
 
-    public void LabelingData(View view) {
+    public void Main_page(View view) {
         setContentView(R.layout.main_page);
 
         logContents = findViewById(R.id.logContents);
