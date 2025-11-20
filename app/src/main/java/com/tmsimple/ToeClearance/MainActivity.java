@@ -43,8 +43,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     private UiManager uiManager;
     private PermissionManager permissionManager;
 
-
-    TextView logContents;
     StorageReference storageReference;
 
     private boolean isSyncing = false;
@@ -57,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         setContentView(R.layout.first_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
-        logManager = new LogManager(this, logContents, null);
+        logManager = new LogManager(this, null, null);
         permissionManager = new PermissionManager(this, logManager);
         permissionManager.requestAllPermissions();
 
@@ -66,22 +64,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void Main_page(View view) {
         setContentView(R.layout.main_page);
 
-        logContents = findViewById(R.id.logContents);
-        logContents.setMovementMethod(new ScrollingMovementMethod());
-        logContents.setVisibility(View.INVISIBLE);
-        // NOW that logContents exists in this layout
-        logManager.setLogContents(logContents);
-
-
-        // Button labelButton1 = findViewById(R.id.labelButton1);
-
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
-
-        logContents = findViewById(R.id.logContents);
-        logContents.setMovementMethod(new ScrollingMovementMethod());
-        logContents.setVisibility(View.INVISIBLE);
 
         imuManager = new ImuManager(this, this, logManager);
         logManager.setImuManager(imuManager);
@@ -105,8 +90,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setButton(uiManager.dataLogButton, null, null, false);
 
 
-        uiManager.setLogToggleButtonHandler(uiManager.logToggleButton, logManager);
-
         uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
             @Override
             public void onSubjectNumberEntered(int subjcetNu) {
@@ -128,15 +111,15 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         //uiManager.bindLabelButtons();
         uiManager.setupLabelDialog(this);
+        uiManager.setupLogDialog(this, logManager);
+        uiManager.setupFeatureDialog(this);
+        uiManager.setupImuDataDialog(this);
 
         // After uiManager.bindLabelingDataViews() call, add:
         if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
         if (uiManager.imu1Accel == null) logManager.log("ERROR: imu1Accel not bound!");
         if (uiManager.imu2Gyro == null) logManager.log("ERROR: imu2Gyro not bound!");
         if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
-
-
-
 
 
     }
@@ -238,10 +221,25 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     @Override
     public void onImuConnectionChanged(String deviceName, boolean connected) {
         runOnUiThread(() -> {
+            String statusText = connected ? "Connected" : "Disconnected";
+
             if (deviceName.equals("IMU1 IMU")) {
-                uiManager.setTextView(uiManager.imu1Status, connected ? "Connected" : "Disconnected", null, null);
+                // Update main page
+                uiManager.setTextView(uiManager.imu1Status, statusText, null, null);
+
+                // Update dialog
+                if (uiManager.dialogImu1Status != null) {
+                    uiManager.dialogImu1Status.setText(statusText);
+                }
+
             } else if (deviceName.equals("IMU2 IMU")) {
-                uiManager.setTextView(uiManager.imu2Status, connected ? "Connected" : "Disconnected", null, null);
+                // Update main page
+                uiManager.setTextView(uiManager.imu2Status, statusText, null, null);
+
+                // Update dialog
+                if (uiManager.dialogImu2Status != null) {
+                    uiManager.dialogImu2Status.setText(statusText);
+                }
             }
 
             if (!connected && !isSyncing) {
@@ -250,7 +248,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 uiManager.setButton(uiManager.measureButton, "Measure", null, null);
                 uiManager.setButton(uiManager.syncButton, "Start Sync", null, null);
                 uiManager.setButton(uiManager.disconnectButton, "Disconnect", null, null);
-
 
                 uiManager.setButton(uiManager.scanButton, null, "#4CAF50", null);
                 uiManager.setButton(uiManager.syncButton, null, "#4CAF50", null);
@@ -351,13 +348,38 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         runOnUiThread(() -> {
             if (deviceAddress.equals(IMU1.MAC)) {
+                // Update main page
                 uiManager.setTextView(uiManager.imu1Roll, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
                 uiManager.setTextView(uiManager.imu1Index, String.valueOf(IMU1.dataOutput[3]), null, null);
                 uiManager.setTextView(uiManager.imu1Battery, IMU1.xsDevice.getBatteryPercentage() + "%", null, null);
+
+                // Update dialog
+                if (uiManager.dialogImu1Roll != null) {
+                    uiManager.dialogImu1Roll.setText(String.format(Locale.US, "%.1f deg", eulerAngles[0]));
+                }
+                if (uiManager.dialogImu1Index != null) {
+                    uiManager.dialogImu1Index.setText(String.valueOf(IMU1.dataOutput[3]));
+                }
+                if (uiManager.dialogImu1Battery != null) {
+                    uiManager.dialogImu1Battery.setText(IMU1.xsDevice.getBatteryPercentage() + "%");
+                }
+
             } else if (deviceAddress.equals(IMU2.MAC)) {
+                // Update main page
                 uiManager.setTextView(uiManager.imu2Roll, String.format(Locale.US, "%.1f deg", eulerAngles[0]), null, null);
                 uiManager.setTextView(uiManager.imu2Index, String.valueOf(IMU2.dataOutput[3]), null, null);
                 uiManager.setTextView(uiManager.imu2Battery, IMU2.xsDevice.getBatteryPercentage() + "%", null, null);
+
+                // Update dialog
+                if (uiManager.dialogImu2Roll != null) {
+                    uiManager.dialogImu2Roll.setText(String.format(Locale.US, "%.1f deg", eulerAngles[0]));
+                }
+                if (uiManager.dialogImu2Index != null) {
+                    uiManager.dialogImu2Index.setText(String.valueOf(IMU2.dataOutput[3]));
+                }
+                if (uiManager.dialogImu2Battery != null) {
+                    uiManager.dialogImu2Battery.setText(IMU2.xsDevice.getBatteryPercentage() + "%");
+                }
             }
         });
     }
@@ -365,13 +387,31 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onZuptDataUpdated(String deviceAddress, double gyroMag, double linearAccelMag) {
         runOnUiThread(() -> {
 
-            if (deviceAddress.equals("IMU1")) {  // Changed from IMU1.MAC
+            if (deviceAddress.equals("IMU1")) {
+                // Update main page
                 uiManager.setTextView(uiManager.imu1Gyro, String.format(Locale.US,"%.2f", gyroMag), null, null);
                 uiManager.setTextView(uiManager.imu1Accel, String.format(Locale.US,"%.2f", linearAccelMag), null, null);
 
-            } else if (deviceAddress.equals("IMU2")) {  // Changed from IMU2.MAC
+                // Update dialog
+                if (uiManager.dialogImu1Gyro != null) {
+                    uiManager.dialogImu1Gyro.setText(String.format(Locale.US,"%.2f", gyroMag));
+                }
+                if (uiManager.dialogImu1Accel != null) {
+                    uiManager.dialogImu1Accel.setText(String.format(Locale.US,"%.2f", linearAccelMag));
+                }
+
+            } else if (deviceAddress.equals("IMU2")) {
+                // Update main page
                 uiManager.setTextView(uiManager.imu2Gyro, String.format(Locale.US,"%.2f", gyroMag), null, null);
                 uiManager.setTextView(uiManager.imu2Accel, String.format(Locale.US,"%.2f", linearAccelMag), null, null);
+
+                // Update dialog
+                if (uiManager.dialogImu2Gyro != null) {
+                    uiManager.dialogImu2Gyro.setText(String.format(Locale.US,"%.2f", gyroMag));
+                }
+                if (uiManager.dialogImu2Accel != null) {
+                    uiManager.dialogImu2Accel.setText(String.format(Locale.US,"%.2f", linearAccelMag));
+                }
             }
         });
     }
