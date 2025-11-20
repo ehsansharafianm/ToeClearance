@@ -30,7 +30,9 @@ public class UiManager {
     private final ImuManager imuManager;
 
     public Button scanButton, syncButton, measureButton, disconnectButton,
-            stopButton, uploadButton, dataLogButton, homeButton, listImusButton;
+            stopButton, uploadButton, dataLogButton, homeButton, listImusButton, openLabelDialogButton;
+    private android.app.Dialog labelDialog;
+    private View labelDialogView;
     public Button logToggleButton;
     public TextView imu1Status, imu2Status, logContents;
     public TextView imu1Roll, imu2Roll;           // Roll angles
@@ -49,6 +51,7 @@ public class UiManager {
     private String selectedIMU1Mac;
     private String selectedIMU2Mac;
     private LogManager logManager;
+
 
 
     public void setLogManager(LogManager logManager) {
@@ -103,6 +106,8 @@ public class UiManager {
         // FOR SPINNERS
         spinnerIMU1 = root.findViewById(R.id.spinnerIMU1);
         spinnerIMU2 = root.findViewById(R.id.spinnerIMU2);
+
+        openLabelDialogButton = root.findViewById(R.id.openLabelDialogButton);
 
 
     }
@@ -232,9 +237,8 @@ public class UiManager {
             return true;
         }
     };
-    /** Call this once after you inflate your labeling_data layout */
-    public void bindLabelButtons() {
-        // configure each of your six buttons here:
+    // Modified bindLabelButtons to work with dialog view
+    private void bindLabelButtonsInDialog(View dialogView) {
         PacketOffsetItem[] configs = new PacketOffsetItem[] {
                 new PacketOffsetItem(R.id.labelButton1, 1000000,
                         Color.parseColor("#05fff8"),
@@ -254,16 +258,16 @@ public class UiManager {
                 new PacketOffsetItem(R.id.labelButton6, 6000000,
                         Color.parseColor("#05fff8"),
                         Color.parseColor("#4CAF50")),
-                // …and so on for buttons 3–6…
         };
 
         for (PacketOffsetItem cfg : configs) {
-            Button btn = root.findViewById(cfg.buttonId);
-            btn.setTag(cfg);
-            btn.setOnTouchListener(labelTouchListener);
+            Button btn = dialogView.findViewById(cfg.buttonId);
+            if (btn != null) {
+                btn.setTag(cfg);
+                btn.setOnTouchListener(labelTouchListener);
+            }
         }
     }
-    /** simple holder for everything our listener needs */
     private static class PacketOffsetItem {
         final int buttonId;
         final int offset;
@@ -509,6 +513,76 @@ public class UiManager {
                 spinnerIMU2.setSelection(position);
             }
         }
+    }
+
+    // Add method to setup and show the label dialog
+    public void setupLabelDialog(android.content.Context context) {
+        // Create the dialog
+        labelDialog = new android.app.Dialog(context);
+        labelDialog.setContentView(R.layout.dialog_label_buttons);
+
+        // Set size and position
+        if (labelDialog.getWindow() != null) {
+            // OPTION 1: Size configuration
+            // Change width - choose one:
+            int dialogWidth = android.view.ViewGroup.LayoutParams.MATCH_PARENT;  // Full width
+            // int dialogWidth = (int)(context.getResources().getDisplayMetrics().widthPixels * 0.9);  // 90% width
+            // int dialogWidth = 800;  // Fixed 800 pixels
+
+            // Change height - choose one:
+            int dialogHeight = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;  // Wrap content (recommended)
+            // int dialogHeight = (int)(context.getResources().getDisplayMetrics().heightPixels * 0.7);  // 70% height
+            // int dialogHeight = 1000;  // Fixed 1000 pixels
+
+            labelDialog.getWindow().setLayout(dialogWidth, dialogHeight);
+
+            // OPTION 2: Position configuration
+            android.view.WindowManager.LayoutParams params = labelDialog.getWindow().getAttributes();
+
+            // Set gravity - choose one or combine:
+            // params.gravity = android.view.Gravity.CENTER;  // Center (default)
+            params.gravity = android.view.Gravity.BOTTOM;  // Bottom of screen
+            // params.gravity = android.view.Gravity.TOP;  // Top of screen
+            // params.gravity = android.view.Gravity.TOP | android.view.Gravity.RIGHT;  // Top-right corner
+
+            // Set offset (optional):
+            params.y = 0;   // Vertical offset: positive = down, negative = up (in pixels)
+            params.x = 0;   // Horizontal offset: positive = right, negative = left (in pixels)
+            // params.y = -200;  // Example: move 200 pixels UP
+            // params.y = 100;   // Example: move 100 pixels DOWN
+
+            labelDialog.getWindow().setAttributes(params);
+
+            // Background style
+            labelDialog.getWindow().setBackgroundDrawableResource(android.R.drawable.dialog_holo_light_frame);
+            // For transparent background (useful with custom drawable):
+            // labelDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // Get the dialog view
+        labelDialogView = labelDialog.findViewById(android.R.id.content);
+
+        // Bind label buttons functionality to dialog buttons
+        bindLabelButtonsInDialog(labelDialogView);
+
+        // Setup close button
+        Button closeButton = labelDialog.findViewById(R.id.closeLabelDialog);
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> labelDialog.dismiss());
+        }
+
+        // Setup the open button
+        if (openLabelDialogButton != null) {
+            openLabelDialogButton.setOnClickListener(v -> {
+                if (labelDialog != null) {
+                    labelDialog.show();
+                }
+            });
+        }
+    }
+
+    public void bindLabelButtons() {
+        bindLabelButtonsInDialog(root);
     }
 
 

@@ -84,13 +84,13 @@ public class LogManager {
             }
         }
     }
-    public DotLogger createDataLog(DotDevice device, String subjectTitle, int subjectNumber,  ImuManager imuManager) {
+    public DotLogger createDataLog(String ImuID, DotDevice device, String subjectTitle, int subjectNumber,  ImuManager imuManager) {
 
         try {
             File loggerFileFolder;
             String loggerFileName;
             loggerFileFolder = context.getApplicationContext().getExternalFilesDir(subjectTitle + "/" + device.getTag());
-            loggerFileName = device.getTag() + "_" + java.text.DateFormat.getDateTimeInstance().format(new Date()) + ", Subject " + subjectNumber + ".csv";
+            loggerFileName = ImuID + "_" + device.getTag() + "_" + java.text.DateFormat.getDateTimeInstance().format(new Date()) + ", Subject " + subjectNumber + ".csv";
             String path = loggerFileFolder.getPath() + "/" + loggerFileName;
             File loggerFile = new File(path);
 

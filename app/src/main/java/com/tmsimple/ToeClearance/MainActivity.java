@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         logManager.setLogContents(logContents);
 
 
-        Button labelButton1 = findViewById(R.id.labelButton1);
+        // Button labelButton1 = findViewById(R.id.labelButton1);
 
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
@@ -125,7 +125,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         // Go back to first page Button
         uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
-        uiManager.bindLabelButtons();
+
+        //uiManager.bindLabelButtons();
+        uiManager.setupLabelDialog(this);
 
         // After uiManager.bindLabelingDataViews() call, add:
         if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
@@ -333,9 +335,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         });
 
         if (IMU1.xsDevice != null)
-            IMU1.normalDataLogger = logManager.createDataLog(IMU1.xsDevice, subjectTitle, subjectNumber, imuManager);
+            IMU1.normalDataLogger = logManager.createDataLog("IMU1", IMU1.xsDevice, subjectTitle, subjectNumber, imuManager);
         if (IMU2.xsDevice != null)
-            IMU2.normalDataLogger = logManager.createDataLog(IMU2.xsDevice, subjectTitle, subjectNumber, imuManager);
+            IMU2.normalDataLogger = logManager.createDataLog("IMU2", IMU2.xsDevice, subjectTitle, subjectNumber, imuManager);
 
         logManager.initializeFeatureLogs(subjectTitle, subjectNumber);
 

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@android:color/white">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Activity Label"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:textColor="#333333"
+        android:paddingBottom="16dp"/>
+
+    <Button
+        android:id="@+id/labelButton1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stand"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/labelButton2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Level Walk"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/labelButton3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Ramp Ascend"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/labelButton4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Ramp Descend"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/labelButton5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stair Ascend"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/labelButton6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:backgroundTint="#4CAF50"
+        android:text="Stair Descend"
+        android:textSize="16sp"/>
+
+    <Button
+        android:id="@+id/closeLabelDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#FF5722"
+        android:text="Close"
+        android:textSize="16sp"/>
+
+</LinearLayout>

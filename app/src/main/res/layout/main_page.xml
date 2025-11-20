@@ -77,7 +77,6 @@
             android:layout_toLeftOf="@+id/connectionStatusSpace"
             android:layout_below="@id/connectionStatusSpace"
             android:backgroundTint="#717070"
-            android:onClick="homeButton_onClick"
             android:textSize="10dp"
             android:textStyle="bold"
             android:text="Home" />
@@ -370,66 +369,77 @@
             android:backgroundTint="#4DBDDF"
             android:text="Data Log" />
 
+<!--        <Button-->
+<!--            android:id="@+id/labelButton1"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="110dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Stand" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/labelButton2"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="160dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Level Walk" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/labelButton3"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="210dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Ramp Ascend" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/labelButton4"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="260dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Ramp Descend" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/labelButton5"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="310dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Stair Ascend" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/labelButton6"-->
+<!--            android:layout_width="160dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_below="@id/imu1Battery"-->
+<!--            android:layout_marginStart="20dp"-->
+<!--            android:layout_marginTop="360dp"-->
+<!--            android:backgroundTint="#4CAF50"-->
+<!--            android:text="Stair Descend" />-->
         <Button
-            android:id="@+id/labelButton1"
-            android:layout_width="160dp"
+            android:id="@+id/openLabelDialogButton"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/imu1Battery"
             android:layout_marginStart="20dp"
             android:layout_marginTop="110dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Stand" />
-
-        <Button
-            android:id="@+id/labelButton2"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/imu1Battery"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="160dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Level Walk" />
-
-        <Button
-            android:id="@+id/labelButton3"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/imu1Battery"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="210dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Ramp Ascend" />
-
-        <Button
-            android:id="@+id/labelButton4"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/imu1Battery"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="260dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Ramp Descend" />
-
-        <Button
-            android:id="@+id/labelButton5"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/imu1Battery"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="310dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Stair Ascend" />
-
-        <Button
-            android:id="@+id/labelButton6"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/imu1Battery"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="360dp"
-            android:backgroundTint="#4CAF50"
-            android:text="Stair Descend" />
-
+            android:backgroundTint="#4DBDDF"
+            android:text="Activity Labels"
+            android:textSize="16sp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"/>
         <Button
             android:id="@+id/stopButton"
             android:layout_width="150dp"
