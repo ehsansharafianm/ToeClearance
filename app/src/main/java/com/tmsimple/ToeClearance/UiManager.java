@@ -30,8 +30,9 @@ public class UiManager {
     private final ImuManager imuManager;
 
     public Button scanButton, syncButton, measureButton, disconnectButton,
-            stopButton, uploadButton, dataLogButton, homeButton, listImusButton, openLabelDialogButton;
-    private android.app.Dialog labelDialog;
+            stopButton, uploadButton, dataLogButton, homeButton, listImusButton, openLabelDialogButton,
+            showFeaturesButton;
+    private android.app.Dialog labelDialog, logDialog, featureDialog;
     private View labelDialogView;
     public Button logToggleButton;
     public TextView imu1Status, imu2Status, logContents;
@@ -39,10 +40,12 @@ public class UiManager {
     public TextView imu1Gyro, imu2Gyro;           // Gyro magnitudes
     public TextView imu1Accel, imu2Accel;         // Linear accelerations
     public TextView imu1Index, imu2Index;         // Packet indices
-    public TextView imu1Battery, imu2Battery;
+    public TextView imu1Battery, imu2Battery, logContentsDialog;
     public EditText enterSubjectNumber;
     // Feature detection display fields
     public TextView imu1WindowNumber, imu1TerrainType, imu1BiasValue, imu1MaxHeight, imu1MaxStride;
+    public TextView dialogImu1WindowNumber, dialogImu1TerrainType, dialogImu1BiasValue,
+            dialogImu1MaxHeight, dialogImu1MaxStride;
 
     public CardView imuListDialog;
     public Spinner spinnerIMU1, spinnerIMU2;
@@ -80,7 +83,6 @@ public class UiManager {
         // Status fields
         imu1Status = root.findViewById(R.id.imu1Status);
         imu2Status = root.findViewById(R.id.imu2Status);
-        logContents = root.findViewById(R.id.logContents);
 
         // IMU1 data fields
         imu1Roll = root.findViewById(R.id.imu1Roll);
@@ -108,6 +110,7 @@ public class UiManager {
         spinnerIMU2 = root.findViewById(R.id.spinnerIMU2);
 
         openLabelDialogButton = root.findViewById(R.id.openLabelDialogButton);
+        showFeaturesButton = root.findViewById(R.id.showFeaturesButton);
 
 
     }
@@ -133,12 +136,6 @@ public class UiManager {
         if (enabled != null) textView.setEnabled(enabled);
     }
 
-    // Configure visibility for logContents
-    public void setLogVisible(boolean visible) {
-        if (logContents != null) {
-            logContents.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
-        }
-    }
     public void setDataLogButtonHandler(Button button, LogManager logManager, ImuManager imuManager) {
         button.setOnClickListener(new View.OnClickListener() {
             int index = 0;
@@ -162,21 +159,6 @@ public class UiManager {
     }
 
     private boolean isLogVisible = false;
-
-    public void setLogToggleButtonHandler(Button logToggleButton, LogManager logManager) {
-        if (logToggleButton == null || logManager == null) return;
-
-        logToggleButton.setOnClickListener(v -> {
-            isLogVisible = !isLogVisible;
-            logManager.setLogVisible(isLogVisible);
-
-            if (isLogVisible) {
-                logToggleButton.setText("Hide Log");
-            } else {
-                logToggleButton.setText("Show Log");
-            }
-        });
-    }
 
     public interface OnSubjectNumberEnteredListener {
         void onSubjectNumberEntered(int subjectNumber);
@@ -242,22 +224,22 @@ public class UiManager {
         PacketOffsetItem[] configs = new PacketOffsetItem[] {
                 new PacketOffsetItem(R.id.labelButton1, 1000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
                 new PacketOffsetItem(R.id.labelButton2, 2000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
                 new PacketOffsetItem(R.id.labelButton3, 3000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
                 new PacketOffsetItem(R.id.labelButton4, 4000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
                 new PacketOffsetItem(R.id.labelButton5, 5000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
                 new PacketOffsetItem(R.id.labelButton6, 6000000,
                         Color.parseColor("#05fff8"),
-                        Color.parseColor("#4CAF50")),
+                        Color.parseColor("#903F51B5")),
         };
 
         for (PacketOffsetItem cfg : configs) {
@@ -299,47 +281,45 @@ public class UiManager {
     }
 
     // Method to update feature detection display with dynamic colors
+    // Method to update feature detection display with dynamic colors
     public void updateFeatureDisplay(int windowNum, String terrainType, double biasValue,
                                      double maxHeight, double maxStride) {
+        // Calculate color once (used for both main page and dialog)
+        int backgroundColor;
+        switch (terrainType) {
+            case "Level_Walk":
+                backgroundColor = Color.parseColor("#4CAF50"); // Green
+                break;
+            case "Stair_Ascend":
+                backgroundColor = Color.parseColor("#FF5722"); // Red-Orange
+                break;
+            case "Stair_Descend":
+                backgroundColor = Color.parseColor("#F44336"); // Red
+                break;
+            case "Ramp_Ascend":
+                backgroundColor = Color.parseColor("#FF9800"); // Orange
+                break;
+            case "Ramp_Descend":
+                backgroundColor = Color.parseColor("#FFC107"); // Amber
+                break;
+            default:
+                backgroundColor = Color.parseColor("#9E9E9E"); // Gray for unknown
+                break;
+        }
+
+        // UPDATE MAIN PAGE TextViews (if they exist)
         if (imu1WindowNumber != null) {
             imu1WindowNumber.setText(String.valueOf(windowNum));
         }
-
         if (imu1TerrainType != null) {
             imu1TerrainType.setText(terrainType);
-
-            // Set different background colors for different terrain types
-            int backgroundColor;
-            switch (terrainType) {
-                case "Level_Walk":
-                    backgroundColor = Color.parseColor("#4CAF50"); // Green
-                    break;
-                case "Stair_Ascend":
-                    backgroundColor = Color.parseColor("#FF5722"); // Red-Orange
-                    break;
-                case "Stair_Descend":
-                    backgroundColor = Color.parseColor("#F44336"); // Red
-                    break;
-                case "Ramp_Ascend":
-                    backgroundColor = Color.parseColor("#FF9800"); // Orange
-                    break;
-                case "Ramp_Descend":
-                    backgroundColor = Color.parseColor("#FFC107"); // Amber
-                    break;
-                default:
-                    backgroundColor = Color.parseColor("#9E9E9E"); // Gray for unknown
-                    break;
-            }
-
-            // Create a GradientDrawable to maintain rounded corners (if your rectangle has them)
+            // Create drawable for main page
             android.graphics.drawable.GradientDrawable drawable = new android.graphics.drawable.GradientDrawable();
             drawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
             drawable.setColor(backgroundColor);
-            drawable.setCornerRadius(8); // Adjust corner radius as needed, or set to 0 for sharp corners
-
+            drawable.setCornerRadius(8);
             imu1TerrainType.setBackground(drawable);
         }
-
         if (imu1BiasValue != null) {
             imu1BiasValue.setText(String.format(Locale.US, "%.3f", biasValue));
         }
@@ -348,6 +328,29 @@ public class UiManager {
         }
         if (imu1MaxStride != null) {
             imu1MaxStride.setText(String.format(Locale.US, "%.3f m", maxStride));
+        }
+
+        // UPDATE DIALOG TextViews (if they exist)
+        if (dialogImu1WindowNumber != null) {
+            dialogImu1WindowNumber.setText(String.valueOf(windowNum));
+        }
+        if (dialogImu1TerrainType != null) {
+            dialogImu1TerrainType.setText(terrainType);
+            // Create new drawable for dialog (can't reuse the same drawable)
+            android.graphics.drawable.GradientDrawable dialogDrawable = new android.graphics.drawable.GradientDrawable();
+            dialogDrawable.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            dialogDrawable.setColor(backgroundColor);
+            dialogDrawable.setCornerRadius(8);
+            dialogImu1TerrainType.setBackground(dialogDrawable);
+        }
+        if (dialogImu1BiasValue != null) {
+            dialogImu1BiasValue.setText(String.format(Locale.US, "%.3f", biasValue));
+        }
+        if (dialogImu1MaxHeight != null) {
+            dialogImu1MaxHeight.setText(String.format(Locale.US, "%.3f m", maxHeight));
+        }
+        if (dialogImu1MaxStride != null) {
+            dialogImu1MaxStride.setText(String.format(Locale.US, "%.3f m", maxStride));
         }
     }
 
@@ -530,8 +533,8 @@ public class UiManager {
             // int dialogWidth = 800;  // Fixed 800 pixels
 
             // Change height - choose one:
-            int dialogHeight = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;  // Wrap content (recommended)
-            // int dialogHeight = (int)(context.getResources().getDisplayMetrics().heightPixels * 0.7);  // 70% height
+            // int dialogHeight = android.view.ViewGroup.LayoutParams.WRAP_CONTENT;  // Wrap content (recommended)
+            int dialogHeight = (int)(context.getResources().getDisplayMetrics().heightPixels * 0.7);  // 70% height
             // int dialogHeight = 1000;  // Fixed 1000 pixels
 
             labelDialog.getWindow().setLayout(dialogWidth, dialogHeight);
@@ -583,6 +586,139 @@ public class UiManager {
 
     public void bindLabelButtons() {
         bindLabelButtonsInDialog(root);
+    }
+
+    // Setup the log dialog
+    public void setupLogDialog(android.content.Context context, LogManager logManager) {
+        // Create the dialog
+        logDialog = new android.app.Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        logDialog.setContentView(R.layout.dialog_log_viewer);
+
+        // ========== SIZE OPTIONS - CHOOSE ONE ==========
+
+        // OPTION 1: Full screen (completely fills the screen)
+//        logDialog.getWindow().setLayout(
+//                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+//                android.view.ViewGroup.LayoutParams.MATCH_PARENT
+//        );
+
+        // OPTION 2: 80% height, centered (your current setup)
+//         logDialog.getWindow().setLayout(
+//                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+//                 (int)(context.getResources().getDisplayMetrics().heightPixels * 0.8)
+//         );
+
+        // OPTION 3: 90% height, centered
+         logDialog.getWindow().setLayout(
+                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                 (int)(context.getResources().getDisplayMetrics().heightPixels * 0.72)
+         );
+
+        // OPTION 4: Half screen from bottom
+        // logDialog.getWindow().setLayout(
+        //         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+        //         (int)(context.getResources().getDisplayMetrics().heightPixels * 0.5)
+        // );
+
+        android.view.WindowManager.LayoutParams params = logDialog.getWindow().getAttributes();
+        params.gravity = android.view.Gravity.BOTTOM;
+        logDialog.getWindow().setAttributes(params);
+
+
+        // Get the log TextView and ScrollView from dialog
+        logContentsDialog = logDialog.findViewById(R.id.logContentsDialog);
+        android.widget.ScrollView logScrollView = logDialog.findViewById(R.id.logScrollView);
+
+        // Auto-scroll whenever text changes
+        if (logContentsDialog != null && logScrollView != null) {
+            logContentsDialog.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    // Scroll to bottom whenever text is added
+                    logScrollView.post(() -> logScrollView.fullScroll(android.view.View.FOCUS_DOWN));
+                }
+            });
+        }
+
+        // Update LogManager to use the dialog TextView
+        if (logManager != null) {
+            logManager.setLogContents(logContentsDialog);
+        }
+
+        // Setup close button
+        Button closeButton = logDialog.findViewById(R.id.closeLogDialog);
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> logDialog.dismiss());
+        }
+
+        // Setup the toggle button to show/hide dialog
+        if (logToggleButton != null) {
+            logToggleButton.setText("Show Log");
+            logToggleButton.setOnClickListener(v -> {
+                if (logDialog != null && !logDialog.isShowing()) {
+                    logDialog.show();
+                    // Scroll to bottom when dialog opens
+                    if (logScrollView != null) {
+                        logScrollView.post(() -> logScrollView.fullScroll(android.view.View.FOCUS_DOWN));
+                    }
+                }
+            });
+        }
+    }
+
+    public void setupFeatureDialog(android.content.Context context) {
+        // Create the dialog
+        featureDialog = new android.app.Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        featureDialog.setContentView(R.layout.dialog_feature_results);
+
+        // Set size and position
+        if (featureDialog.getWindow() != null) {
+            // OPTION 1: 80% height, centered (recommended)
+            featureDialog.getWindow().setLayout(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    (int)(context.getResources().getDisplayMetrics().heightPixels * 0.72)
+            );
+
+            // OPTION 2: Full screen
+            // featureDialog.getWindow().setLayout(
+            //         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            //         android.view.ViewGroup.LayoutParams.MATCH_PARENT
+            // );
+
+            android.view.WindowManager.LayoutParams params = featureDialog.getWindow().getAttributes();
+            // params.gravity = android.view.Gravity.CENTER;
+            // For bottom sheet style:
+             params.gravity = android.view.Gravity.BOTTOM;
+            featureDialog.getWindow().setAttributes(params);
+        }
+
+        // Bind the TextViews from dialog
+        dialogImu1WindowNumber = featureDialog.findViewById(R.id.imu1WindowNumber);
+        dialogImu1TerrainType = featureDialog.findViewById(R.id.imu1TerrainType);
+        dialogImu1BiasValue = featureDialog.findViewById(R.id.imu1BiasValue);
+        dialogImu1MaxHeight = featureDialog.findViewById(R.id.imu1MaxHeight);
+        dialogImu1MaxStride = featureDialog.findViewById(R.id.imu1MaxStride);
+
+        // Setup close button
+        Button closeButton = featureDialog.findViewById(R.id.closeFeatureDialog);
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> featureDialog.dismiss());
+        }
+
+        // Setup the show button
+        if (showFeaturesButton != null) {
+            showFeaturesButton.setOnClickListener(v -> {
+                if (featureDialog != null) {
+                    featureDialog.show();
+                }
+            });
+        }
     }
 
 

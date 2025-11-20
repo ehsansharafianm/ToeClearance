@@ -43,8 +43,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     private UiManager uiManager;
     private PermissionManager permissionManager;
 
-
-    TextView logContents;
     StorageReference storageReference;
 
     private boolean isSyncing = false;
@@ -57,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         setContentView(R.layout.first_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
-        logManager = new LogManager(this, logContents, null);
+        logManager = new LogManager(this, null, null);
         permissionManager = new PermissionManager(this, logManager);
         permissionManager.requestAllPermissions();
 
@@ -66,22 +64,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void Main_page(View view) {
         setContentView(R.layout.main_page);
 
-        logContents = findViewById(R.id.logContents);
-        logContents.setMovementMethod(new ScrollingMovementMethod());
-        logContents.setVisibility(View.INVISIBLE);
-        // NOW that logContents exists in this layout
-        logManager.setLogContents(logContents);
-
-
-        // Button labelButton1 = findViewById(R.id.labelButton1);
-
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
-
-        logContents = findViewById(R.id.logContents);
-        logContents.setMovementMethod(new ScrollingMovementMethod());
-        logContents.setVisibility(View.INVISIBLE);
 
         imuManager = new ImuManager(this, this, logManager);
         logManager.setImuManager(imuManager);
@@ -105,8 +90,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setButton(uiManager.dataLogButton, null, null, false);
 
 
-        uiManager.setLogToggleButtonHandler(uiManager.logToggleButton, logManager);
-
         uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
             @Override
             public void onSubjectNumberEntered(int subjcetNu) {
@@ -128,15 +111,14 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         //uiManager.bindLabelButtons();
         uiManager.setupLabelDialog(this);
+        uiManager.setupLogDialog(this, logManager);
+        uiManager.setupFeatureDialog(this);
 
         // After uiManager.bindLabelingDataViews() call, add:
         if (uiManager.imu1Gyro == null) logManager.log("ERROR: imu1Gyro not bound!");
         if (uiManager.imu1Accel == null) logManager.log("ERROR: imu1Accel not bound!");
         if (uiManager.imu2Gyro == null) logManager.log("ERROR: imu2Gyro not bound!");
         if (uiManager.imu2Accel == null) logManager.log("ERROR: imu2Accel not bound!");
-
-
-
 
 
     }
