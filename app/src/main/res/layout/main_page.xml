@@ -3,14 +3,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#F5F5F5">
+    android:background="#E0E0E0">
 
     <LinearLayout
         android:id="@+id/labeling_data_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:layout_margin="8dp"
+        android:background="@drawable/app_border">
 
         <!-- ============================================ -->
         <!-- SECTION 1: SUBJECT INFORMATION -->
@@ -93,7 +95,69 @@
             android:text="Search Available IMUs"
             android:textSize="14sp"/>
 
-        <!-- IMU Selection Compact Layout -->
+        <!-- IMU Selection Layout - Labels at top, Spinners below -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- IMU 1 Column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="4dp">
+
+                <TextView
+                    android:id="@+id/labelIMU1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="IMU 1"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1976D2"
+                    android:gravity="center"
+                    android:layout_marginBottom="4dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerIMU1"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:background="@android:drawable/btn_dropdown"
+                    android:spinnerMode="dropdown"/>
+            </LinearLayout>
+
+            <!-- IMU 2 Column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="4dp">
+
+                <TextView
+                    android:id="@+id/labelIMU2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="IMU 2"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1976D2"
+                    android:gravity="center"
+                    android:layout_marginBottom="4dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerIMU2"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:background="@android:drawable/btn_dropdown"
+                    android:spinnerMode="dropdown"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- IMU Status and Index Display - No IMU names inside -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,38 +165,117 @@
             android:layout_marginBottom="12dp"
             android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/labelIMU1"
-                android:layout_width="60dp"
-                android:layout_height="wrap_content"
-                android:text="IMU 1:"
-                android:textSize="14sp"
-                android:textColor="#333333"/>
-
-            <Spinner
-                android:id="@+id/spinnerIMU1"
+            <!-- IMU1 Status and Index -->
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:background="@android:drawable/btn_dropdown"
-                android:spinnerMode="dropdown"/>
-
-            <TextView
-                android:id="@+id/labelIMU2"
-                android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:text="IMU 2:"
-                android:textSize="14sp"
-                android:textColor="#333333"/>
-
-            <Spinner
-                android:id="@+id/spinnerIMU2"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
                 android:layout_weight="1"
-                android:background="@android:drawable/btn_dropdown"
-                android:spinnerMode="dropdown"/>
+                android:orientation="vertical"
+                android:layout_marginEnd="4dp"
+                android:padding="8dp"
+                android:background="#E3F2FD">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Status: "
+                        android:textSize="11sp"
+                        android:textColor="#666666"/>
+
+                    <TextView
+                        android:id="@+id/imu1Status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-"
+                        android:textSize="11sp"
+                        android:textColor="#333333"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Index: "
+                        android:textSize="11sp"
+                        android:textColor="#666666"/>
+
+                    <TextView
+                        android:id="@+id/imu1Index"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-"
+                        android:textSize="11sp"
+                        android:textColor="#333333"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- IMU2 Status and Index -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="4dp"
+                android:padding="8dp"
+                android:background="#E3F2FD">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Status: "
+                        android:textSize="11sp"
+                        android:textColor="#666666"/>
+
+                    <TextView
+                        android:id="@+id/imu2Status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-"
+                        android:textSize="11sp"
+                        android:textColor="#333333"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Index: "
+                        android:textSize="11sp"
+                        android:textColor="#666666"/>
+
+                    <TextView
+                        android:id="@+id/imu2Index"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-"
+                        android:textSize="11sp"
+                        android:textColor="#333333"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <Button
@@ -339,8 +482,8 @@
                 android:layout_marginStart="4dp"
                 android:backgroundTint="#AB2727"
                 android:onClick="disconnectButton_onClick"
-                android:text="Disconnect"
-                android:textSize="14sp"/>
+                android:text="Disconnet"
+                android:textSize="13sp"/>
         </LinearLayout>
 
     </LinearLayout>

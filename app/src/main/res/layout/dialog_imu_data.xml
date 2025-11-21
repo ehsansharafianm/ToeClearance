@@ -69,26 +69,6 @@
                     android:gravity="center"
                     android:paddingBottom="8dp"/>
 
-                <!-- IMU1 Status -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Status"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:paddingBottom="2dp"/>
-
-                <TextView
-                    android:id="@+id/imu1Status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rectangle"
-                    android:backgroundTint="#E3F2FD"
-                    android:padding="6dp"
-                    android:text="Disconnected"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp"/>
-
                 <!-- IMU1 Roll -->
                 <TextView
                     android:layout_width="match_parent"
@@ -149,26 +129,6 @@
                     android:textSize="13sp"
                     android:layout_marginBottom="8dp"/>
 
-                <!-- IMU1 Index -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Packet Index"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:paddingBottom="2dp"/>
-
-                <TextView
-                    android:id="@+id/imu1Index"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rectangle"
-                    android:backgroundTint="#E3F2FD"
-                    android:padding="6dp"
-                    android:text="0"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp"/>
-
                 <!-- IMU1 Battery -->
                 <TextView
                     android:layout_width="match_parent"
@@ -208,26 +168,6 @@
                     android:textColor="#052A64"
                     android:gravity="center"
                     android:paddingBottom="8dp"/>
-
-                <!-- IMU2 Status -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Status"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:paddingBottom="2dp"/>
-
-                <TextView
-                    android:id="@+id/imu2Status"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rectangle"
-                    android:backgroundTint="#E3F2FD"
-                    android:padding="6dp"
-                    android:text="Disconnected"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp"/>
 
                 <!-- IMU2 Roll -->
                 <TextView
@@ -286,26 +226,6 @@
                     android:backgroundTint="#E3F2FD"
                     android:padding="6dp"
                     android:text="0.0"
-                    android:textSize="13sp"
-                    android:layout_marginBottom="8dp"/>
-
-                <!-- IMU2 Index -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Packet Index"
-                    android:textSize="12sp"
-                    android:textColor="#666666"
-                    android:paddingBottom="2dp"/>
-
-                <TextView
-                    android:id="@+id/imu2Index"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/rectangle"
-                    android:backgroundTint="#E3F2FD"
-                    android:padding="6dp"
-                    android:text="0"
                     android:textSize="13sp"
                     android:layout_marginBottom="8dp"/>
 

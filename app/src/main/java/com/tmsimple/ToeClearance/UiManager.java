@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
@@ -65,6 +66,7 @@ public class UiManager {
     private String selectedIMU1Mac;
     private String selectedIMU2Mac;
     private LogManager logManager;
+    private LinearLayout appBorderContainer;
 
 
 
@@ -123,7 +125,15 @@ public class UiManager {
         showFeaturesButton = root.findViewById(R.id.showFeaturesButton);
         showImuDataButton = root.findViewById(R.id.showImuDataButton);
 
+        // Status fields
+        imu1Status = root.findViewById(R.id.imu1Status);
+        imu2Status = root.findViewById(R.id.imu2Status);
 
+        // Index fields
+        imu1Index = root.findViewById(R.id.imu1Index);
+        imu2Index = root.findViewById(R.id.imu2Index);
+
+        appBorderContainer = root.findViewById(R.id.labeling_data_root);
 
     }
 
@@ -775,6 +785,42 @@ public class UiManager {
             });
         }
     }
+    // METHOD to change the app border color dynamically
+    public void setAppBorderColor(String borderColorHex) {
+        if (appBorderContainer == null) return;
+
+        try {
+            // Create a new GradientDrawable programmatically
+            android.graphics.drawable.GradientDrawable border = new android.graphics.drawable.GradientDrawable();
+            border.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            border.setStroke(12, Color.parseColor(borderColorHex)); // 4dp border width (12px)
+            border.setCornerRadius(36); // 12dp corner radius (36px)
+            border.setColor(Color.parseColor("#F5F5F5")); // Background color
+
+            appBorderContainer.setBackground(border);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // OVERLOADED METHOD for more control
+    public void setAppBorder(String borderColor, String backgroundColor, int borderWidthDp) {
+        if (appBorderContainer == null) return;
+
+        try {
+            android.graphics.drawable.GradientDrawable border = new android.graphics.drawable.GradientDrawable();
+            border.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            border.setStroke(borderWidthDp * 3, Color.parseColor(borderColor)); // Convert dp to pixels
+            border.setCornerRadius(36); // 12dp corner radius
+            border.setColor(Color.parseColor(backgroundColor));
+
+            appBorderContainer.setBackground(border);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 
 }

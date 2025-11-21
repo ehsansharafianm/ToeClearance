@@ -254,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 uiManager.setButton(uiManager.syncButton, null, "#2196F3", null);
                 uiManager.setButton(uiManager.disconnectButton, null, "#AB2727", null);
             }
+            updateAppBorderColor();
         });
     }
 
@@ -276,6 +277,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             if (isScanning) {
                 uiManager.setButton(uiManager.scanButton, "Scanning...", "#FF9933", null);
             }
+            // UPDATE APP BORDER COLOR
+            updateAppBorderColor();
 
         });
     }
@@ -300,6 +303,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 uiManager.setButton(uiManager.syncButton, null, null, true);
                 uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
             }
+            // UPDATE APP BORDER COLOR
+            updateAppBorderColor();
         });
     }
 
@@ -321,6 +326,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 if (uiManager.dialogImu2Status != null) {
                     uiManager.dialogImu2Status.setText("Syncing");
                 }
+                // UPDATE APP BORDER COLOR
+                updateAppBorderColor();
             }
         });
 
@@ -349,6 +356,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             }
 
             logManager.log("(Main): --- Syncing is done! ---- ");
+            // UPDATE APP BORDER COLOR
+            updateAppBorderColor();
         });
     }
 
@@ -361,8 +370,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                //measureButton.setText("Measuring...");
                 uiManager.setButton(uiManager.measureButton, "Measuring", null, null);
+                // UPDATE APP BORDER COLOR to indicate measuring
+                uiManager.setAppBorderColor("#2196F3"); // Light Blue for measuring
             }
         });
 
@@ -503,8 +513,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                // measureButton.setText("Measuring Stopped");
                 uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, null);
+                // UPDATE APP BORDER COLOR to indicate stopped
+                uiManager.setAppBorderColor("#AB2727"); // Red for stopped
             }
         });
 
@@ -566,6 +577,33 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         if (permissionManager != null) {
             permissionManager.handlePermissionResult(requestCode, grantResults);
         }
+    }
+
+    private void updateAppBorderColor() {
+        String imu1StatusText = uiManager.imu1Status.getText().toString();
+        String imu2StatusText = uiManager.imu2Status.getText().toString();
+
+        // Determine border color based on overall status
+        String borderColor;
+
+        if (imu1StatusText.equals("Synced") && imu2StatusText.equals("Synced")) {
+            borderColor = "#052A64";
+        } else if (imu1StatusText.equals("Ready") && imu2StatusText.equals("Ready")) {
+            borderColor = "#052A64";
+        } else if (imu1StatusText.equals("Syncing") || imu2StatusText.equals("Syncing")) {
+            borderColor = "#FF9933"; // Amber - Currently syncing
+        } else if ((imu1StatusText.equals("Connected") || imu1StatusText.equals("Scanned")) &&
+                (imu2StatusText.equals("Connected") || imu2StatusText.equals("Scanned"))) {
+            borderColor = "#052A64 ";
+        } else if (imu1StatusText.equals("Disconnected") || imu2StatusText.equals("Disconnected") ||
+                imu1StatusText.equals("-") || imu2StatusText.equals("-")) {
+            borderColor = "#AB2727"; // Red - Disconnected or not started
+        } else {
+            borderColor = "#9E9E9E"; // Gray - Unknown/Initial state
+        }
+
+        // Update the border color
+        uiManager.setAppBorderColor(borderColor);
     }
 
 }
