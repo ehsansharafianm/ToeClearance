@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             isScanning = true;
             logManager.log("Scan started!");
 
-            uiManager.setButton(uiManager.scanButton, "Scanning ...", "#FF9933", null);
+            uiManager.setButton(uiManager.scanButton, "Scanning ...", "#AB2727", null);
         } else {
             logManager.log("Failed to start scan.");
         }
@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 Button listButton = findViewById(R.id.listImusButton);
                 if (listButton != null) {
                     listButton.setText("Scanning...");
-                    listButton.setBackgroundColor(Color.parseColor("#FF9933"));
+                    listButton.setBackgroundColor(Color.parseColor("#AB2727"));
                     listButton.setEnabled(false);
                 }
             });
@@ -275,7 +275,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 }
             }
             if (isScanning) {
-                uiManager.setButton(uiManager.scanButton, "Scanning...", "#FF9933", null);
+                uiManager.setButton(uiManager.scanButton, "Scanning...", "#AB2727", null);
             }
             // UPDATE APP BORDER COLOR
             updateAppBorderColor();
@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                uiManager.setButton(uiManager.syncButton, "Syncing...", "#FF9933", null);
+                uiManager.setButton(uiManager.syncButton, "Syncing...", "#AB2727", null);
                 uiManager.setTextView(uiManager.imu1Status, "Syncing", null, null);
                 uiManager.setTextView(uiManager.imu2Status, "Syncing", null, null);
 
