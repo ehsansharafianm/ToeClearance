@@ -30,7 +30,7 @@ public class UiManager {
     private final ImuManager imuManager;
 
     public Button scanButton, syncButton, measureButton, disconnectButton,
-            stopButton, uploadButton, dataLogButton, homeButton, listImusButton, openLabelDialogButton,
+            stopButton, uploadButton, dataLogButton, listImusButton, openLabelDialogButton,
             showFeaturesButton;
     private android.app.Dialog labelDialog, logDialog, featureDialog;
 
@@ -88,7 +88,6 @@ public class UiManager {
         listImusButton = root.findViewById(R.id.listImusButton);
         uploadButton = root.findViewById(R.id.uploadButton);
         dataLogButton = root.findViewById(R.id.dataLogButton);
-        homeButton = root.findViewById(R.id.homeButton);
 
         logToggleButton = root.findViewById(R.id.logToggleButton);
         // Status fields
@@ -158,13 +157,13 @@ public class UiManager {
                 index++;
                 if (index % 2 == 1) {
                     imuManager.setLoggingData(true);
-                    button.setBackgroundColor(Color.parseColor("#05edbb"));
-                    button.setText("Data Logging ...");
+                    button.setBackgroundColor(Color.parseColor("#008080"));
+                    button.setText("Logging ...");
                     logManager.log(" ---- Data is Logging -----");
                 } else if (index % 2 == 0 && index > 1) {
                     imuManager.setLoggingData(false);
-                    button.setBackgroundColor(Color.parseColor("#4DBDDF"));
-                    button.setText("Data Logging Stopped");
+                    button.setBackgroundColor(Color.parseColor("#2196F3"));
+                    button.setText("Log Stoped");
                     logManager.log("---- Data Logging Stopped -----");
                 }
             }
@@ -203,13 +202,7 @@ public class UiManager {
         });
     }
 
-    public void setHomeButtonHandler(Button button, Runnable onHomePressed) {
-        button.setOnClickListener(v -> {
-            if (onHomePressed != null) {
-                onHomePressed.run();
-            }
-        });
-    }
+
 
     // single listener that reads its offset (and colors) out of the view’s tag
     private final View.OnTouchListener labelTouchListener = new View.OnTouchListener() {

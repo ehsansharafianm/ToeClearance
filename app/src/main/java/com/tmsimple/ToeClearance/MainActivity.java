@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     private LogManager logManager;
     private UiManager uiManager;
     private PermissionManager permissionManager;
+    private boolean isScanning = false;
 
     StorageReference storageReference;
 
@@ -52,18 +53,19 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.first_page);
+        setContentView(R.layout.main_page);
 
         storageReference = FirebaseStorage.getInstance().getReference();
         logManager = new LogManager(this, null, null);
         permissionManager = new PermissionManager(this, logManager);
         permissionManager.requestAllPermissions();
 
+        // Initialize main page directly
+        initializeMainPage();
+
     }
 
-    public void Main_page(View view) {
-        setContentView(R.layout.main_page);
-
+    private  void initializeMainPage(){
 
         logFilePath = this.getApplicationContext().getExternalFilesDir("logs");
 
@@ -106,8 +108,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         // DataLogger Button
         uiManager.setDataLogButtonHandler(uiManager.dataLogButton, logManager, imuManager);
 
-        // Go back to first page Button
-        uiManager.setHomeButtonHandler(uiManager.homeButton, () -> {setContentView(R.layout.first_page);});
 
         //uiManager.bindLabelButtons();
         uiManager.setupLabelDialog(this);
@@ -167,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         imuManager.setSegments(IMU1, IMU2);
 
         if (imuManager.startScan()) {
+            isScanning = true;
             logManager.log("Scan started!");
 
             uiManager.setButton(uiManager.scanButton, "Scanning ...", "#FF9933", null);
@@ -249,9 +250,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 uiManager.setButton(uiManager.syncButton, "Start Sync", null, null);
                 uiManager.setButton(uiManager.disconnectButton, "Disconnect", null, null);
 
-                uiManager.setButton(uiManager.scanButton, null, "#4CAF50", null);
-                uiManager.setButton(uiManager.syncButton, null, "#4CAF50", null);
-                uiManager.setButton(uiManager.disconnectButton, null, "#FD8888", null);
+                uiManager.setButton(uiManager.scanButton, null, "#2196F3", null);
+                uiManager.setButton(uiManager.syncButton, null, "#2196F3", null);
+                uiManager.setButton(uiManager.disconnectButton, null, "#AB2727", null);
             }
         });
     }
@@ -261,9 +262,21 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         runOnUiThread(() -> {
             if (deviceName.equals("IMU1 IMU")) {
                 uiManager.setTextView(uiManager.imu1Status, "Scanned", null, null);
+                // ADD THIS:
+                if (uiManager.dialogImu1Status != null) {
+                    uiManager.dialogImu1Status.setText("Scanned");
+                }
             } else if (deviceName.equals("IMU2 IMU")) {
                 uiManager.setTextView(uiManager.imu2Status, "Scanned", null, null);
+                // ADD THIS:
+                if (uiManager.dialogImu2Status != null) {
+                    uiManager.dialogImu2Status.setText("Scanned");
+                }
             }
+            if (isScanning) {
+                uiManager.setButton(uiManager.scanButton, "Scanning...", "#FF9933", null);
+            }
+
         });
     }
 
@@ -272,8 +285,16 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         runOnUiThread(() -> {
             if (deviceName.equals("IMU1 IMU")) {
                 uiManager.setTextView(uiManager.imu1Status, "Ready", null, null);
+                // ADD THIS:
+                if (uiManager.dialogImu1Status != null) {
+                    uiManager.dialogImu1Status.setText("Ready");
+                }
             } else if (deviceName.equals("IMU2 IMU")) {
                 uiManager.setTextView(uiManager.imu2Status, "Ready", null, null);
+                // ADD THIS:
+                if (uiManager.dialogImu2Status != null) {
+                    uiManager.dialogImu2Status.setText("Ready");
+                }
             }
             if (IMU1.isReady && IMU2.isReady) {
                 uiManager.setButton(uiManager.syncButton, null, null, true);
@@ -289,16 +310,21 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-
                 uiManager.setButton(uiManager.syncButton, "Syncing...", "#FF9933", null);
                 uiManager.setTextView(uiManager.imu1Status, "Syncing", null, null);
                 uiManager.setTextView(uiManager.imu2Status, "Syncing", null, null);
 
+                // ADD THIS:
+                if (uiManager.dialogImu1Status != null) {
+                    uiManager.dialogImu1Status.setText("Syncing");
+                }
+                if (uiManager.dialogImu2Status != null) {
+                    uiManager.dialogImu2Status.setText("Syncing");
+                }
             }
         });
 
         imuManager.startSync();
-
     }
 
     @Override
@@ -308,11 +334,20 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         uiManager.setButton(uiManager.measureButton, null, null, true);
         uiManager.setButton(uiManager.disconnectButton, null, null, true);
         runOnUiThread(() -> {
-
-            uiManager.setButton(uiManager.syncButton, "Sync Done", "#008080", null);
-
+            uiManager.setButton(uiManager.syncButton, "Synced", "#008080", null);
             uiManager.setButton(uiManager.measureButton, null, null, true);
             uiManager.setButton(uiManager.disconnectButton, null, null, true);
+
+            // ADD THIS:
+            uiManager.setTextView(uiManager.imu1Status, "Synced", null, null);
+            uiManager.setTextView(uiManager.imu2Status, "Synced", null, null);
+            if (uiManager.dialogImu1Status != null) {
+                uiManager.dialogImu1Status.setText("Synced");
+            }
+            if (uiManager.dialogImu2Status != null) {
+                uiManager.dialogImu2Status.setText("Synced");
+            }
+
             logManager.log("(Main): --- Syncing is done! ---- ");
         });
     }
@@ -327,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @Override
             public void run() {
                 //measureButton.setText("Measuring...");
-                uiManager.setButton(uiManager.measureButton, "Measuring...", null, null);
+                uiManager.setButton(uiManager.measureButton, "Measuring", null, null);
             }
         });
 
@@ -511,7 +546,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                             public void run() {
                                 // uploadButton.setText("Uploading Done");
                                 // uploadButton.setBackgroundColor(Color.parseColor("#0af056"));
-                                uiManager.setButton(uiManager.uploadButton, "Uploading Done", "#0af056", null);
+                                uiManager.setButton(uiManager.uploadButton, "Uploaded", "#008080", null);
                             }
                         });
                         progressDialog.dismiss();
