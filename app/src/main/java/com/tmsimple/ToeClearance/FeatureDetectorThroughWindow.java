@@ -53,7 +53,7 @@ public class FeatureDetectorThroughWindow {
         }
 
         // Log sample data
-        logManager.log("First Sample:");
+        /*logManager.log("First Sample:");
         logManager.log("  Acceleration: [" + decimalFormat.format(a_corrected.get(0)[0]) + ", " +
                 decimalFormat.format(a_corrected.get(0)[1]) + ", " +
                 decimalFormat.format(a_corrected.get(0)[2]) + "]");
@@ -76,7 +76,7 @@ public class FeatureDetectorThroughWindow {
                 decimalFormat.format(p_corrected.get(lastIdx)[1]) + ", " +
                 decimalFormat.format(p_corrected.get(lastIdx)[2]) + "]");
 
-
+*/
 
 
 

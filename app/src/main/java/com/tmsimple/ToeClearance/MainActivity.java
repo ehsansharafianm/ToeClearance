@@ -215,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                     // Re-enable scan button after discovery completes
                     uiManager.setButton(uiManager.scanButton, null, null, null, true);
                 });
-            }, 10000);
+            }, 5000);
         } else {
             logManager.log("Failed to start discovery scan.");
         }

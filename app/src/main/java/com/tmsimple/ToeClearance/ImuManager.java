@@ -549,7 +549,7 @@ public class ImuManager implements
                 public void run() {
                     stopDiscoveryScan();
                 }
-            }, 10000); // 10 seconds
+            }, 5000); // 5 seconds
         }
 
         return started;

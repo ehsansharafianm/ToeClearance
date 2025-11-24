@@ -179,12 +179,12 @@ public class UiManager {
                 } else if (index % 2 == 0 && index > 1) {
                     imuManager.setLoggingData(false);
                     button.setBackgroundColor(Color.parseColor("#2196F3"));
-                    button.setText("Log Stoped");
+                    button.setText("No Log");
                     logManager.log("---- Data Logging Stopped -----");
                 }
-                vibratePhone(100);
             }
         });
+        vibratePhone(100);
     }
 
     private boolean isLogVisible = false;
