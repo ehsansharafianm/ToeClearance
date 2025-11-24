@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -83,13 +84,13 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
         // Before scanning all should be deactive; after each step they will be enabled
 
-        uiManager.setButton(uiManager.scanButton,null, null, false);
-        uiManager.setButton(uiManager.syncButton, null, null, false);
-        uiManager.setButton(uiManager.measureButton, null, null, false);
-        uiManager.setButton(uiManager.stopButton, null, null, false);
-        uiManager.setButton(uiManager.disconnectButton, null, null, false);
-        uiManager.setButton(uiManager.uploadButton, null, null, false);
-        uiManager.setButton(uiManager.dataLogButton, null, null, false);
+        uiManager.setButton(uiManager.scanButton,null, null, null, false);
+        uiManager.setButton(uiManager.syncButton, null, null, null, false);
+        uiManager.setButton(uiManager.measureButton, null, null, null, false);
+        uiManager.setButton(uiManager.stopButton, null, null, null, false);
+        uiManager.setButton(uiManager.disconnectButton, null, null, null, false);
+        uiManager.setButton(uiManager.uploadButton, null, null, null, false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, null, false);
 
 
         uiManager.setEnterSubjectNumberHandler(uiManager.enterSubjectNumber, new UiManager.OnSubjectNumberEnteredListener() {
@@ -131,6 +132,9 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     public void scanButton_onClick(View view) {
 
+
+        uiManager.setButton(uiManager.listImusButton,"IMUs are selected", "#008080", null, false);
+
         // Get selected MAC addresses
         IMU1MAC = uiManager.getSelectedIMU1Mac();
         IMU2MAC = uiManager.getSelectedIMU2Mac();
@@ -142,6 +146,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         logManager.log("IMU1: Name = " + imu1Name + ",MAC: " + IMU1MAC);
         logManager.log("IMU2: Name = " + imu2Name + ",MAC: " + IMU2MAC);
 
+
+
         // Check if the same IMU is selected for both
         if (IMU1MAC.equals(IMU2MAC)) {
             // Show error popup
@@ -152,10 +158,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                     .show();
 
             // Vibrate phone
-            android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(VIBRATOR_SERVICE);
-            if (vibrator != null && vibrator.hasVibrator()) {
-                vibrator.vibrate(500); // Vibrate for 500ms
-            }
+            uiManager.vibratePhone(500);  // Vibrate for 500ms
 
             logManager.log("Error: IMU1 and IMU2 cannot be the same!");
             return;
@@ -170,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             isScanning = true;
             logManager.log("Scan started!");
 
-            uiManager.setButton(uiManager.scanButton, "Scanning ...", "#AB2727", null);
+            uiManager.setButton(uiManager.scanButton, "Scanning ...", "#AB2727", null, null);
         } else {
             logManager.log("Failed to start scan.");
         }
@@ -188,29 +191,29 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             imuManager.setSegments(IMU1, IMU2);
         }
 
+        // Disable scan button during IMU discovery
+        uiManager.setButton(uiManager.scanButton, null, null, null, false);
+
         // Start discovery scan
         if (imuManager.startDiscoveryScan()) {
             logManager.log("Discovery scan started - searching for 10 seconds...");
 
             // Update button to show scanning status
             runOnUiThread(() -> {
-                Button listButton = findViewById(R.id.listImusButton);
-                if (listButton != null) {
-                    listButton.setText("Scanning...");
-                    listButton.setBackgroundColor(Color.parseColor("#AB2727"));
-                    listButton.setEnabled(false);
-                }
+                // Update Available IMUs button to scanning state
+                uiManager.setButton(uiManager.listImusButton, "Searching...", "#AB2727", "#FFFFFF", false);
+
+                // Disable scan button during IMU discovery
+                uiManager.setButton(uiManager.scanButton, null, null, null, false);
             });
 
             // Reset button after 10 seconds
             new android.os.Handler().postDelayed(() -> {
                 runOnUiThread(() -> {
-                    Button listButton = findViewById(R.id.listImusButton);
-                    if (listButton != null) {
-                        listButton.setText("Available IMUs");
-                        listButton.setBackgroundColor(Color.parseColor("#2196F3"));
-                        listButton.setEnabled(true);
-                    }
+                    uiManager.setButton(uiManager.listImusButton, "Choose The IMUs", "#2196F3", "#FFFFFF",true);
+
+                    // Re-enable scan button after discovery completes
+                    uiManager.setButton(uiManager.scanButton, null, null, null, true);
                 });
             }, 10000);
         } else {
@@ -245,14 +248,14 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
             if (!connected && !isSyncing) {
                 // Only reset buttons on DISCONNECT
-                uiManager.setButton(uiManager.scanButton, "Scan", null, null);
-                uiManager.setButton(uiManager.measureButton, "Measure", null, null);
-                uiManager.setButton(uiManager.syncButton, "Start Sync", null, null);
-                uiManager.setButton(uiManager.disconnectButton, "Disconnect", null, null);
+                uiManager.setButton(uiManager.scanButton, "Scan", null, null, null);
+                uiManager.setButton(uiManager.measureButton, "Measure", null, null, null);
+                uiManager.setButton(uiManager.syncButton, "Start Sync", null, null, null);
+                uiManager.setButton(uiManager.disconnectButton, "Disconnect", null, null, null);
 
-                uiManager.setButton(uiManager.scanButton, null, "#2196F3", null);
-                uiManager.setButton(uiManager.syncButton, null, "#2196F3", null);
-                uiManager.setButton(uiManager.disconnectButton, null, "#AB2727", null);
+                uiManager.setButton(uiManager.scanButton, null, "#2196F3", null, null);
+                uiManager.setButton(uiManager.syncButton, null, "#2196F3", null, null);
+                uiManager.setButton(uiManager.disconnectButton, null, "#AB2727", null, null);
             }
             updateAppBorderColor();
         });
@@ -275,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 }
             }
             if (isScanning) {
-                uiManager.setButton(uiManager.scanButton, "Scanning...", "#AB2727", null);
+                uiManager.setButton(uiManager.scanButton, "Scanning...", "#AB2727", null, null);
             }
             // UPDATE APP BORDER COLOR
             updateAppBorderColor();
@@ -300,8 +303,8 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                 }
             }
             if (IMU1.isReady && IMU2.isReady) {
-                uiManager.setButton(uiManager.syncButton, null, null, true);
-                uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", true);
+                uiManager.setButton(uiManager.syncButton, null, null, null, true);
+                uiManager.setButton(uiManager.scanButton, "Scanned", "#008080", null, true);
             }
             // UPDATE APP BORDER COLOR
             updateAppBorderColor();
@@ -315,7 +318,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                uiManager.setButton(uiManager.syncButton, "Syncing...", "#AB2727", null);
+                uiManager.setButton(uiManager.syncButton, "Syncing...", "#AB2727", null, null);
                 uiManager.setTextView(uiManager.imu1Status, "Syncing", null, null);
                 uiManager.setTextView(uiManager.imu2Status, "Syncing", null, null);
 
@@ -338,12 +341,12 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
     public void onSyncingDone() {
         isSyncing = false;
 
-        uiManager.setButton(uiManager.measureButton, null, null, true);
-        uiManager.setButton(uiManager.disconnectButton, null, null, true);
+        uiManager.setButton(uiManager.measureButton, null, null, null, true);
+        uiManager.setButton(uiManager.disconnectButton, null, null, null, true);
         runOnUiThread(() -> {
-            uiManager.setButton(uiManager.syncButton, "Synced", "#008080", null);
-            uiManager.setButton(uiManager.measureButton, null, null, true);
-            uiManager.setButton(uiManager.disconnectButton, null, null, true);
+            uiManager.setButton(uiManager.syncButton, "Synced", "#008080", null, null);
+            uiManager.setButton(uiManager.measureButton, null, null, null, true);
+            uiManager.setButton(uiManager.disconnectButton, null, null, null, true);
 
             // ADD THIS:
             uiManager.setTextView(uiManager.imu1Status, "Synced", null, null);
@@ -363,14 +366,21 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
 
     public void measureButton_onClick(View view) {
 
+        // Play sound
+        MediaPlayer mediaPlayer = MediaPlayer.create(this, R.raw.measuring_audio);
+        mediaPlayer.setOnCompletionListener(mp -> mp.release());
+        mediaPlayer.start();
 
-        uiManager.setButton(uiManager.stopButton, null, null, true);
-        uiManager.setButton(uiManager.dataLogButton, null, null, true);
+        // Vibrate phone
+        uiManager.vibratePhone(100);  // Vibrate for 500ms
+
+        uiManager.setButton(uiManager.stopButton, null, null, null, true);
+        uiManager.setButton(uiManager.dataLogButton, null, null, null, true);
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
-                uiManager.setButton(uiManager.measureButton, "Measuring", null, null);
+                uiManager.setButton(uiManager.measureButton, "Measuring", "#008080", null, null);
                 // UPDATE APP BORDER COLOR to indicate measuring
                 uiManager.setAppBorderColor("#2196F3"); // Light Blue for measuring
             }
@@ -484,26 +494,26 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
      */
     public void disconnectButton_onClick(View view) {
         // measureButton.setEnabled(false);
-        uiManager.setButton(uiManager.measureButton, null, null, false);
+        uiManager.setButton(uiManager.measureButton, null, null, null, false);
         // dataLogButton.setEnabled(false);
-        uiManager.setButton(uiManager.dataLogButton, null, null, false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, null, false);
         runOnUiThread(new Runnable() {
             @SuppressLint("SetTextI18n")
             @Override
             public void run() {
                 // disconnectButton.setText("Disconnecting...");
                 // disconnectButton.setBackgroundColor(Color.parseColor("#F60000"));
-                uiManager.setButton(uiManager.disconnectButton, "Disconnecting...", "#F60000", false);
+                uiManager.setButton(uiManager.disconnectButton, "Disconnecting...", "#F60000", null, false);
             }
         });
         imuManager.disconnectAll();
     }
     public void stopButton_onClick(View view) { // After measuring, the dots should be stopped to for data logging
 
-        uiManager.setButton(uiManager.stopButton, null, null, false);
-        uiManager.setButton(uiManager.dataLogButton, null, null, false);
-        uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, false);
-        uiManager.setButton(uiManager.uploadButton, null, null, true);
+        uiManager.setButton(uiManager.stopButton, null, null, null, false);
+        uiManager.setButton(uiManager.dataLogButton, null, null, null, false);
+        uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, null, false);
+        uiManager.setButton(uiManager.uploadButton, null, null, null, true);
 
         logManager.log("Stopping");
         imuManager.stopMeasurement();
@@ -513,7 +523,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, null);
+                uiManager.setButton(uiManager.measureButton, "Measuring Stopped", null, null, null);
                 // UPDATE APP BORDER COLOR to indicate stopped
                 uiManager.setAppBorderColor("#AB2727"); // Red for stopped
             }
@@ -546,7 +556,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                     public void onFailure(@NonNull Exception exception) {
                         //uploadButton.setText("Uploading Failed");
                         //uploadButton.setBackgroundColor(Color.parseColor("#f63e00"));
-                        uiManager.setButton(uiManager.uploadButton, "Uploading Failed", "#f63e00", null);
+                        uiManager.setButton(uiManager.uploadButton, "Uploading Failed", "#f63e00", null, null);
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -557,7 +567,7 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
                             public void run() {
                                 // uploadButton.setText("Uploading Done");
                                 // uploadButton.setBackgroundColor(Color.parseColor("#0af056"));
-                                uiManager.setButton(uiManager.uploadButton, "Uploaded", "#008080", null);
+                                uiManager.setButton(uiManager.uploadButton, "Uploaded", "#008080", null, null);
                             }
                         });
                         progressDialog.dismiss();
@@ -605,5 +615,6 @@ public class MainActivity extends AppCompatActivity implements ImuManagerListene
         // Update the border color
         uiManager.setAppBorderColor(borderColor);
     }
+
 
 }

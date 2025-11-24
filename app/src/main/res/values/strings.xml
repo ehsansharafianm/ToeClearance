@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ToeClearance</string>
+    <string name="app_name">Foot Train</string>
 
     <!-- A single array for MAC address to Tag mapping -->
     <!-- Format: "MAC_ADDRESS,Human-Readable-Tag" -->

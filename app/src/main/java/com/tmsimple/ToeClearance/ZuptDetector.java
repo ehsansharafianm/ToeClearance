@@ -34,8 +34,6 @@ public class ZuptDetector {
     private static class GaitWindow {
         int startPacketCounter;
         int endPacketCounter;
-        long startTime;
-        long endTime;
         double duration; // in seconds
 
         GaitWindow(int startPacket) {
@@ -206,6 +204,7 @@ public class ZuptDetector {
             for (int i = 0; i < size; i++) {
                 if (buffer[i] != null) {
                     ZuptCandidate candidate = buffer[i];
+                    if (candidate == null) continue;
                     boolean isBest = (best == null || candidate.combinedScore < best.combinedScore);
 
                     if (isBest) {
@@ -290,10 +289,13 @@ public class ZuptDetector {
         // Check if current sample meets threshold criteria
         boolean meetsCriteria = (gyroMagnitude < gyroThreshold) && (accelMagnitude < accelThreshold);
 
-        if (imuId.equals("IMU1")) {
-            processCandidateDetection("IMU1", imu1Buffer, imu1WindowTracker, gyroMagnitude, accelMagnitude, rollAngle, packetCounter, meetsCriteria);
-        } else if (imuId.equals("IMU2")) {
-            processCandidateDetection("IMU2", imu2Buffer, imu2WindowTracker, gyroMagnitude, accelMagnitude, rollAngle, packetCounter, meetsCriteria);
+        // Route to correct IMU buffer
+        if ("IMU1".equals(imuId)) {
+            processCandidateDetection(imuId, imu1Buffer, imu1WindowTracker,
+                    gyroMagnitude, accelMagnitude, rollAngle, packetCounter, meetsCriteria);
+        } else if ("IMU2".equals(imuId)) {
+            processCandidateDetection(imuId, imu2Buffer, imu2WindowTracker,
+                    gyroMagnitude, accelMagnitude, rollAngle, packetCounter, meetsCriteria);
         }
     }
 

@@ -32,7 +32,8 @@ public class UiManager {
 
     public Button scanButton, syncButton, measureButton, disconnectButton,
             stopButton, uploadButton, dataLogButton, listImusButton, openLabelDialogButton,
-            showFeaturesButton;
+            showFeaturesButton, listButton;
+
     private android.app.Dialog labelDialog, logDialog, featureDialog;
 
     public Button showImuDataButton;
@@ -67,6 +68,7 @@ public class UiManager {
     private String selectedIMU2Mac;
     private LogManager logManager;
     private LinearLayout appBorderContainer;
+    private Context context;
 
 
 
@@ -76,6 +78,7 @@ public class UiManager {
     public UiManager(View rootView, ImuManager imuManager) {
         this.root = rootView;
         this.imuManager = imuManager;
+        this.context = rootView.getContext();
     }
 
     // Bind all Views from layout
@@ -135,6 +138,8 @@ public class UiManager {
 
         appBorderContainer = root.findViewById(R.id.labeling_data_root);
 
+        Button listButton = root.findViewById(R.id.listImusButton);
+
     }
 
 
@@ -143,10 +148,11 @@ public class UiManager {
     //
 
     // Configure Button (text, color, enabled)
-    public void setButton(Button button, String text, String colorHex, Boolean enabled) {
+    public void setButton(Button button, String text, String colorHex, String textColorHex, Boolean enabled) {
         if (button == null) return;
         if (text != null) button.setText(text);
         if (colorHex != null) button.setBackgroundColor(Color.parseColor(colorHex));
+        if (textColorHex != null) button.setTextColor(Color.parseColor(textColorHex));
         if (enabled != null) button.setEnabled(enabled);
     }
 
@@ -176,6 +182,7 @@ public class UiManager {
                     button.setText("Log Stoped");
                     logManager.log("---- Data Logging Stopped -----");
                 }
+                vibratePhone(100);
             }
         });
     }
@@ -202,7 +209,7 @@ public class UiManager {
                     try {
                         int number = Integer.parseInt(string.toString());
                         listener.onSubjectNumberEntered(number);
-                        setButton(scanButton, null, null, true);
+                        setButton(scanButton, null, null, null, true);
                     } catch (NumberFormatException e) {
                         e.printStackTrace();
                     }
@@ -820,6 +827,13 @@ public class UiManager {
         }
     }
 
+    // Phone vibration method
+    public void vibratePhone(int durationMs) {
+        android.os.Vibrator vibrator = (android.os.Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            vibrator.vibrate(durationMs);
+        }
+    }
 
 
 
