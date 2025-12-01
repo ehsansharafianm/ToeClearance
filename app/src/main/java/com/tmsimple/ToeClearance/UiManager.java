@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
@@ -69,6 +70,12 @@ public class UiManager {
     private LogManager logManager;
     private LinearLayout appBorderContainer;
     private Context context;
+
+    private LinearLayout embeddedLogContainer;
+    private ScrollView embeddedLogScrollView;
+    private TextView embeddedLogContents;
+    private Button toggleLogButton;
+    private boolean isLogExpanded = true;
 
 
 
@@ -139,6 +146,14 @@ public class UiManager {
         appBorderContainer = root.findViewById(R.id.labeling_data_root);
 
         Button listButton = root.findViewById(R.id.listImusButton);
+
+        // Bind embedded log views
+        embeddedLogScrollView = root.findViewById(R.id.logScrollView);
+        embeddedLogContents = root.findViewById(R.id.logContentsDialog);
+        toggleLogButton = root.findViewById(R.id.toggleLogVisibility);
+
+        // Setup toggle functionality
+        setupEmbeddedLogToggle();
 
     }
 
@@ -577,6 +592,10 @@ public class UiManager {
             // params.y = -200;  // Example: move 200 pixels UP
             // params.y = 100;   // Example: move 100 pixels DOWN
 
+            // ADD THIS: Make background semi-transparent
+            params.dimAmount = 0.1f; // 0.0f = no dim, 1.0f = fully dark
+            labelDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
             labelDialog.getWindow().setAttributes(params);
 
             // Background style
@@ -613,48 +632,9 @@ public class UiManager {
 
     // Setup the log dialog
     public void setupLogDialog(android.content.Context context, LogManager logManager) {
-        // Create the dialog
-        logDialog = new android.app.Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-        logDialog.setContentView(R.layout.dialog_log_viewer);
-
-        // ========== SIZE OPTIONS - CHOOSE ONE ==========
-
-        // OPTION 1: Full screen (completely fills the screen)
-//        logDialog.getWindow().setLayout(
-//                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-//                android.view.ViewGroup.LayoutParams.MATCH_PARENT
-//        );
-
-        // OPTION 2: 80% height, centered (your current setup)
-//         logDialog.getWindow().setLayout(
-//                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-//                 (int)(context.getResources().getDisplayMetrics().heightPixels * 0.8)
-//         );
-
-        // OPTION 3: 90% height, centered
-         logDialog.getWindow().setLayout(
-                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                 (int)(context.getResources().getDisplayMetrics().heightPixels * 0.72)
-         );
-
-        // OPTION 4: Half screen from bottom
-        // logDialog.getWindow().setLayout(
-        //         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-        //         (int)(context.getResources().getDisplayMetrics().heightPixels * 0.5)
-        // );
-
-        android.view.WindowManager.LayoutParams params = logDialog.getWindow().getAttributes();
-        params.gravity = android.view.Gravity.BOTTOM;
-        logDialog.getWindow().setAttributes(params);
-
-
-        // Get the log TextView and ScrollView from dialog
-        logContentsDialog = logDialog.findViewById(R.id.logContentsDialog);
-        android.widget.ScrollView logScrollView = logDialog.findViewById(R.id.logScrollView);
-
         // Auto-scroll whenever text changes
-        if (logContentsDialog != null && logScrollView != null) {
-            logContentsDialog.addTextChangedListener(new android.text.TextWatcher() {
+        if (embeddedLogContents != null && embeddedLogScrollView != null) {
+            embeddedLogContents.addTextChangedListener(new android.text.TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -664,37 +644,21 @@ public class UiManager {
                 @Override
                 public void afterTextChanged(android.text.Editable s) {
                     // Scroll to bottom whenever text is added
-                    logScrollView.post(() -> logScrollView.fullScroll(android.view.View.FOCUS_DOWN));
+                    embeddedLogScrollView.post(() -> embeddedLogScrollView.fullScroll(android.view.View.FOCUS_DOWN));
                 }
             });
         }
 
-        // Update LogManager to use the dialog TextView
+        // Update LogManager to use the embedded TextView
         if (logManager != null) {
-            logManager.setLogContents(logContentsDialog);
+            logManager.setLogContents(embeddedLogContents);
         }
 
-        // Setup close button
-        Button closeButton = logDialog.findViewById(R.id.closeLogDialog);
-        if (closeButton != null) {
-            closeButton.setOnClickListener(v -> logDialog.dismiss());
-        }
-
-        // Setup the toggle button to show/hide dialog
+        // Remove the old logToggleButton functionality or repurpose it
         if (logToggleButton != null) {
-            logToggleButton.setText("Show Log");
-            logToggleButton.setOnClickListener(v -> {
-                if (logDialog != null && !logDialog.isShowing()) {
-                    logDialog.show();
-                    // Scroll to bottom when dialog opens
-                    if (logScrollView != null) {
-                        logScrollView.post(() -> logScrollView.fullScroll(android.view.View.FOCUS_DOWN));
-                    }
-                }
-            });
+            logToggleButton.setVisibility(View.GONE); // Hide the old button
         }
     }
-
     public void setupFeatureDialog(android.content.Context context) {
         // Create the dialog
         featureDialog = new android.app.Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
@@ -827,6 +791,31 @@ public class UiManager {
         }
     }
 
+    private void setupEmbeddedLogToggle() {
+        if (toggleLogButton != null && embeddedLogScrollView != null) {
+
+            // Set initial state - ScrollView is hidden
+            embeddedLogScrollView.setVisibility(View.GONE);
+            toggleLogButton.setText("Show");  // Already set to "Show"
+
+            toggleLogButton.setOnClickListener(v -> {
+                if (embeddedLogScrollView.getVisibility() == View.VISIBLE) {
+                    embeddedLogScrollView.setVisibility(View.GONE);
+                    toggleLogButton.setText("Show");
+                } else {
+                    embeddedLogScrollView.setVisibility(View.VISIBLE);
+                    toggleLogButton.setText("Hide");
+
+                    // Auto-scroll to bottom when opened
+                    if (embeddedLogScrollView != null) {
+                        embeddedLogScrollView.post(() ->
+                                embeddedLogScrollView.fullScroll(View.FOCUS_DOWN));
+                    }
+                }
+            });
+        }
+    }
+
     // Phone vibration method
     public void vibratePhone(int durationMs) {
         android.os.Vibrator vibrator = (android.os.Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
@@ -834,6 +823,8 @@ public class UiManager {
             vibrator.vibrate(durationMs);
         }
     }
+
+
 
 
 

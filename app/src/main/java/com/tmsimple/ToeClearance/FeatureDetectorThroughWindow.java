@@ -39,12 +39,12 @@ public class FeatureDetectorThroughWindow {
                                   ArrayList<double[]> v_corrected,
                                   ArrayList<double[]> p_corrected, int startPacket, int endPacket) {
 
-        logManager.log("---------------------------------------------------");
-        logManager.log("Feature Detection Started for " + imuId + " Window #" + windowNum);
-        logManager.log("  Terrain Type: " + terrainType);
-        logManager.log("  Bias Value: " + decimalFormat.format(biasValue));
-        logManager.log("  Recalculated Bias: " + decimalFormat.format(recalculatedBias));
-        logManager.log("  Data Points: " + a_corrected.size());
+//        logManager.log("---------------------------------------------------");
+//        logManager.log("Feature Detection Started for " + imuId + " Window #" + windowNum);
+//        logManager.log("  Terrain Type: " + terrainType);
+//        logManager.log("  Bias Value: " + decimalFormat.format(biasValue));
+//        logManager.log("  Recalculated Bias: " + decimalFormat.format(recalculatedBias));
+//        logManager.log("  Data Points: " + a_corrected.size());
 
         // Verify data integrity
         if (a_corrected.isEmpty() || v_corrected.isEmpty() || p_corrected.isEmpty()) {
