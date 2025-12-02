@@ -101,7 +101,6 @@ public class UiManager {
         uploadButton = root.findViewById(R.id.uploadButton);
         dataLogButton = root.findViewById(R.id.dataLogButton);
 
-        logToggleButton = root.findViewById(R.id.logToggleButton);
         // Status fields
         imu1Status = root.findViewById(R.id.imu1Status);
         imu2Status = root.findViewById(R.id.imu2Status);
@@ -654,10 +653,6 @@ public class UiManager {
             logManager.setLogContents(embeddedLogContents);
         }
 
-        // Remove the old logToggleButton functionality or repurpose it
-        if (logToggleButton != null) {
-            logToggleButton.setVisibility(View.GONE); // Hide the old button
-        }
     }
     public void setupFeatureDialog(android.content.Context context) {
         // Create the dialog

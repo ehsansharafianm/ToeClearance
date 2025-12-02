@@ -375,47 +375,31 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="10dp"/>
 
+            <!-- Activity Labels button (full width, on top) -->
+            <Button
+                android:id="@+id/openLabelDialogButton"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginBottom="10dp"
+                android:backgroundTint="#2196F3"
+                android:text="Activity Labels"
+                android:textSize="14sp"/>
+
+            <!-- IMU Data and Features buttons (side by side) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="10dp">
-
-                <Button
-                    android:id="@+id/logToggleButton"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:backgroundTint="#2196F3"
-                    android:text="Logger"
-                    android:textSize="14sp"/>
 
                 <Button
                     android:id="@+id/showImuDataButton"
                     android:layout_width="0dp"
                     android:layout_height="45dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:backgroundTint="#2196F3"
-                    android:text="IMU Data"
-                    android:textSize="14sp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="10dp">
-
-                <Button
-                    android:id="@+id/openLabelDialogButton"
-                    android:layout_width="0dp"
-                    android:layout_height="45dp"
-                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
                     android:backgroundTint="#2196F3"
-                    android:text="Activity Labels"
+                    android:text="IMU Data"
                     android:textSize="14sp"/>
 
                 <Button
@@ -502,6 +486,7 @@
         android:id="@+id/floatingLogContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="top"
         android:orientation="vertical"
         android:background="#FFFFFF"
         android:layout_margin="12dp"

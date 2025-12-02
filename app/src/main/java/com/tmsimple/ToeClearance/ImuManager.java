@@ -625,9 +625,9 @@ public class ImuManager implements
         } else if (packetCounter >= 3000000 && packetCounter < 4000000) {
             return "Ramp_Ascend";
         } else if (packetCounter >= 4000000 && packetCounter < 5000000) {
-            return "Stair_Ascend";
-        } else if (packetCounter >= 5000000 && packetCounter < 6000000) {
             return "Ramp_Descend";
+        } else if (packetCounter >= 5000000 && packetCounter < 6000000) {
+            return "Stair_Ascend";
         } else if (packetCounter >= 6000000 && packetCounter < 7000000) {
             return "Stair_Descend";
         } else if (packetCounter >= 1000000 && packetCounter < 2000000) {
