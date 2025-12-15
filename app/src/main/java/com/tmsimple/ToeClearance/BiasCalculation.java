@@ -2,6 +2,7 @@ package com.tmsimple.ToeClearance;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class BiasCalculation {
 
@@ -10,7 +11,28 @@ public class BiasCalculation {
 
     DecimalFormat decimalFormat = new DecimalFormat("##.###");
 
-    // Terrain classification thresholds
+
+    // ========== CALIBRATION PHASE VARIABLES ==========
+    private boolean isCalibrated = false;
+    private int calibrationWindowCount = 0;
+    private static final int REQUIRED_CALIBRATION_WINDOWS = 20;
+    private ArrayList<Double> calibrationBiasValues = new ArrayList<>();
+
+    // Calculated calibration parameters
+    private double mu_HS = 0.0;  // Mean/median of HS bias
+    private double sigma_HS = 0.0;  // Robust standard deviation
+
+    // Optimal k values (from your previous optimization)
+    private static final double K1 = 1.2;  // Multiplier for ramp threshold
+    private static final double K2 = 3.2;  // Multiplier for stair threshold
+
+    // Calculated thresholds (will be set after calibration)
+    private double T_RAMP_ASCEND = 0.0;
+    private double T_STAIR_ASCEND = 0.0;
+    private double T_RAMP_DESCEND = 0.0;
+    private double T_STAIR_DESCEND = 0.0;
+
+    // OLD FIXED THRESHOLDS (kept for reference, won't be used after calibration)
     private static final double THRESHOLD_VALUE1 = 0.3;
     private static final double THRESHOLD_VALUE2 = 0.11;
     private static final double THRESHOLD_VALUE3 = -0.11;
@@ -27,9 +49,28 @@ public class BiasCalculation {
         this.listener = listener;
         this.logManager = logManager;
     }
+    // NEW: Method to check calibration status
+    public boolean isCalibrated() {
+        return isCalibrated;
+    }
+
+    // NEW: Method to get calibration progress
+    public int getCalibrationProgress() {
+        return calibrationWindowCount;
+    }
+
+    // NEW: Method to get calibration parameters
+    public double getMu() {
+        return mu_HS;
+    }
+
+    public double getSigma() {
+        return sigma_HS;
+    }
+
 
     // Method to process bias calculation
-    public void processBiasCalculation(ImuManager.GaitWindowData windowData, int windowNum, int startPacket, int endPacket) {
+    public void processBiasCalculation(ImuManager.GaitWindowData windowData, int windowNum, int startPacket, int endPacket, String groundTruthTerrain) {
 
         if (windowData.eulerAnglesInWindow.isEmpty()) {
             logManager.log("ERROR: Empty window data received!");
@@ -217,9 +258,47 @@ public class BiasCalculation {
         // double calculatedBias = Math.sqrt(biasAccX*biasAccX + biasAccY*biasAccY + biasAccZ*biasAccZ);
         double calculatedBias = biasV_hs;
 
+        // ========== CALIBRATION LOGIC ==========
+        if (!isCalibrated) {
+            // Only accept Level_Walk data for calibration
+            if (groundTruthTerrain.equals("Level_Walk")) {
+                calibrationBiasValues.add(biasV_hs);
+                calibrationWindowCount++;
 
-        // Terrain Determination
-        String terrainType = terrainDetermination(biasV_hs, biasAcc);
+                logManager.log("------------------------------------------");
+                logManager.log("CALIBRATION Window #" + calibrationWindowCount + "/" + REQUIRED_CALIBRATION_WINDOWS);
+                logManager.log("  Bias V_hs: " + decimalFormat.format(biasV_hs));
+                logManager.log("------------------------------------------");
+
+                // Check if calibration is complete
+                if (calibrationWindowCount >= REQUIRED_CALIBRATION_WINDOWS) {
+                    performCalibration();
+                }
+            } else {
+                logManager.log("WARNING: Window #" + windowNum + " skipped - calibration requires Level_Walk only");
+                logManager.log("  Current terrain: " + groundTruthTerrain);
+            }
+
+            // During calibration, we don't do terrain classification or second integration
+            // Just return here
+            return;
+        }
+
+        // ========== AFTER CALIBRATION: NORMAL PROCESSING ==========
+        logManager.log("------------------------------------------");
+        logManager.log("Processing Window #" + windowNum + " (" + sampleCount + " samples)");
+        logManager.log("  Packets: " + startPacket + " to " + endPacket);
+        logManager.log("  Raw Bias V_hs: " + decimalFormat.format(biasV_hs));
+
+        // **** Terrain Determination using CALIBRATED thresholds
+//         String terrainType = terrainDeterminationAdaptive(biasV_hs);
+
+        // **** Terrain Determination using hardcoded thresholds
+        String terrainType = terrainDeterminationHardcoded(biasV_hs, biasAcc);
+
+        logManager.log("  Classified: " + terrainType);
+
+
 
         /*logManager.log("-----------------");
         logManager.log("Terrain Type: " + terrainType);
@@ -532,7 +611,7 @@ public class BiasCalculation {
         return x;
     }
 
-    private String terrainDetermination(double biasV_hs, double[] biasAcc) {
+    private String terrainDeterminationHardcoded(double biasV_hs, double[] biasAcc) {
         String terrainType;
 
         if (biasV_hs < THRESHOLD_VALUE4) {
@@ -552,5 +631,143 @@ public class BiasCalculation {
 
         return terrainType;
     }
+
+    // ========== NEW: CALIBRATED TERRAIN DETERMINATION ==========
+    private String terrainDeterminationAdaptive(double biasV_hs) {
+        String terrainType;
+
+        // ========== DEBUG ==========
+        logManager.log("Bias=" + decimalFormat.format(biasV_hs) +
+                " | T_stair-=" + decimalFormat.format(T_STAIR_DESCEND) +
+                " | T_ramp-=" + decimalFormat.format(T_RAMP_DESCEND) +
+                " | T_ramp+=" + decimalFormat.format(T_RAMP_ASCEND) +
+                " | T_stair+=" + decimalFormat.format(T_STAIR_ASCEND));
+
+        if (biasV_hs < T_STAIR_DESCEND) {
+            terrainType = "Stair_Descend";
+        } else if (biasV_hs >= T_STAIR_DESCEND && biasV_hs < T_RAMP_DESCEND) {
+            terrainType = "Ramp_Descend";
+        } else if (biasV_hs >= T_RAMP_DESCEND && biasV_hs <= T_RAMP_ASCEND) {
+            terrainType = "Level_Walk";
+        } else if (biasV_hs > T_RAMP_ASCEND && biasV_hs <= T_STAIR_ASCEND) {
+            terrainType = "Ramp_Ascend";
+        } else if (biasV_hs > T_STAIR_ASCEND) {
+            terrainType = "Stair_Ascend";
+        } else {
+            logManager.log("ERROR: Terrain could not be detected");
+            terrainType = "Unknown";
+        }
+
+        return terrainType;
+    }
+
+    // ========== NEW: CALIBRATION CALCULATION METHOD ==========
+    private void performCalibration() {
+        logManager.log("==========================================");
+        logManager.log("PERFORMING CALIBRATION WITH IQR FILTERING");
+        logManager.log("==========================================");
+
+        if (calibrationBiasValues.size() < REQUIRED_CALIBRATION_WINDOWS) {
+            logManager.log("ERROR: Not enough calibration data!");
+            return;
+        }
+
+        // Step 1: Compute magnitudes for IQR identification
+        ArrayList<Double> magnitudes = new ArrayList<>();
+        for (double bias : calibrationBiasValues) {
+            magnitudes.add(Math.abs(bias));
+        }
+        Collections.sort(magnitudes);
+
+        int n = magnitudes.size();
+
+        // Step 2: Find Q25 and Q75 (25th and 75th percentiles)
+        int q25_idx = n / 4;
+        int q75_idx = (3 * n) / 4;
+        double Q25 = magnitudes.get(q25_idx);
+        double Q75 = magnitudes.get(q75_idx);
+
+        logManager.log("Magnitude Q25: " + decimalFormat.format(Q25));
+        logManager.log("Magnitude Q75: " + decimalFormat.format(Q75));
+
+        // Step 3: Filter to IQR subset using SIGNED values
+        ArrayList<Double> IQR_subset = new ArrayList<>();
+        for (double bias : calibrationBiasValues) {
+            double magnitude = Math.abs(bias);
+            if (magnitude >= Q25 && magnitude <= Q75) {
+                IQR_subset.add(bias);  // Keep SIGNED value
+            }
+        }
+
+        int n_IQR = IQR_subset.size();
+        logManager.log("IQR subset size: " + n_IQR + " out of " + n + " windows");
+        logManager.log("Removed " + (n - n_IQR) + " outliers");
+
+        // Step 4: Calculate μ_HS from IQR subset (SIGNED values)
+        Collections.sort(IQR_subset);
+        if (n_IQR % 2 == 0) {
+            mu_HS = (IQR_subset.get(n_IQR/2 - 1) + IQR_subset.get(n_IQR/2)) / 2.0;
+        } else {
+            mu_HS = IQR_subset.get(n_IQR/2);
+        }
+
+        logManager.log("Step 1: Baseline (μ_HS) from IQR = " + decimalFormat.format(mu_HS));
+
+        // Step 5: Normalize ALL data (not just IQR)
+        ArrayList<Double> normalizedBias = new ArrayList<>();
+        for (double bias : calibrationBiasValues) {
+            normalizedBias.add(bias - mu_HS);
+        }
+
+        // Step 6: Calculate MAD from ALL normalized data
+        ArrayList<Double> absoluteDeviations = new ArrayList<>();
+        for (double normalizedValue : normalizedBias) {
+            absoluteDeviations.add(Math.abs(normalizedValue));
+        }
+        Collections.sort(absoluteDeviations);
+
+        double MAD;
+        int m = absoluteDeviations.size();
+        if (m % 2 == 0) {
+            MAD = (absoluteDeviations.get(m/2 - 1) + absoluteDeviations.get(m/2)) / 2.0;
+        } else {
+            MAD = absoluteDeviations.get(m/2);
+        }
+
+        logManager.log("Step 2: MAD from ALL data = " + decimalFormat.format(MAD));
+
+        // Step 7: Convert MAD to standard deviation equivalent
+        //sigma_HS = 1.4826 * MAD;
+        sigma_HS = 0.1156;
+
+        logManager.log("Step 3: Robust Spread (σ_HS) = " + decimalFormat.format(sigma_HS));
+
+        // Step 8: Calculate thresholds using optimal k values
+        T_RAMP_ASCEND = mu_HS + K1 * sigma_HS;
+        T_STAIR_ASCEND = mu_HS + K2 * sigma_HS;
+        T_RAMP_DESCEND = mu_HS - K1 * sigma_HS;
+        T_STAIR_DESCEND = mu_HS - K2 * sigma_HS;
+
+        logManager.log("==========================================");
+        logManager.log("CALIBRATION COMPLETE!");
+        logManager.log("==========================================");
+        logManager.log("Parameters:");
+        logManager.log("  μ_HS (baseline) = " + decimalFormat.format(mu_HS));
+        logManager.log("  σ_HS (spread), constant = " + decimalFormat.format(sigma_HS));
+        logManager.log("  k₁ (ramp) = " + K1);
+        logManager.log("  k₂ (stair) = " + K2);
+        logManager.log("------------------------------------------");
+        logManager.log("Calculated Thresholds:");
+        logManager.log("  Stair Ascend:  > " + decimalFormat.format(T_STAIR_ASCEND));
+        logManager.log("  Ramp Ascend:   > " + decimalFormat.format(T_RAMP_ASCEND));
+        logManager.log("  Level Walk:    " + decimalFormat.format(T_RAMP_DESCEND) + " to " + decimalFormat.format(T_RAMP_ASCEND));
+        logManager.log("  Ramp Descend:  < " + decimalFormat.format(T_RAMP_DESCEND));
+        logManager.log("  Stair Descend: < " + decimalFormat.format(T_STAIR_DESCEND));
+        logManager.log("==========================================");
+
+        isCalibrated = true;
+    }
+
+
 
 }

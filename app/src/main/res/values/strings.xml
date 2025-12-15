@@ -35,6 +35,18 @@
         <item>D4:CA:6E:F1:72:76,V1–09</item>
         <item>D4:CA:6E:F1:72:BF,V1–10</item>
 
+        <!-- Movella DOT sensors (M1-M10) -->
+        <item>D4:22:CD:07:A9:70,M-01</item>
+        <item>D4:22:CD:07:A7:06,M-02</item>
+        <item>D4:22:CD:07:A9:85,M-03</item>
+        <item>D4:22:CD:07:AA:CB,M-04</item>
+        <item>D4:22:CD:07:A7:18,M-05</item>
+        <item>D4:22:CD:07:A6:BD,M-06</item>
+        <item>D4:22:CD:07:A5:EE,M-07</item>
+        <item>D4:22:CD:07:A9:82,M-08</item>
+        <item>D4:22:CD:07:A7:5B,M-09</item>
+        <item>D4:22:CD:07:A8:3A,M-10</item>
+
         <!-- Add more sensors here. Just add a new <item> line. -->
         <!-- <item>XX:XX:XX:XX:XX:XX,MyOtherSensor</item> -->
     </string-array>

@@ -50,6 +50,9 @@ public class ImuManager implements
     private BiasCalculation biasCalculation;
     private FeatureDetectorThroughWindow featureDetectorThroughWindow;
     private String groundTruthTerrain;
+    // ========== NEW: CALIBRATION STATE TRACKING ==========
+    private boolean isCalibrationComplete = false;
+    private int calibrationWindowsProcessed = 0;
 
 
     private int SelectionMesurementMode = DotPayload.PAYLOAD_TYPE_CUSTOM_MODE_5;
@@ -124,31 +127,48 @@ public class ImuManager implements
                 " | Duration: " + decimalFormat.format(duration) + "s");
 
         if (isLoggingData) {
-
             // Extract the gait window data
             GaitWindowData windowData = extractGaitWindowData(imuId, startPacket, endPacket);
+            biasCalculation.processBiasCalculation(windowData, windowNum, startPacket, endPacket, groundTruthTerrain);
 
-            biasCalculation.processBiasCalculation(windowData, windowNum, startPacket, endPacket);
-
+            // ⚠️ ADD THIS CHECK HERE:
+            if (!isCalibrationComplete && biasCalculation.isCalibrated()) {
+                onCalibrationJustCompleted();
+            }
         }
+    }
+
+    // ========== NEW: HANDLE CALIBRATION COMPLETION ==========
+    private void onCalibrationJustCompleted() {
+        isCalibrationComplete = true;
+
+        logManager.log("==========================================");
+        logManager.log(">>> CALIBRATION COMPLETE IN IMU MANAGER <<<");
+        logManager.log("  System is now ready for terrain classification");
+        logManager.log("  Confusion matrix tracking enabled");
+        logManager.log("==========================================");
+
+        // Initialize confusion matrix now that calibration is done
+        initializeConfusionMatrix();
     }
     public void onBiasCalculationComplete(String imuId, int windowNum, double biasValue, double recalculatedBias, String terrainType, ArrayList<double[]> a_corrected, ArrayList<double[]> v_corrected, ArrayList<double[]> p_corrected, int startPacket, int endPacket) {
 
 
-        // Only update confusion matrix if we have valid terrain data (not Unknown or Standing)
-        if (!groundTruthTerrain.equals("Unknown")) {
-            // Update confusion matrix
-            updateConfusionMatrix(groundTruthTerrain, terrainType);
+        // ========== ONLY UPDATE CONFUSION MATRIX AFTER CALIBRATION ==========
+        if (isCalibrationComplete) {
+            // Only update confusion matrix if we have valid terrain data
+            if (!groundTruthTerrain.equals("Unknown") && !groundTruthTerrain.equals("Standing")) {
+                updateConfusionMatrix(groundTruthTerrain, terrainType);
 
-            // Log the comparison
-            logManager.log("Window #" + windowNum + " - Ground Truth: " + groundTruthTerrain +
-                    ", Predicted: " + terrainType +
-                    (groundTruthTerrain.equals(terrainType) ? " ✓ CORRECT" : " ✗ INCORRECT"));
-
-            // Display confusion matrix
-            // logConfusionMatrix();
+                logManager.log("Window #" + windowNum + " - Ground Truth: " + groundTruthTerrain +
+                        ", Predicted: " + terrainType +
+                        (groundTruthTerrain.equals(terrainType) ? " ✓ CORRECT" : " ✗ INCORRECT"));
+            } else {
+                logManager.log("Window #" + windowNum + " - Skipped (Ground Truth: " + groundTruthTerrain + ")");
+            }
         } else {
-            logManager.log("Window #" + windowNum + " - Skipped (Ground Truth: " + groundTruthTerrain + ")");
+            // During calibration, just acknowledge window processing
+            logManager.log("Window #" + windowNum + " - Calibration in progress (no classification yet)");
         }
 
 
